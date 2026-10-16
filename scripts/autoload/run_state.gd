@@ -5,18 +5,20 @@ extends Node
 ## Holds the state and owns the rule classes that change it: four guys, progress along the
 ## crossing, elapsed time and the phase, plus one Paddling, Drunkenness, Stamina and Rescue (with
 ## their data/*.tres tunings) and one RandomNumberGenerator for their rolls. The boat scene calls
-## stroke() on each key release and step() once per physics frame, and applies the Motion it
-## gets back; the lake sets progress from the boat's position, calls arrive() at the island,
+## stroke() on each key release and step() once per physics frame with its position (where a guy
+## whose wind-up ends jumps from, T34), and applies the Motion it gets back; the lake sets
+## progress from the boat's position, calls arrive() at the island,
 ## pickup() when the boat reaches a floating guy and shore_touched() whenever the boat touches
 ## the shore; RunState decides whether that is a shore reset. While the boat still rests at the
 ## launch shore (LAUNCH) a guy washed up at the shoreline climbs back aboard on his own in step()
 ## (B2); under way he waits there for the boat or the shore reset. Hazard scenes call the effects
 ## palette (GDD › Systems › Hazards, Effects): beer_overboard(), shove(), snag(), stop(),
 ## force_break() and water_aboard(); the boat takes the shove and the stop with take_shove() and
-## take_stop(), and a snagged or bailing seat gives no strokes. A guy who falls in without a
-## beer (T13) goes through guy_overboard(). new_attempt() draws lake_seed from the RNG, the seed
-## the lake plans its hazards from (Hazards.plan), and then resets; a shore reset only resets, so
-## the attempt meets the same lake again. Screens only read. Reads and writes no player data.
+## take_stop(), and a snagged or bailing seat gives no strokes. A guy who falls in some other
+## way than a jump (T13) goes through guy_overboard(). new_attempt() draws lake_seed from the
+## RNG, the seed the lake plans its hazards from (Hazards.plan), and then resets; a shore reset
+## only resets, so the attempt meets the same lake again. Screens only read. Reads and writes no
+## player data.
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
 ## step() mirrors the rule classes' levels into them so screens read one place.
@@ -135,22 +137,20 @@ func shore_touched() -> void:
 
 
 ## A hazard knocked a beer over on `side` with the boat at `at_position`: the beer lands
-## beer_toss to that side, and the guy Rescue picks (that hull, front first) jumps in after it
-## and is no longer aboard, and his strokes still waiting to land are dropped. Returns his seat,
-## or Rescue.NOBODY when nobody was aboard.
+## beer_toss to that side and bobs away, and the guy Rescue picks (that hull, front first, not
+## already winding up) winds up for BoatTuning.jump_delay seconds (T34). He stays aboard and
+## paddles meanwhile; step() takes him off the boat when he jumps. Returns his seat, or
+## Rescue.NOBODY when nobody was free to jump.
 func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	var toss: float = paddling.tuning.beer_toss
 	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
-	var seat: int = rescue.beer_overboard(side, _seats_aboard(), at_position, beer_at)
-	if seat != Rescue.NOBODY:
-		guys[seat].aboard = false
-		_drop_pending(seat)
-	return seat
+	return rescue.beer_overboard(side, _seats_aboard(), beer_at, paddling.tuning.jump_delay)
 
 
-## A guy fell in without a beer (GDD › Drunkenness: the pee antic, T13): he floats from the
-## start and doesn't drink, and his strokes still waiting to land are dropped. Nothing happens if
-## he is already in the water.
+## A guy fell in some other way than a jump (GDD › Drunkenness: the pee antic, T13): he is off
+## the boat and his strokes still waiting to land are dropped. With no beer loose for him he
+## floats from the start and doesn't drink; caught winding up, he swims for his beer anyway
+## (Rescue.guy_overboard). Nothing happens if he is already in the water.
 func guy_overboard(seat: int, at_position: Vector2) -> void:
 	if not guys[seat].aboard:
 		return
@@ -271,15 +271,17 @@ func stroke(seat: int, hold_time: float) -> void:
 	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
 
 
-## One physics frame: the swimmers and their beers move with the current (while launching, a
-## guy washed up at the shoreline climbs back aboard with whatever beer he has), every guy drinks
-## (a floating guy with his beer at the water rate; one without a beer not at all) and every guy
-## aboard recovers or breaks (a guy in the water keeps his stamina, state and time left until he
-## is picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, the snags count
+## One physics frame with the boat at `boat_at`: the loose beers, the swimmers and their beers
+## move with the current, and a guy whose wind-up ends this frame jumps in from `boat_at`, is no
+## longer aboard and loses his strokes still waiting to land (while launching, a guy washed up
+## at the shoreline climbs back aboard with whatever beer he has); every guy drinks (a floating
+## guy with his beer at the water rate; one without a beer not at all) and every guy aboard
+## recovers or breaks (a guy in the water keeps his stamina, state and time left until he is
+## picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, the snags count
 ## down and the bailers bail, elapsed advances, and the strokes that land this frame become the
 ## boat's Motion. With nobody aboard the Motion is only the current's drift. Nothing moves once
 ## the attempt is won.
-func step(delta: float) -> Paddling.Motion:
+func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	if phase == Phase.WON:
 		return Paddling.Motion.new()
 	elapsed += delta
@@ -288,7 +290,10 @@ func step(delta: float) -> Paddling.Motion:
 	for side: int in Rescue.Hull.size():
 		if bailer_of(side as Rescue.Hull) != Rescue.NOBODY:
 			_water[side] = maxf(_water[side] - paddling.tuning.bail_rate * delta, 0.0)
-	rescue.step(delta, Vector2.DOWN * paddling.tuning.current_speed, paddling.tuning)
+	var current: Vector2 = Vector2.DOWN * paddling.tuning.current_speed
+	for seat: int in rescue.step(delta, current, paddling.tuning, boat_at):
+		guys[seat].aboard = false
+		_drop_pending(seat)
 	if phase == Phase.LAUNCH:
 		# The boat rests at the shore, so the launch shore never traps the player (B2).
 		for seat: int in rescue.washed_up():

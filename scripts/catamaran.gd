@@ -9,8 +9,9 @@ extends CharacterBody2D
 ## guys' squares under `Visual` show the break telegraph from RunState's Stamina state (a flashing
 ## marker during the warning, dimmed on the break) and the timing bar from its Drunkenness (it
 ## blinks beside a guy while his tier is announced, then shows beside him while his key is held,
-## the marker sweeping over the green band); a guy in the water has no square here (the lake
-## draws him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
+## the marker sweeping over the green band); a guy winding up to jump after a beer (Rescue's
+## winding_up, T34) rocks in his seat; a guy in the water has no square here (the lake draws
+## him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
 ## and yaw, take_shove() is added to its speed. In debug builds F5/F6 knock a beer over on the
 ## left/right without a hazard. No rules live here.
 
@@ -27,6 +28,10 @@ const GUY_PATHS: Array[String] = [
 const BREAK_DIM: Color = Color(0.4, 0.4, 0.4, 1.0)
 ## Seconds per flash of the break warning marker and the bar's wind-up (cosmetic).
 const WARNING_FLASH_PERIOD: float = 0.3
+## The jump wind-up: a guy's square rocks this far (radians) each way, once per period
+## (cosmetic), quickening as his wind-up runs out.
+const WIND_UP_ROCK: float = 0.35
+const WIND_UP_ROCK_PERIOD: float = 0.4
 ## The timing bar beside a guy's square (cosmetic sizes, in the square's pixels): a dark track
 ## with a green band of DrinkTuning.green_width and a sweeping marker.
 const BAR_WIDTH: float = 16.0
@@ -44,6 +49,7 @@ var _stroke_velocity: Vector2 = Vector2.ZERO
 var _yaw_rate: float = 0.0
 var _hold_times: Array[float] = [0.0, 0.0, 0.0, 0.0]
 var _flash_clock: float = 0.0
+var _rock_clock: float = 0.0
 var _guys: Array[Polygon2D] = []
 var _warnings: Array[Node2D] = []
 var _bars: Array[Node2D] = []
@@ -63,7 +69,7 @@ func _physics_process(delta: float) -> void:
 	if OS.is_debug_build() or OS.has_feature("dev_tools"):
 		_read_debug_keys()
 	var tuning: BoatTuning = RunState.paddling.tuning
-	var motion: Paddling.Motion = RunState.step(delta)
+	var motion: Paddling.Motion = RunState.step(delta, position)
 	_stroke_velocity += Vector2.UP.rotated(rotation) * motion.thrust * tuning.thrust_scale
 	_yaw_rate += motion.turn * tuning.turn_scale
 	if RunState.take_stop():
@@ -115,16 +121,30 @@ func guy_colour(seat: int) -> Color:
 
 
 ## Visual only: a swimmer's square is hidden, a warned guy's marker flashes, a guy on a break is
-## dim, and the timing bar shows beside a guy on the top tier.
+## dim, a guy winding up to jump rocks in his seat, and the timing bar shows beside a guy on the
+## top tier.
 func _show_telegraphs(delta: float) -> void:
 	_flash_clock = fmod(_flash_clock + delta, WARNING_FLASH_PERIOD)
+	_rock_clock = fmod(_rock_clock + delta, WIND_UP_ROCK_PERIOD)
 	var flash_on: bool = _flash_clock < WARNING_FLASH_PERIOD * 0.5
 	for seat: int in _guys.size():
 		var state: Stamina.State = RunState.stamina.state_of(seat)
 		_guys[seat].visible = RunState.guys[seat].aboard
 		_guys[seat].modulate = BREAK_DIM if state == Stamina.State.BREAK else Color.WHITE
+		_guys[seat].rotation = _wind_up_rock(seat)
 		_warnings[seat].visible = state == Stamina.State.WARNING and flash_on
 		_show_bar(seat, flash_on)
+
+
+## Visual only: the rock of a guy's square while Rescue has him winding up to jump, growing as
+## the time left runs out so the jump reads as coming; 0 when he isn't.
+func _wind_up_rock(seat: int) -> float:
+	var rescue: Rescue = RunState.rescue
+	if not rescue.winding_up(seat):
+		return 0.0
+	var delay: float = maxf(RunState.paddling.tuning.jump_delay, 0.001)
+	var build_up: float = 1.0 - clampf(rescue.wind_up_left(seat) / delay, 0.0, 1.0)
+	return WIND_UP_ROCK * (0.5 + 0.5 * build_up) * sin(TAU * _rock_clock / WIND_UP_ROCK_PERIOD)
 
 
 ## Visual only: the bar blinks beside a guy while his tier is announced (the wind-up), then

@@ -2,15 +2,19 @@ class_name Rescue
 extends RefCounted
 ## Rescue · the guys in the water and the beers they went in after (GDD › Systems › Setbacks).
 ##
-## A plain rule class: it receives the current and its BoatTuning each step and never touches
-## the scene tree or RunState. Seats equal RunState.Guy.seat and Paddling.Seat. Positions are
-## Vector2 in lake pixels. A beer knocked overboard puts one guy in the water after it: he swims
-## toward it at swim_speed (on top of the current, like everything in the water) until he
+## A plain rule class: it receives the current, its BoatTuning and the boat's position each step
+## and never touches the scene tree or RunState. Seats equal RunState.Guy.seat and Paddling.Seat.
+## Positions are Vector2 in lake pixels. A beer knocked overboard first bobs away loose for
+## BoatTuning.jump_delay seconds while the guy chosen by jumper() winds up aboard (he still
+## paddles); when the countdown ends in step() he jumps in from where the boat is then and swims
+## toward the beer at swim_speed (on top of the current, like everything in the water) until he
 ## reaches it, then floats, drifting with the current and drinking. He never swims back; the boat
-## has to come to him. A guy can also fall in without a beer (the pee antic, T13): he floats at
-## once and doesn't drink. There is no limit on how many are in the water at a time. Nothing loose
-## drifts past the shoreline: a beer or a guy stops shore_margin above it (B2) and a guy lying
-## there is washed up, within pickup_radius of a boat resting at the shore.
+## has to come to him. A guy can also fall in some other way (the pee antic, T13): with no beer
+## loose he floats at once and doesn't drink; caught mid-wind-up he swims for his beer anyway, as
+## if he had jumped early. There is no limit on how many are in the water at a time. Nothing
+## loose drifts past the shoreline: a beer or a guy stops
+## shore_margin above it (B2) and a guy lying there is washed up, within pickup_radius of a boat
+## resting at the shore.
 
 ## Which hull a hazard hit; the guy who jumps comes from that side when one is aboard.
 enum Hull { LEFT, RIGHT }
@@ -39,30 +43,59 @@ class Swimmer extends RefCounted:
 		has_beer = beer
 
 
+## A beer bobbing away while its guy winds up aboard (T34): he jumps when time_left runs out.
+class LooseBeer extends RefCounted:
+	## The guy winding up for it.
+	var seat: int = 0
+	var position: Vector2 = Vector2.ZERO
+	## Seconds of wind-up left before he jumps.
+	var time_left: float = 0.0
+
+	func _init(jumper_seat: int, at: Vector2, delay: float) -> void:
+		seat = jumper_seat
+		position = at
+		time_left = delay
+
+
 var _swimmers: Array[Swimmer] = []
+var _beers: Array[LooseBeer] = []
 
 
-## Everyone back aboard (the starting conditions and the shore reset).
+## Everyone back aboard, no beer loose (the starting conditions and the shore reset).
 func reset() -> void:
 	_swimmers.clear()
+	_beers.clear()
 
 
-## A beer went over on `side` at `beer_at`; the guy chosen by jumper() jumps in at `at` and
-## swims for it. Returns his seat, or NOBODY when nobody was aboard to jump.
-func beer_overboard(side: Hull, seats_aboard: Array[int], at: Vector2, beer_at: Vector2) -> int:
-	var seat: int = jumper(side, seats_aboard)
+## A beer went over on `side` at `beer_at`: it floats loose from here, and the guy chosen by
+## jumper() among `seats_aboard` (less those already winding up) starts a wind-up of
+## `jump_delay` seconds, after which step() puts him in the water after it. Returns his seat, or
+## NOBODY when nobody was free to jump (then there is no beer to go after either).
+func beer_overboard(side: Hull, seats_aboard: Array[int], beer_at: Vector2, jump_delay: float) -> int:
+	var free: Array[int] = []
+	for seat: int in seats_aboard:
+		if not winding_up(seat):
+			free.append(seat)
+	var seat: int = jumper(side, free)
 	if seat == NOBODY:
 		return NOBODY
-	_swimmers.append(Swimmer.new(seat, at, beer_at, State.SWIMMING, true))
+	_beers.append(LooseBeer.new(seat, beer_at, jump_delay))
 	return seat
 
 
-## A guy fell in at `at` with no beer (GDD › Drunkenness: the pee antic): he floats from the
-## start and doesn't drink. Nothing happens if he is already in the water.
+## A guy fell in at `at` some other way than a jump (GDD › Drunkenness: the pee antic). With no
+## beer loose for him he floats from the start and doesn't drink. Winding up when he went in,
+## he swims for his beer from `at` anyway, as after a jump: the wind-up is over early and the
+## loose beer is his to reach. Nothing happens if he is already in the water.
 func guy_overboard(seat: int, at: Vector2) -> void:
 	if is_in_water(seat):
 		return
-	_swimmers.append(Swimmer.new(seat, at, at, State.FLOATING, false))
+	var beer: LooseBeer = beer_of(seat)
+	if beer == null:
+		_swimmers.append(Swimmer.new(seat, at, at, State.FLOATING, false))
+		return
+	_beers.erase(beer)
+	_swimmers.append(Swimmer.new(seat, at, beer.position, State.SWIMMING, true))
 
 
 ## Who goes in after a beer on `side`: the aboard guy on that hull, the front one if both are;
@@ -84,9 +117,12 @@ static func seats_on(side: Hull) -> Array[int]:
 
 ## One timestep: every loose beer and every floating guy drifts by `current` (pixels per second);
 ## a swimming guy drifts too and swims swim_speed toward his beer on top of it, and holds it
-## (FLOATING) once he reaches it this step. Nothing drifts past the shoreline: beers and guys stop
-## at y = -shore_margin, and a guy lying there is washed_up.
-func step(delta: float, current: Vector2, tuning: BoatTuning) -> void:
+## (FLOATING) once he reaches it this step. Every wind-up counts down, and a guy whose wind-up
+## ends this step jumps in at `boat_at` (where the boat is now, not where the beer went over)
+## and swims for his beer from next step. Nothing drifts past the shoreline: beers and guys stop
+## at y = -shore_margin, and a guy lying there is washed_up. Returns the seats that jumped this
+## step, so the holder can take them off the boat.
+func step(delta: float, current: Vector2, tuning: BoatTuning, boat_at: Vector2) -> Array[int]:
 	var drift: Vector2 = current * delta
 	var shoreline: float = -tuning.shore_margin
 	for swimmer: Swimmer in _swimmers:
@@ -104,6 +140,20 @@ func step(delta: float, current: Vector2, tuning: BoatTuning) -> void:
 			swimmer.position = held_back(swimmer.position + drift, shoreline)
 			swimmer.beer_position = swimmer.position
 		swimmer.washed_up = swimmer.position.y >= shoreline
+	var jumped: Array[int] = []
+	var loose: Array[LooseBeer] = []
+	for beer: LooseBeer in _beers:
+		beer.position = held_back(beer.position + drift, shoreline)
+		beer.time_left -= delta
+		if beer.time_left <= 0.0:
+			var swimmer: Swimmer = Swimmer.new(beer.seat, held_back(boat_at, shoreline), beer.position, State.SWIMMING, true)
+			swimmer.washed_up = swimmer.position.y >= shoreline
+			_swimmers.append(swimmer)
+			jumped.append(beer.seat)
+		else:
+			loose.append(beer)
+	_beers = loose
+	return jumped
 
 
 ## `at` held above the shoreline: the same point, no lower than `shoreline` (y grows toward the
@@ -125,6 +175,30 @@ func swimmer_of(seat: int) -> Swimmer:
 
 func is_in_water(seat: int) -> bool:
 	return swimmer_of(seat) != null
+
+
+## The beers bobbing away with a guy still winding up for each.
+func loose_beers() -> Array[LooseBeer]:
+	return _beers
+
+
+## The beer `seat` is winding up for, or null.
+func beer_of(seat: int) -> LooseBeer:
+	for beer: LooseBeer in _beers:
+		if beer.seat == seat:
+			return beer
+	return null
+
+
+## Whether `seat` is still aboard, winding up to jump after a beer.
+func winding_up(seat: int) -> bool:
+	return beer_of(seat) != null
+
+
+## Seconds of wind-up left before `seat` jumps; 0 when he isn't winding up.
+func wind_up_left(seat: int) -> float:
+	var beer: LooseBeer = beer_of(seat)
+	return 0.0 if beer == null else beer.time_left
 
 
 ## The floating guys within `radius` of `boat_position`: the ones the boat can pick up. A guy

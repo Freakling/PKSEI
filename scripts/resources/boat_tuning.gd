@@ -28,6 +28,9 @@ extends Resource
 @export var swim_speed: float = 30.0 ## PLACEHOLDER
 ## Pixels a beer knocked overboard lands from the boat's centre, to the side the hazard hit.
 @export var beer_toss: float = 32.0 ## PLACEHOLDER
+## Seconds a beer overboard bobs away while its guy winds up aboard, before he jumps in after it
+## (GDD › Setbacks: "two or three seconds"). Read by RunState, passed to Rescue.
+@export var jump_delay: float = 2.5 ## PLACEHOLDER
 ## Pixels from the boat's centre within which a floating guy is picked up (the lake checks it).
 @export var pickup_radius: float = 20.0 ## PLACEHOLDER
 ## Pixels above the shoreline (y = 0) where everything loose stops (B2): no beer or swimmer drifts

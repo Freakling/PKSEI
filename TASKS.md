@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (42 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (43 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -124,9 +124,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Found in: ad hoc (the human's first play)
 - GDD: Presentation and Platforms
 
-### T34 · A beer bobs away for a moment before a guy winds up and jumps · todo · M · agent
+### T34 · A beer bobs away for a moment before a guy winds up and jumps · done · M · agent
 - Depends on: T9
-- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+jump_delay), data/boat_tuning.tres, scripts/lake.gd, scripts/catamaran.gd, tests/test_rescue.gd
+- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+jump_delay), data/boat_tuning.tres, scripts/autoload/run_state.gd, scripts/lake.gd, scripts/catamaran.gd, tests/test_rescue.gd, tests/test_run_state.gd, tests/test_hazards.gd
 - Done when: a beer overboard floats loose for jump_delay seconds before the chosen guy leaves the boat; his seat still paddles until he jumps (test) · the wind-up reads on the guy and the beer is visible drifting during the delay (play)
 - GDD: Systems › Setbacks
 

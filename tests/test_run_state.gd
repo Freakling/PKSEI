@@ -13,23 +13,29 @@ extends "res://tools/test_case.gd"
 ## land are dropped when he goes in (GDD › Systems › Setbacks).
 ## B2 · A guy washed up at the shoreline climbs back aboard on his own while the boat rests at the
 ## launch shore (LAUNCH); under way (CROSSING) he waits there for the boat or the shore reset.
+## T34 · A beer overboard leaves its guy aboard and paddling for BoatTuning.jump_delay; step()
+## takes him off the boat when he jumps, and drops his strokes still waiting then.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
 const BOAT: Vector2 = Vector2(0.0, -300.0)
+const DELAY: float = 2.5
 
 
-## A RunState whose guys are sober (no lag, no misses) and whose rolls are seeded.
+## A RunState whose guys are sober (no lag, no misses), whose rolls are seeded, and whose
+## BoatTuning is its own (jump_delay DELAY), so a test can change it.
 func sober_state() -> Node:
 	var state: Node = RunStateScript.new()
 	state.rng.seed = 7
+	state.paddling = Paddling.new(own_boat_tuning())
 	state.reset()
 	for seat: int in state.guys.size():
 		state.drunkenness.set_level(seat, 0.0)
 	return state
 
 
-## A RunState with a DrinkTuning of this flat lag, flat miss chance and start level.
+## A RunState with a DrinkTuning of this flat lag, flat miss chance and start level, and its own
+## BoatTuning (jump_delay DELAY).
 func drunk_state(lag: float, miss: float, level: float) -> Node:
 	var tuning: DrinkTuning = DrinkTuning.new()
 	tuning.start_level = level
@@ -37,9 +43,25 @@ func drunk_state(lag: float, miss: float, level: float) -> Node:
 	tuning.miss_curve = DrinkTuning.ramp(miss, miss)
 	var state: Node = RunStateScript.new()
 	state.rng.seed = 7
+	state.paddling = Paddling.new(own_boat_tuning())
 	state.drunkenness = Drunkenness.new(tuning)
 	state.reset()
 	return state
+
+
+func own_boat_tuning() -> BoatTuning:
+	var tuning: BoatTuning = BoatTuning.new()
+	tuning.jump_delay = DELAY
+	return tuning
+
+
+## A beer over on `side` with the boat at `at` and no wind-up: the chosen guy is in the water at
+## `at` at once (the T9 shape; the wind-up has its own tests). The state's jump_delay stays 0.
+func jump_now(state: Node, side: Rescue.Hull, at: Vector2) -> int:
+	state.paddling.tuning.jump_delay = 0.0
+	var seat: int = state.beer_overboard(side, at)
+	state.step(0.0, at)
+	return seat
 
 
 func test_reset_restores_starting_conditions() -> void:
@@ -86,7 +108,7 @@ func test_reset_restores_the_rule_classes_and_drops_pending_strokes() -> void:
 	state.reset()
 	expect_near(state.stamina.level_of(Paddling.Seat.LEFT_FRONT), 1.0, 0.0001, "stamina back to full")
 	expect_eq(state.stamina.state_of(Paddling.Seat.RIGHT_BACK), Stamina.State.PADDLING, "break cancelled")
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "the stroke released before the reset never lands")
 	state.free()
 
@@ -94,11 +116,11 @@ func test_reset_restores_the_rule_classes_and_drops_pending_strokes() -> void:
 func test_sober_stroke_lands_next_step_with_its_force_and_turn() -> void:
 	var state: Node = sober_state()
 	state.stroke(Paddling.Seat.LEFT_BACK, 10.0)
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, state.paddling.stroke_force(10.0), 0.0001, "a full hold gives the full force")
 	expect(motion.turn > 0.0, "a left-side stroke turns right")
 	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * TICK, 0.0001, "the current pulls every step")
-	var next: RefCounted = state.step(TICK)
+	var next: RefCounted = state.step(TICK, BOAT)
 	expect_near(next.thrust, 0.0, 0.0001, "a stroke lands once")
 	state.free()
 
@@ -116,12 +138,12 @@ func test_stroke_burns_the_target_guys_stamina_by_power() -> void:
 func test_stroke_is_ignored_on_a_break_or_overboard() -> void:
 	var state: Node = sober_state()
 	state.stamina.call_break(Paddling.Seat.LEFT_BACK)
-	state.step(state.stamina.tuning.break_warning + 0.01)
+	state.step(state.stamina.tuning.break_warning + 0.01, BOAT)
 	expect_eq(state.stamina.state_of(Paddling.Seat.LEFT_BACK), Stamina.State.BREAK, "warning over, on a break")
 	state.stroke(Paddling.Seat.LEFT_BACK, 10.0)
 	state.guys[Paddling.Seat.RIGHT_BACK].aboard = false
 	state.stroke(Paddling.Seat.RIGHT_BACK, 10.0)
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "neither stroke lands")
 	expect_near(state.guys[Paddling.Seat.RIGHT_BACK].stamina, 1.0, 0.0001, "a swimmer burns nothing")
 	state.free()
@@ -130,16 +152,16 @@ func test_stroke_is_ignored_on_a_break_or_overboard() -> void:
 func test_drunk_stroke_lands_after_the_lag() -> void:
 	var state: Node = drunk_state(0.5, 0.0, 0.5)
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	expect_near(state.step(0.2).thrust, 0.0, 0.0001, "not yet at 0.2 s")
-	expect_near(state.step(0.2).thrust, 0.0, 0.0001, "not yet at 0.4 s")
-	expect(state.step(0.2).thrust > 0.0, "lands once 0.5 s have passed")
+	expect_near(state.step(0.2, BOAT).thrust, 0.0, 0.0001, "not yet at 0.2 s")
+	expect_near(state.step(0.2, BOAT).thrust, 0.0, 0.0001, "not yet at 0.4 s")
+	expect(state.step(0.2, BOAT).thrust > 0.0, "lands once 0.5 s have passed")
 	state.free()
 
 
 func test_missed_stroke_never_lands_but_still_costs_the_effort() -> void:
 	var state: Node = drunk_state(0.0, 1.0, 0.5)
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	expect_near(state.step(TICK).thrust, 0.0, 0.0001, "a sure miss gives no thrust")
+	expect_near(state.step(TICK, BOAT).thrust, 0.0, 0.0001, "a sure miss gives no thrust")
 	expect(state.guys[Paddling.Seat.LEFT_FRONT].stamina < 1.0, "he swung all the same")
 	state.free()
 
@@ -151,7 +173,7 @@ func bar_state(seat: int) -> Node:
 	state.drunkenness.tuning.bar_period = 2.0
 	state.drunkenness.tuning.green_width = 0.2
 	state.drunkenness.set_level(seat, state.drunkenness.tuning.bar_level)
-	state.step(Drunkenness.BAR_WINDUP)
+	state.step(Drunkenness.BAR_WINDUP, BOAT)
 	return state
 
 
@@ -163,7 +185,7 @@ func test_a_bar_hit_gives_the_normal_stroke_and_burns_its_stamina() -> void:
 	var cost: float = state.stamina.burn_of(state.paddling.stroke_force(0.5))
 	expect(cost > 0.0, "the stroke costs something")
 	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, before - cost, 0.0001, "a hit burns the stroke's stamina")
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, state.paddling.stroke_force(0.5), 0.0001, "a hit is the normal stroke")
 	expect_near(motion.turn, state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 0.5), 0.0001, "with its normal turn")
 	expect(motion.turn > 0.0, "a left-side stroke turns right")
@@ -178,7 +200,7 @@ func test_a_bar_miss_is_a_backwards_stroke_of_the_same_power_and_still_burns() -
 	expect(cost > 0.0, "the stroke costs something")
 	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, before - cost, 0.0001, "a miss burns the same stamina as a hit")
 	expect_near(state.guys[Paddling.Seat.RIGHT_BACK].stamina, 1.0, 0.0001, "nobody else pays")
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, -state.paddling.stroke_force(1.0), 0.0001, "a miss paddles backwards at the same power")
 	expect_near(motion.turn, -state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 1.0), 0.0001, "and turns the other way as much")
 	expect(motion.turn < 0.0, "a backwards left-side stroke turns left")
@@ -190,11 +212,11 @@ func test_strokes_are_plain_below_bar_level_and_during_the_wind_up() -> void:
 	state.drunkenness.tuning.bar_period = 2.0
 	state.drunkenness.tuning.green_width = 0.2
 	state.stroke(Paddling.Seat.LEFT_FRONT, 1.0)
-	expect(state.step(TICK).thrust > 0.0, "below bar_level a would-be miss is a plain stroke")
+	expect(state.step(TICK, BOAT).thrust > 0.0, "below bar_level a would-be miss is a plain stroke")
 	state.drunkenness.set_level(Paddling.Seat.LEFT_FRONT, state.drunkenness.tuning.bar_level)
 	expect(state.drunkenness.bar_winding_up(Paddling.Seat.LEFT_FRONT), "crossing bar_level is announced first")
 	state.stroke(Paddling.Seat.LEFT_FRONT, 1.0)
-	expect(state.step(TICK).thrust > 0.0, "during the wind-up the stroke is still plain")
+	expect(state.step(TICK, BOAT).thrust > 0.0, "during the wind-up the stroke is still plain")
 	state.free()
 
 
@@ -202,7 +224,7 @@ func test_step_advances_time_and_mirrors_the_levels() -> void:
 	var state: Node = RunStateScript.new()
 	state.rng.seed = 7
 	state.reset()
-	state.step(1.0)
+	state.step(1.0, BOAT)
 	expect_near(state.elapsed, 1.0, 0.0001, "elapsed advances")
 	for seat: int in state.guys.size():
 		var guy: RefCounted = state.guys[seat]
@@ -243,7 +265,7 @@ func test_a_won_attempt_stops_stepping_and_ignores_keys() -> void:
 	state.arrive()
 	var elapsed: float = state.elapsed
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	var motion: RefCounted = state.step(1.0)
+	var motion: RefCounted = state.step(1.0, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "no thrust after the win")
 	expect_near(motion.drift_to_shore, 0.0, 0.0001, "no drift after the win")
 	expect_near(state.elapsed, elapsed, 0.0001, "the clock stops")
@@ -253,7 +275,7 @@ func test_a_won_attempt_stops_stepping_and_ignores_keys() -> void:
 
 func test_a_beer_overboard_takes_the_guy_off_the_boat_and_his_key_does_nothing() -> void:
 	var state: Node = sober_state()
-	var seat: int = state.beer_overboard(Rescue.Hull.RIGHT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.RIGHT, BOAT)
 	expect_eq(seat, Paddling.Seat.RIGHT_FRONT, "the right front guy jumped")
 	expect_false(state.guys[seat].aboard, "he is no longer aboard")
 	expect(state.rescue.is_in_water(seat), "Rescue has him")
@@ -261,7 +283,7 @@ func test_a_beer_overboard_takes_the_guy_off_the_boat_and_his_key_does_nothing()
 	var toss: float = state.paddling.tuning.beer_toss
 	expect_eq(state.rescue.swimmer_of(seat).beer_position, BOAT + Vector2(toss, 0.0), "the beer landed beer_toss to the right")
 	state.stroke(seat, 10.0)
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "a stroke from his seat does nothing")
 	expect_near(state.guys[seat].stamina, 1.0, 0.0001, "and costs nothing")
 	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * TICK, 0.0001, "the current still pulls")
@@ -271,13 +293,13 @@ func test_a_beer_overboard_takes_the_guy_off_the_boat_and_his_key_does_nothing()
 func test_each_beer_puts_one_more_guy_in_until_nobody_is_aboard_and_the_boat_still_drifts() -> void:
 	var state: Node = sober_state()
 	for i: int in 4:
-		expect_ne(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "beer %d puts one more guy in" % i)
+		expect_ne(jump_now(state, Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "beer %d puts one more guy in" % i)
 	expect_eq(state.rescue.swimmers().size(), 4, "all four in the water")
 	expect_false(state.all_aboard(), "nobody aboard")
-	expect_eq(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "a fifth beer has nobody to jump")
+	expect_eq(jump_now(state, Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "a fifth beer has nobody to jump")
 	for seat: int in state.guys.size():
 		state.stroke(seat, 10.0)
-	var motion: RefCounted = state.step(TICK)
+	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "no key moves the boat")
 	expect_near(motion.turn, 0.0, 0.0001, "or turns it")
 	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * TICK, 0.0001, "the boat drifts home at current_speed")
@@ -286,8 +308,8 @@ func test_each_beer_puts_one_more_guy_in_until_nobody_is_aboard_and_the_boat_sti
 
 func test_the_swimmers_and_their_beers_move_with_the_current_each_step() -> void:
 	var state: Node = sober_state()
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
-	state.step(1.0)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
+	state.step(1.0, BOAT)
 	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
 	var current: Vector2 = Vector2.DOWN * state.paddling.tuning.current_speed
 	var toss: float = state.paddling.tuning.beer_toss
@@ -299,10 +321,10 @@ func test_the_swimmers_and_their_beers_move_with_the_current_each_step() -> void
 
 func test_a_swimmer_drinks_only_while_he_has_a_beer() -> void:
 	var state: Node = sober_state()
-	var with_beer: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var with_beer: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	state.guy_overboard(Paddling.Seat.RIGHT_BACK, BOAT)
 	expect_false(state.guys[Paddling.Seat.RIGHT_BACK].aboard, "the beerless guy is off the boat too")
-	state.step(1.0)
+	state.step(1.0, BOAT)
 	var rate: float = state.drunkenness.tuning.drink_rate
 	var water: float = state.drunkenness.tuning.water_drink_multiplier
 	expect_near(state.guys[with_beer].drunkenness, rate * water, 0.0001, "floating with his beer: the water rate")
@@ -313,13 +335,13 @@ func test_a_swimmer_drinks_only_while_he_has_a_beer() -> void:
 
 func test_pickup_puts_him_back_aboard() -> void:
 	var state: Node = sober_state()
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	expect(state.pickup(seat), "he brought his beer back")
 	expect(state.guys[seat].aboard, "aboard again")
 	expect_false(state.rescue.is_in_water(seat), "out of the water")
 	expect(state.all_aboard(), "all four aboard")
 	state.stroke(seat, 10.0)
-	expect(state.step(TICK).thrust > 0.0, "his key paddles again")
+	expect(state.step(TICK, BOAT).thrust > 0.0, "his key paddles again")
 	state.free()
 
 
@@ -328,11 +350,11 @@ func test_pickup_puts_him_back_aboard() -> void:
 func test_a_stroke_released_before_its_guy_goes_overboard_never_lands() -> void:
 	var state: Node = drunk_state(0.5, 0.0, 0.5)
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy, who released the stroke, jumped")
-	state.step(0.2)
-	state.step(0.2)
-	var motion: RefCounted = state.step(0.2)
+	state.step(0.2, BOAT)
+	state.step(0.2, BOAT)
+	var motion: RefCounted = state.step(0.2, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "past the 0.5 s lag the stroke from the water never lands")
 	expect_near(motion.turn, 0.0, 0.0001, "and steers nothing")
 	state.free()
@@ -341,11 +363,11 @@ func test_a_stroke_released_before_its_guy_goes_overboard_never_lands() -> void:
 func test_a_pending_stroke_of_a_guy_still_aboard_lands_when_another_goes_overboard() -> void:
 	var state: Node = drunk_state(0.5, 0.0, 0.5)
 	state.stroke(Paddling.Seat.RIGHT_BACK, 10.0)
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy jumped, not the right back one")
-	state.step(0.2)
-	state.step(0.2)
-	var motion: RefCounted = state.step(0.2)
+	state.step(0.2, BOAT)
+	state.step(0.2, BOAT)
+	var motion: RefCounted = state.step(0.2, BOAT)
 	expect(motion.thrust > 0.0, "the right back stroke still lands once its lag has passed")
 	state.free()
 
@@ -353,10 +375,10 @@ func test_a_pending_stroke_of_a_guy_still_aboard_lands_when_another_goes_overboa
 func test_a_stroke_does_not_come_back_when_he_is_picked_up_before_the_lag_ends() -> void:
 	var state: Node = drunk_state(0.5, 0.0, 0.5)
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	state.pickup(seat)
 	expect(state.guys[seat].aboard, "back aboard")
-	var motion: RefCounted = state.step(0.6)
+	var motion: RefCounted = state.step(0.6, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "the stroke he released in the water stays dropped")
 	state.free()
 
@@ -365,8 +387,8 @@ func test_shore_touched_while_launching_does_nothing() -> void:
 	var state: Node = sober_state()
 	var fired: Array[bool] = []
 	state.shore_reset_done.connect(func() -> void: fired.append(true))
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
-	state.step(2.0)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
+	state.step(2.0, BOAT)
 	state.shore_touched()
 	expect_eq(state.phase, RunStateScript.Phase.LAUNCH, "still launching")
 	expect(state.rescue.is_in_water(seat), "the swimmer is still in the water")
@@ -382,7 +404,7 @@ func test_shore_touched_while_crossing_resets_even_with_all_aboard() -> void:
 	state.shore_reset_done.connect(func() -> void: fired.append(true))
 	state.set_progress(0.4)
 	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
-	state.step(5.0)
+	state.step(5.0, BOAT)
 	expect(state.all_aboard(), "everyone aboard")
 	state.shore_touched()
 	var start_level: float = state.drunkenness.tuning.start_level
@@ -401,9 +423,9 @@ func test_shore_touched_while_crossing_with_a_swimmer_restores_the_starting_cond
 	var fired: Array[bool] = []
 	state.shore_reset_done.connect(func() -> void: fired.append(true))
 	state.set_progress(0.4)
-	state.beer_overboard(Rescue.Hull.LEFT, BOAT)
-	state.beer_overboard(Rescue.Hull.RIGHT, BOAT)
-	state.step(5.0)
+	jump_now(state, Rescue.Hull.LEFT, BOAT)
+	jump_now(state, Rescue.Hull.RIGHT, BOAT)
+	state.step(5.0, BOAT)
 	state.shore_touched()
 	var start_level: float = state.drunkenness.tuning.start_level
 	for seat: int in state.guys.size():
@@ -430,7 +452,7 @@ func test_a_guy_in_the_water_keeps_his_stamina_and_state_until_picked_up() -> vo
 	state.guy_overboard(burnt, BOAT)
 	var warning_left: float = state.stamina.time_left(warned)
 	for i: int in 5:
-		state.step(1.0)
+		state.step(1.0, BOAT)
 	expect_near(state.stamina.level_of(warned), 0.4, 0.0001, "in the water: no recovery")
 	expect_eq(state.stamina.state_of(warned), Stamina.State.WARNING, "still in his warning")
 	expect_near(state.stamina.time_left(warned), warning_left, 0.0001, "the warning's time is frozen")
@@ -440,7 +462,7 @@ func test_a_guy_in_the_water_keeps_his_stamina_and_state_until_picked_up() -> vo
 	expect(state.stamina.level_of(Paddling.Seat.LEFT_FRONT) > 0.5, "aboard guys still recover")
 	state.pickup(warned)
 	state.pickup(burnt)
-	state.step(TICK)
+	state.step(TICK, BOAT)
 	expect(state.stamina.level_of(warned) > 0.4, "picked up: he recovers again")
 	expect(state.stamina.time_left(warned) < warning_left, "and his warning counts down again")
 	expect_eq(state.stamina.state_of(burnt), Stamina.State.WARNING, "picked up burnt out: his break is called now")
@@ -451,20 +473,20 @@ func test_a_guy_in_the_water_stays_on_his_break_until_picked_up() -> void:
 	var state: Node = sober_state()
 	var seat: int = Paddling.Seat.LEFT_BACK
 	state.stamina.call_break(seat)
-	state.step(state.stamina.tuning.break_warning + 0.01)
+	state.step(state.stamina.tuning.break_warning + 0.01, BOAT)
 	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "on a break")
 	var level: float = state.stamina.level_of(seat)
 	state.guy_overboard(seat, BOAT)
 	var break_left: float = state.stamina.time_left(seat)
-	state.step(5.0)
+	state.step(5.0, BOAT)
 	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "still on the break while in the water")
 	expect_near(state.stamina.time_left(seat), break_left, 0.0001, "the break's time is frozen")
 	expect_near(state.stamina.level_of(seat), level, 0.0001, "his stamina is frozen")
 	state.pickup(seat)
-	state.step(1.0)
+	state.step(1.0, BOAT)
 	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "the break carries on once he is back")
 	expect(state.stamina.time_left(seat) < break_left, "and counts down again")
-	state.step(2.5)
+	state.step(2.5, BOAT)
 	expect_eq(state.stamina.state_of(seat), Stamina.State.PADDLING, "the break ends after its time")
 	state.free()
 
@@ -475,13 +497,13 @@ func test_a_washed_up_swimmer_climbs_back_aboard_while_launching() -> void:
 	var state: Node = sober_state()
 	var at_shore: Vector2 = Vector2(0.0, -28.0)
 	var shoreline: float = -state.paddling.tuning.shore_margin
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, at_shore)
-	state.step(TICK)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, at_shore)
+	state.step(TICK, at_shore)
 	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
 	expect_near(swimmer.position.y, shoreline, 0.0001, "held at the shoreline, not under the shore")
 	expect_false(state.guys[seat].aboard, "still swimming for his beer: not aboard yet")
 	for i: int in 120:
-		state.step(TICK)
+		state.step(TICK, at_shore)
 	expect(state.guys[seat].aboard, "with his beer at the shoreline he climbed back aboard")
 	expect_false(state.rescue.is_in_water(seat), "out of the water")
 	expect(state.all_aboard(), "all four aboard again")
@@ -489,7 +511,7 @@ func test_a_washed_up_swimmer_climbs_back_aboard_while_launching() -> void:
 	expect_near(state.elapsed, TICK * 121.0, 0.0001, "no reset: the clock kept its time")
 	state.drunkenness.set_level(seat, 0.0)
 	state.stroke(seat, 10.0)
-	expect(state.step(TICK).thrust > 0.0, "his key paddles again")
+	expect(state.step(TICK, at_shore).thrust > 0.0, "his key paddles again")
 	state.free()
 
 
@@ -499,9 +521,9 @@ func test_a_washed_up_swimmer_waits_at_the_shoreline_while_crossing() -> void:
 	var state: Node = sober_state()
 	var shoreline: float = -state.paddling.tuning.shore_margin
 	state.set_progress(0.4)
-	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	for i: int in 60:
-		state.step(1.0)
+		state.step(1.0, BOAT)
 	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
 	expect(swimmer != null, "still in the water")
 	expect_near(swimmer.position.y, shoreline, 0.0001, "lying at the shoreline")
@@ -511,4 +533,80 @@ func test_a_washed_up_swimmer_waits_at_the_shoreline_while_crossing() -> void:
 	state.shore_touched()
 	expect(state.guys[seat].aboard, "the boat back at the shore is the shore reset: everyone aboard")
 	expect_eq(state.rescue.swimmers().size(), 0, "nobody in the water")
+	state.free()
+
+
+## T34: during the wind-up the chosen guy is still aboard and his seat paddles; once jump_delay
+## has passed he is off the boat, in the water where the boat is, and his key does nothing.
+func test_a_guy_winding_up_still_paddles_until_he_jumps() -> void:
+	var state: Node = sober_state()
+	var seat: int = state.beer_overboard(Rescue.Hull.RIGHT, BOAT)
+	expect_eq(seat, Paddling.Seat.RIGHT_FRONT, "the right front guy is chosen")
+	expect(state.guys[seat].aboard, "still aboard")
+	expect(state.rescue.winding_up(seat), "winding up")
+	expect_false(state.rescue.is_in_water(seat), "not in the water")
+	expect(state.can_paddle(seat), "his seat still paddles")
+	expect_eq(state.rescue.loose_beers().size(), 1, "the beer is loose for the lake to draw")
+	state.stroke(seat, 10.0)
+	var motion: RefCounted = state.step(TICK, BOAT)
+	expect(motion.thrust > 0.0, "a stroke from his seat lands during the wind-up")
+	expect(state.guys[seat].stamina < 1.0, "and costs him stamina")
+	expect(state.guys[seat].aboard, "a tick in: still aboard")
+	var boat_later: Vector2 = BOAT + Vector2(0.0, -40.0)
+	state.step(DELAY, boat_later)
+	expect_false(state.guys[seat].aboard, "jump_delay over: he is off the boat")
+	expect(state.rescue.is_in_water(seat), "in the water")
+	expect_false(state.rescue.winding_up(seat), "no longer winding up")
+	expect_eq(state.rescue.swimmer_of(seat).position, boat_later, "he jumped from where the boat is now")
+	var stamina: float = state.guys[seat].stamina
+	state.stroke(seat, 10.0)
+	motion = state.step(TICK, boat_later)
+	expect_near(motion.thrust, 0.0, 0.0001, "from the water a stroke does nothing")
+	expect_near(state.guys[seat].stamina, stamina, 0.0001, "and costs nothing")
+	state.free()
+
+
+## T34: a stroke still waiting when the beer goes over lands if its lag ends during the wind-up;
+## the strokes still waiting at the jump are dropped then (B1 at the jump, not at the beer).
+func test_pending_strokes_land_during_the_wind_up_and_are_dropped_at_the_jump() -> void:
+	var state: Node = drunk_state(0.5, 0.0, 0.5)
+	state.paddling.tuning.jump_delay = 1.0
+	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the guy with the stroke waiting is the one winding up")
+	expect(state.step(0.6, BOAT).thrust > 0.0, "0.6 s in: the stroke lands, he is still aboard")
+	state.stroke(seat, 10.0)
+	expect_near(state.step(0.2, BOAT).thrust, 0.0, 0.0001, "a second stroke, 0.3 s of wind-up left: still waiting")
+	expect(state.guys[seat].aboard, "still aboard at 0.8 s")
+	expect_near(state.step(0.3, BOAT).thrust, 0.0, 0.0001, "at the jump the waiting stroke is dropped")
+	expect_false(state.guys[seat].aboard, "he jumped at 1.0 s")
+	expect_near(state.step(0.3, BOAT).thrust, 0.0, 0.0001, "past its lag it never lands from the water")
+	state.free()
+
+
+## T34: a guy who falls in some other way during his wind-up is off the boat and swims for his
+## beer anyway, as if he had jumped early; a shore reset drops every wind-up.
+func test_falling_in_during_the_wind_up_is_an_early_jump_and_the_reset_drops_it() -> void:
+	var state: Node = sober_state()
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	var beer_at: Vector2 = state.rescue.beer_of(seat).position
+	expect_eq(beer_at, BOAT + Vector2(-state.paddling.tuning.beer_toss, 0.0), "the beer landed to the left")
+	state.guy_overboard(seat, BOAT)
+	expect_false(state.guys[seat].aboard, "he is off the boat")
+	expect_false(state.rescue.winding_up(seat), "the wind-up is over early")
+	expect_eq(state.rescue.loose_beers().size(), 0, "the loose beer is his target now")
+	var swimmer: Rescue.Swimmer = state.rescue.swimmer_of(seat)
+	expect_eq(swimmer.state, Rescue.State.SWIMMING, "swimming")
+	expect_eq(swimmer.beer_position, beer_at, "toward where the beer is")
+	expect_false(state.can_paddle(seat), "his seat gives no strokes from the water")
+	state.step(DELAY, BOAT)
+	expect_eq(state.rescue.swimmers().size(), 1, "the delay passing adds nobody")
+	expect_eq(swimmer.state, Rescue.State.FLOATING, "32 px at 30 px/s: he reached it")
+	expect(swimmer.has_beer, "and has his beer")
+	var other: int = state.beer_overboard(Rescue.Hull.RIGHT, BOAT)
+	state.set_progress(0.4)
+	state.shore_touched()
+	expect_false(state.rescue.winding_up(other), "the shore reset drops the wind-up")
+	expect_eq(state.rescue.loose_beers().size(), 0, "no beer loose")
+	expect(state.all_aboard(), "everyone aboard")
 	state.free()
