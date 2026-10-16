@@ -14,7 +14,7 @@
 ## Pitch
 Four drunk guys have lashed two aluminium canoes into a catamaran and need to reach an island in the middle of the lake. You control all four at once. The lake throws random hazards at them, and they keep drinking, so the boat gets harder to control the longer the crossing takes. Nobody dies: a bad stretch drifts the boat back into water already crossed. A top-down, bright pixel-art rage game in the spirit of Getting Over It and A Difficult Game About Climbing, played for the comedy of watching four idiots fail together.
 
-Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout.
+Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout. Reference research: `design/research/rage-games.md`.
 
 ## Design Pillars
 1. **Hard but fair.** Failure is always the player's fault and readable in hindsight. Rage comes from near-misses, never from randomness the player couldn't see coming.
@@ -24,7 +24,7 @@ Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout.
 
 ## Core Loop
 ### Moment to moment
-Paddle-timing balance. Each guy paddles or leans on input; the catamaran gains speed, turns and tips from the mix of who paddles when. The player juggles four guys at once while drunkenness makes each one less reliable. Exact inputs: see Open Questions (Q1).
+Charge-and-release paddling against a constant current. Each guy has one key: hold to wind up, release to stroke, with no on-screen meter; the power of the stroke comes from how long the key was held. The boat gains speed, turns and wobbles from the mix of who strokes when and how hard. The player juggles four wind-ups at once while drunkenness makes each guy less reliable, and the current pulls the boat back toward the shore whenever the strokes stop.
 
 ### Session
 A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. Target crossing time for the first version: a few minutes for a competent player. The number is a tunable.
@@ -33,23 +33,27 @@ A sitting is one continuous attempt at the crossing, since there is no restart: 
 One lake, one crossing, from the launch shore to the island in the middle. Hazards are randomised per attempt. The first version is a short lake; it grows longer once the loop is proven.
 
 ### Starting conditions
-Four guys, mildly tipsy, on a calm stretch of water at the shore. Drunkenness climbs with time and beers, so the first stretch teaches control before it degrades.
+Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate of beer aboard. Drunkenness climbs with time and with every rescued beer, so the first stretch teaches control before it degrades.
 
 ## Systems
 ### Catamaran and paddling
-Two aluminium canoes lashed side by side, two guys per hull. Paddle strokes on one side push that side forward and turn the boat toward the other; paddling both sides together goes straight. Leaning shifts weight and tips the boat. The physics must stay readable: the same inputs give the same result when the guys are sober (pillar "Hard but fair").
+Two aluminium canoes lashed side by side, two guys per hull. A stroke on one side pushes that side forward and turns the boat toward the other; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
 
 ### Drunkenness
-Each guy has his own drunkenness level that rises with time and with beers. Higher levels degrade that guy's control and must look funny doing it (pillar "Drunker is funnier"). What the degradation is exactly, and where beers come from, is open (Q4).
+Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, and by one beer each time a guy is rescued with the one he jumped in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
+- **Lag and misses.** A drunker guy's stroke lands later after the release, and sometimes not at all; the fumble shows in his animation. Delay and miss chance rise with the level.
+- **Antics.** At drunkenness thresholds a guy does something stupid, always with a visible wind-up and a recovery: he stands up and rocks the boat, drops his paddle and has to fish for it, or nods off as dead weight.
+- **Scrambled keys.** Only at the top tier, a guy's key stops being his: announced with a wind-up, shown on screen next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds.
+Input is always honoured instantly in the animation; what the drunk body then does with it is the comedy.
 
 ### Hazards
-Random hazards along the crossing: which ones, and how they are randomised so they stay readable, is open (Q3). Every hazard is visible before it matters, so the player can react (pillar "Hard but fair").
+Random hazards along the crossing. Their main effect is knocking a beer overboard, which starts a Rescue; which hazards exist, what else they do, and how they are randomised so they stay readable is open (Q3). Every hazard is visible before it matters, so the player can react (pillar "Hard but fair").
 
 ### Setbacks
-Nobody dies. A bad stretch sends the boat back into water already crossed, where the player has to re-cross it, drunker than before. What triggers a setback and how far it sends the boat is open (Q2).
+Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard knocks a beer overboard, and a guy jumps in after it. While he is in the water the boat has three paddlers, so it is slower and harder to steer, and the current drifts it back toward the shore. The player has to paddle to the guy and pick him up; there are no calm areas that stop the drift, so the water lost is however much the recovery cost. Back aboard, he drinks the beer on the spot, so every setback makes the next stretch harder. Whether more than one guy can be in the water at once, and whether the swimmer drifts too, is open (Q6).
 
 ### Lake and island
-The lake is the level: a launch shore, open water with hazards, and the island at the end. The first version is a single short lake.
+The lake is the level: a launch shore, open water with hazards and the current, and the island at the end. The first version is a single short lake.
 
 ## Characters and Units
 Four guys. They are the comedy: the bodies the player drives and the thing that goes wrong. Whether they differ from one another (weight, tolerance, personality) is undecided and can wait until the loop is playable.
@@ -58,10 +62,10 @@ Four guys. They are the comedy: the bodies the player drives and the thing that 
 None planned for the first version. The crossing is the whole game.
 
 ## World and Narrative
-A lake, four drunk guys, a catamaran made of two canoes, and an island they have decided to reach. No further story.
+A lake, four drunk guys, a catamaran made of two canoes, a crate of beer, and an island they have decided to reach. No further story.
 
 ## Difficulty and Scaling
-Difficulty comes from drunkenness, which only rises over the attempt, and from the hazards getting denser toward the island. Numbers for both are tunables.
+Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, and from the hazards getting denser toward the island. Numbers for all three are tunables.
 
 ## Win and Loss
 - **Win:** the catamaran reaches the island with all four guys aboard.
@@ -70,7 +74,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, and from t
 ## Presentation and Platforms
 - Platforms: Web (HTML5, itch.io). Desktop builds for development.
 - Target aspect ratios: 16:9 at a 640×360 canvas, integer-scaled (720p, 1080p, 1440p).
-- Input: keyboard first (scheme: Q1). Local co-op with one guy per player is a planned mode (Q5).
+- Input: keyboard, four keys, one per guy, hold to charge and release to stroke. Local co-op with one guy per player is a planned mode (Q5); there each player gets two keys, stroke and lean.
 - Camera: top-down, follows the catamaran, biased toward the direction of travel so hazards show early.
 - Art direction: top-down, bright pixel art, a bit retro, lots of comedy. Godot primitives and flat colours until pixel art replaces them.
 - Audio: undecided; the comedy will want sound, so plan for stroke, splash and guy noises once the loop is playable.
@@ -80,18 +84,18 @@ Difficulty comes from drunkenness, which only rises over the attempt, and from t
 | Term | Meaning |
 |---|---|
 | Guy | One of the four drunk men the player controls at once. |
-| Catamaran | The two aluminium canoes lashed together; the boat. |
+| Catamaran | The two aluminium canoes lashed together; the boat. It never capsizes. |
 | Crossing | The run: shore to island on one lake. |
-| Setback | Being drifted back into water already crossed. The game's only penalty. |
-| Hazard | A random obstacle or event on the lake that pushes, blocks or tips the boat. |
+| Current | The constant pull from the island toward the shore. The game's gravity. |
+| Rescue | The setback: a guy in the water after a beer, three paddlers, the boat drifting until he is picked up. |
+| Hazard | A random obstacle or event on the lake; its main effect is knocking a beer overboard. |
+| Antic | A telegraphed stupid thing a drunk guy does: stands up, drops his paddle, nods off. |
 
 ## Open Questions
 <!-- Numbered Q<n>, never reused. When one is answered: write the rule into its section, add a line
 to design/decisions.md, and delete the question here. -->
-- **Q1 · Control scheme.** How do four guys map onto one keyboard, so that it is difficult but learnable? Options to weigh: one key per guy per side; a stroke rhythm; mirrored halves. Gamepads later. Gates the input part of T6.
-- **Q2 · Setbacks.** What sends the boat back (capsizing, a guy overboard, drifting into a current) and how far (to the previous area, a fixed distance, or until the boat is righted)? Gates T9.
-- **Q3 · Hazards.** Which hazards (logs, wakes, swimmers, geese, currents, wind…) and how they are randomised so they stay readable. Gates T10.
-- **Q4 · Drunkenness effects.** What a drunker guy does: input lag, missed strokes, mirrored inputs, wobble, passing out? And whether beers are picked up on the lake or simply drunk over time. Gates the effect mapping in T5.
-- **Q5 · Local co-op.** One guy per player: in the first version, or a later mode once single-player is proven?
+- **Q3 · Hazards.** Which hazards exist (logs, wakes, swimmers, geese, currents, wind), what they do besides knocking a beer overboard, and how they are randomised so they stay readable. Gates T10.
+- **Q5 · Local co-op.** One guy per player with stroke and lean keys: in the first version, or a later mode once single-player is proven?
+- **Q6 · Rescue details.** Can more than one guy be in the water at once, or does a second beer overboard wait? Does the swimmer drift with the current or tread water by the beer? Gates the edge cases in T9.
 
-**Next:** Q6
+**Next:** Q7
