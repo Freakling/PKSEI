@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StaminaTuning" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/stamina_tuning.gd" id="1_stamina"]
+
+[sub_resource type="Curve" id="Curve_random_break"]
+_data = [Vector2(0, 0), 0.0, 0.2, 0, 1, Vector2(1, 0.2), 0.2, 0.0, 1, 0]
+point_count = 2
+
+[resource]
+script = ExtResource("1_stamina")
+burn_per_power = 0.003
+recover_rate = 0.05
+break_recover_rate = 0.25
+break_duration = 3.0
+break_warning = 1.5
+random_break_curve = SubResource("Curve_random_break")
