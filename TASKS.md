@@ -91,9 +91,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a guy in the water neither recovers stamina nor rolls random breaks, and comes back in the state he left (test)
 - GDD: Systems › Stamina
 
-### B1 · A stroke released just before the guy jumps still lands · todo · S · agent · low
+### B1 · A stroke released just before the guy jumps still lands · done · S · agent · low
 - Depends on: T9
-- Touches: scripts/autoload/run_state.gd, scripts/catamaran.gd, tests/test_run_state.gd
+- Touches: scripts/autoload/run_state.gd, tests/test_run_state.gd
 - Repro: release a key, then knock that guy's beer over (F5/F6 in a debug build) before the pending stroke lands (same physics frame, or within a drunk guy's lag) → expected: no stroke / actual: the stroke lands from the water
 - Found in: T9
 - GDD: Systems › Setbacks

@@ -9,6 +9,8 @@ extends "res://tools/test_case.gd"
 ## stroke and one outside it a backwards stroke of the same power; both burn stamina.
 ## T32 · A guy in the water neither recovers stamina nor rolls random breaks, and comes back in
 ## the state he left when he is picked up (GDD › Systems › Stamina).
+## B1 · A stroke released before its guy goes overboard never lands: the strokes still waiting to
+## land are dropped when he goes in (GDD › Systems › Setbacks).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -316,6 +318,44 @@ func test_pickup_puts_him_back_aboard() -> void:
 	expect(state.all_aboard(), "all four aboard")
 	state.stroke(seat, 10.0)
 	expect(state.step(TICK).thrust > 0.0, "his key paddles again")
+	state.free()
+
+
+## B1 regression: a drunk guy's stroke is still pending (lag 0.5 s) when his beer goes over, so
+## it must not land from the water once the lag has run out.
+func test_a_stroke_released_before_its_guy_goes_overboard_never_lands() -> void:
+	var state: Node = drunk_state(0.5, 0.0, 0.5)
+	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy, who released the stroke, jumped")
+	state.step(0.2)
+	state.step(0.2)
+	var motion: RefCounted = state.step(0.2)
+	expect_near(motion.thrust, 0.0, 0.0001, "past the 0.5 s lag the stroke from the water never lands")
+	expect_near(motion.turn, 0.0, 0.0001, "and steers nothing")
+	state.free()
+
+
+func test_a_pending_stroke_of_a_guy_still_aboard_lands_when_another_goes_overboard() -> void:
+	var state: Node = drunk_state(0.5, 0.0, 0.5)
+	state.stroke(Paddling.Seat.RIGHT_BACK, 10.0)
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy jumped, not the right back one")
+	state.step(0.2)
+	state.step(0.2)
+	var motion: RefCounted = state.step(0.2)
+	expect(motion.thrust > 0.0, "the right back stroke still lands once its lag has passed")
+	state.free()
+
+
+func test_a_stroke_does_not_come_back_when_he_is_picked_up_before_the_lag_ends() -> void:
+	var state: Node = drunk_state(0.5, 0.0, 0.5)
+	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	state.pickup(seat)
+	expect(state.guys[seat].aboard, "back aboard")
+	var motion: RefCounted = state.step(0.6)
+	expect_near(motion.thrust, 0.0, 0.0001, "the stroke he released in the water stays dropped")
 	state.free()
 
 

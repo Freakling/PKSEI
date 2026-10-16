@@ -103,23 +103,27 @@ func shore_touched() -> void:
 
 ## A hazard knocked a beer over on `side` with the boat at `at_position`: the beer lands
 ## beer_toss to that side, and the guy Rescue picks (that hull, front first) jumps in after it
-## and is no longer aboard. Returns his seat, or Rescue.NOBODY when nobody was aboard.
+## and is no longer aboard, and his strokes still waiting to land are dropped. Returns his seat,
+## or Rescue.NOBODY when nobody was aboard.
 func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	var toss: float = paddling.tuning.beer_toss
 	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
 	var seat: int = rescue.beer_overboard(side, _seats_aboard(), at_position, beer_at)
 	if seat != Rescue.NOBODY:
 		guys[seat].aboard = false
+		_drop_pending(seat)
 	return seat
 
 
 ## A guy fell in without a beer (GDD › Drunkenness: the pee antic, T13): he floats from the
-## start and doesn't drink. Nothing happens if he is already in the water.
+## start and doesn't drink, and his strokes still waiting to land are dropped. Nothing happens if
+## he is already in the water.
 func guy_overboard(seat: int, at_position: Vector2) -> void:
 	if not guys[seat].aboard:
 		return
 	rescue.guy_overboard(seat, at_position)
 	guys[seat].aboard = false
+	_drop_pending(seat)
 
 
 ## The boat reached him: he is aboard again. Returns whether he brought his beer back.
@@ -131,7 +135,8 @@ func pickup(seat: int) -> bool:
 
 ## One key released: `seat` is the key's owner, `hold_time` how long it was held. Nothing
 ## happens if he is on a break, in the water, or the attempt is over. He burns stamina for the
-## stroke's power at once; the stroke then lands after his drunkenness's lag, or misses. On the
+## stroke's power at once; the stroke then lands after his drunkenness's lag, or misses, unless he
+## goes overboard before it lands. On the
 ## timing bar (drunkenness.uses_bar) a release outside the green zone is a backwards stroke of
 ## the same power, so it burns the same stamina: he swung.
 func stroke(seat: int, hold_time: float) -> void:
@@ -202,6 +207,16 @@ func _seats_aboard() -> Array[int]:
 		if guy.aboard:
 			seats.append(guy.seat)
 	return seats
+
+
+## Drops the strokes of `seat` still waiting to land. He went overboard before they landed, so
+## they never do, not even if he is picked up again first.
+func _drop_pending(seat: int) -> void:
+	var waiting: Array[PendingStroke] = []
+	for pending: PendingStroke in _pending:
+		if pending.stroke.seat != seat:
+			waiting.append(pending)
+	_pending = waiting
 
 
 ## Counts the pending strokes down by `delta` and returns the ones that land now.
