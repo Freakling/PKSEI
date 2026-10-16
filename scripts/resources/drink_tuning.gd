@@ -19,8 +19,12 @@ extends Resource
 @export var lag_curve: Curve = ramp(0.0, 0.6) ## PLACEHOLDER
 ## Chance 0..1 that a stroke never lands (y) against the level (x).
 @export var miss_curve: Curve = ramp(0.0, 0.35) ## PLACEHOLDER
-## Level at and above which a guy's key drives another seat (the top tier).
-@export var scramble_level: float = 0.85 ## PLACEHOLDER
+## Level at and above which a guy's strokes go through the timing bar (the top tier).
+@export var bar_level: float = 0.85 ## PLACEHOLDER
+## Seconds the timing bar takes for one full sweep, there and back.
+@export var bar_period: float = 1.0 ## PLACEHOLDER
+## Width of the bar's green zone as a fraction 0..1 of the bar, centred on its middle.
+@export var green_width: float = 0.2 ## PLACEHOLDER
 
 
 ## A straight line from (0, y_sober) to (1, y_blind): linear tangents, so sample(x) is the lerp.

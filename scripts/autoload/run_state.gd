@@ -129,22 +129,23 @@ func pickup(seat: int) -> bool:
 	return had_beer
 
 
-## One key released: `seat` is the key's owner, `hold_time` how long it was held. The key drives
-## drunkenness.key_target(seat) (his own seat, or the one beside him while scrambled); nothing
-## happens if that guy is on a break, in the water, or the attempt is over. He burns stamina for
-## the stroke's power at once; the stroke then lands after his drunkenness's lag, or misses.
+## One key released: `seat` is the key's owner, `hold_time` how long it was held. Nothing
+## happens if he is on a break, in the water, or the attempt is over. He burns stamina for the
+## stroke's power at once; the stroke then lands after his drunkenness's lag, or misses. On the
+## timing bar (drunkenness.uses_bar) a release outside the green zone is a backwards stroke of
+## the same power, so it burns the same stamina: he swung.
 func stroke(seat: int, hold_time: float) -> void:
 	if phase == Phase.WON:
 		return
-	var target: int = drunkenness.key_target(seat)
-	if not guys[target].aboard or not stamina.can_stroke(target):
+	if not guys[seat].aboard or not stamina.can_stroke(seat):
 		return
-	var level: float = drunkenness.level_of(target)
-	stamina.burn(target, paddling.stroke_force(hold_time))
-	guys[target].stamina = stamina.level_of(target)
+	var level: float = drunkenness.level_of(seat)
+	stamina.burn(seat, paddling.stroke_force(hold_time))
+	guys[seat].stamina = stamina.level_of(seat)
 	if drunkenness.misses(level, rng):
 		return
-	var pending: Paddling.Stroke = Paddling.Stroke.new(target, hold_time)
+	var backwards: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
+	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards)
 	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
 
 

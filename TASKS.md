@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (29 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (31 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -67,12 +67,11 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · a guy's break warning and break read at a glance on him (play) · the HUD shows progress and each guy's drunkenness and stamina (play)
 - GDD: Systems › Lake and island · Win and Loss
 
-### T31 · Timing-bar strokes at the top drunkenness tier replace the scrambled keys · todo · M · agent
+### T31 · Timing-bar strokes at the top drunkenness tier replace the scrambled keys · done · M · agent
 - Depends on: T6
-- Touches: scripts/systems/drunkenness.gd (replace scrambled/key_target/scramble_target with the timing bar), scripts/resources/drink_tuning.gd (+bar_period, +green_width; scramble_level renamed bar_level), data/drink_tuning.tres, scripts/autoload/run_state.gd (stroke: outside the green zone the stroke is backwards), scripts/catamaran.gd (the bar next to the guy while his key is held), tests/test_drunkenness.gd, tests/test_run_state.gd
+- Touches: scripts/systems/drunkenness.gd (replace scrambled/key_target/scramble_target with the timing bar), scripts/resources/drink_tuning.gd (+bar_period, +green_width; scramble_level renamed bar_level), data/drink_tuning.tres, scripts/autoload/run_state.gd (stroke: outside the green zone the stroke is backwards), scripts/catamaran.gd (the bar next to the guy while his key is held), scripts/systems/paddling.gd (Stroke.backwards), tests/test_drunkenness.gd, tests/test_run_state.gd
 - Done when: at bar_level and above, the bar position for a hold time sweeps back and forth with bar_period, and a release inside green_width of the centre counts as a hit (test) · a hit gives the normal stroke, a miss a backwards stroke of the same power, and both burn stamina (test) · the bar is visible next to the guy while his key is held, and the tier is announced with a wind-up (play) · nothing references the old scrambled-key mapping (check)
 - GDD: Systems › Drunkenness
-- Note: until this lands, T6's interim behaviour at the top tier is that the neighbour across the hulls strokes instead.
 
 ### T8 · Camera follows the boat with look-ahead · done · S · agent
 - Depends on: T6

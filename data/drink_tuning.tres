@@ -18,4 +18,6 @@ break_drink_multiplier = 3.0
 water_drink_multiplier = 5.0
 lag_curve = SubResource("Curve_lag")
 miss_curve = SubResource("Curve_miss")
-scramble_level = 0.85
+bar_level = 0.85
+bar_period = 1.0
+green_width = 0.2

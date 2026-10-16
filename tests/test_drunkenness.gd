@@ -1,6 +1,8 @@
 extends "res://tools/test_case.gd"
-## T5 · Drunkenness: levels rise with time, faster on a break or in the water; lag, misses and
-## scrambled keys follow the level (GDD › Systems › Drunkenness).
+## T5 · Drunkenness: levels rise with time, faster on a break or in the water; lag and misses
+## follow the level (GDD › Systems › Drunkenness).
+## T31 · The timing bar at the top tier: the bar sweeps with bar_period, a release inside
+## green_width of the centre is a hit, and crossing bar_level is announced with a wind-up.
 
 const SEATS: int = 4
 
@@ -16,7 +18,9 @@ func before_each() -> void:
 	tuning.water_drink_multiplier = 5.0
 	tuning.lag_curve = DrinkTuning.ramp(0.0, 0.5)
 	tuning.miss_curve = DrinkTuning.ramp(0.0, 0.4)
-	tuning.scramble_level = 0.8
+	tuning.bar_level = 0.8
+	tuning.bar_period = 2.0
+	tuning.green_width = 0.2
 	drunkenness = Drunkenness.new(tuning)
 
 
@@ -108,37 +112,91 @@ func test_misses_are_rolled_from_the_given_rng() -> void:
 	expect(rate > 0.25 and rate < 0.35, "about 30%% of strokes miss at chance 0.3, got %f" % rate)
 
 
-func test_at_scramble_level_the_key_drives_the_other_hull_neighbour_until_he_sobers() -> void:
+func test_bar_position_sweeps_there_and_back_once_per_bar_period() -> void:
+	expect_near(drunkenness.bar_position(0.0), 0.0, 0.0001, "the bar starts at the left end")
+	expect_near(drunkenness.bar_position(0.5), 0.5, 0.0001, "a quarter period in it is at the centre")
+	expect_near(drunkenness.bar_position(1.0), 1.0, 0.0001, "half a period in it is at the right end")
+	expect_near(drunkenness.bar_position(1.5), 0.5, 0.0001, "on the way back")
+	expect_near(drunkenness.bar_position(2.0), 0.0, 0.0001, "back at the left end after bar_period")
+	expect_near(drunkenness.bar_position(2.5), 0.5, 0.0001, "and sweeping again")
+	expect_near(drunkenness.bar_position(7.0), 1.0, 0.0001, "the sweep repeats every bar_period")
+	var previous: float = drunkenness.bar_position(0.0)
+	for i: int in range(1, 81):
+		var at: float = drunkenness.bar_position(i * 0.05)
+		expect(at >= 0.0 and at <= 1.0, "always on the bar (%d)" % i)
+		expect_near(at, previous, 0.0501, "no jumps: the marker slides (%d)" % i)
+		previous = at
+	tuning.bar_period = 1.0
+	expect_near(drunkenness.bar_position(0.25), 0.5, 0.0001, "a shorter period sweeps faster")
+	expect_near(drunkenness.bar_position(0.5), 1.0, 0.0001, "reaching the end in half of it")
+	tuning.bar_period = 0.0
+	expect_near(drunkenness.bar_position(3.0), 0.5, 0.0001, "no period: the bar rests in the middle")
+
+
+func test_bar_hit_is_a_release_inside_green_width_of_the_centre() -> void:
+	expect(drunkenness.bar_hit(0.5), "dead centre is a hit")
+	expect(drunkenness.bar_hit(0.45), "just inside the green zone on the way out")
+	expect(drunkenness.bar_hit(1.55), "just inside the green zone on the way back")
+	expect_false(drunkenness.bar_hit(0.35), "outside the green zone is a miss")
+	expect_false(drunkenness.bar_hit(0.0), "a tap, marker at the left end, is a miss")
+	expect_false(drunkenness.bar_hit(1.0), "the right end is a miss")
+	expect(drunkenness.bar_hit(2.5), "the centre on the next sweep is a hit again")
+	tuning.green_width = 0.5
+	expect(drunkenness.bar_hit(0.35), "a wider green zone takes the same release")
+	tuning.green_width = 1.0
+	expect(drunkenness.bar_hit(0.0) and drunkenness.bar_hit(1.0), "the whole bar green: everything hits")
+	tuning.green_width = 0.0
+	expect_false(drunkenness.bar_hit(0.45), "no green zone: nothing but the centre")
+	expect(drunkenness.bar_hit(0.5), "which still hits")
+
+
+func test_the_bar_applies_after_a_wind_up_at_bar_level_until_he_sobers() -> void:
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.scrambled(0), "just below scramble_level is still his key")
-	expect_eq(drunkenness.key_target(0), 0, "his key drives his own seat")
+	expect_false(drunkenness.uses_bar(0), "just below bar_level his strokes are plain")
+	expect_false(drunkenness.bar_winding_up(0), "and nothing is announced")
 	drunkenness.set_level(0, 0.8)
-	expect(drunkenness.scrambled(0), "at scramble_level the key is scrambled")
-	expect_eq(drunkenness.key_target(0), Paddling.Seat.RIGHT_FRONT, "left front key drives right front")
+	expect(drunkenness.bar_winding_up(0), "at bar_level the tier is announced")
+	expect_false(drunkenness.uses_bar(0), "the bar does not apply during the wind-up")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.bar_winding_up(0), "still announcing halfway through")
+	expect_false(drunkenness.uses_bar(0), "still not applied")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.uses_bar(0), "the bar applies once the wind-up is over")
+	expect_false(drunkenness.bar_winding_up(0), "the announcement is over")
 	drunkenness.drink(0, 5.0, false, true)
-	expect(drunkenness.scrambled(0), "still scrambled as he drinks on")
-	expect_eq(drunkenness.key_target(0), Paddling.Seat.RIGHT_FRONT, "the same seat while he stays drunk")
+	expect(drunkenness.uses_bar(0), "and holds as he drinks on")
 	drunkenness.set_level(0, 1.0)
-	expect_eq(drunkenness.key_target(0), Paddling.Seat.RIGHT_FRONT, "the same seat at the cap")
+	expect(drunkenness.uses_bar(0) and not drunkenness.bar_winding_up(0), "no new wind-up while he stays in the tier")
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.scrambled(0), "below scramble_level his key is his again")
-	expect_eq(drunkenness.key_target(0), 0, "sobering up unscrambles")
-	expect_false(drunkenness.scrambled(2), "the target seat guy is unaffected")
-	expect_eq(drunkenness.key_target(2), 2, "his key is still his own")
+	expect_false(drunkenness.uses_bar(0), "below bar_level his strokes are plain again")
+	expect_false(drunkenness.bar_winding_up(0), "nothing announced")
+	drunkenness.set_level(0, 0.9)
+	expect(drunkenness.bar_winding_up(0), "crossing again is announced again")
+	expect_false(drunkenness.uses_bar(0), "before the bar applies")
+	expect_false(drunkenness.uses_bar(2) or drunkenness.bar_winding_up(2), "the other guys are unaffected")
+	drunkenness.reset()
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a reset forgets the tier")
 
 
-func test_scramble_target_is_fixed_per_seat_on_the_other_hull_same_row() -> void:
-	expect_eq(Drunkenness.scramble_target(Paddling.Seat.LEFT_FRONT), Paddling.Seat.RIGHT_FRONT, "left front to right front")
-	expect_eq(Drunkenness.scramble_target(Paddling.Seat.LEFT_BACK), Paddling.Seat.RIGHT_BACK, "left back to right back")
-	expect_eq(Drunkenness.scramble_target(Paddling.Seat.RIGHT_FRONT), Paddling.Seat.LEFT_FRONT, "right front to left front")
-	expect_eq(Drunkenness.scramble_target(Paddling.Seat.RIGHT_BACK), Paddling.Seat.LEFT_BACK, "right back to left back")
-	for seat: int in SEATS:
-		var target: int = Drunkenness.scramble_target(seat)
-		expect_ne(target, seat, "seat %d never keeps its own key" % seat)
-		expect_ne(Paddling.seat_side(target), Paddling.seat_side(seat), "seat %d maps across the hulls" % seat)
-		expect_eq(Paddling.is_back_seat(target), Paddling.is_back_seat(seat), "seat %d keeps its row" % seat)
-		drunkenness.set_level(seat, 1.0)
-		expect_eq(drunkenness.key_target(seat), target, "seat %d scrambled drives its target" % seat)
+func test_the_wind_up_waits_while_he_is_in_the_water_and_counts_down_once_aboard() -> void:
+	drunkenness.set_level(0, 0.79)
+	drunkenness.drink(0, 1.0, false, true)
+	expect(drunkenness.level_of(0) >= tuning.bar_level, "a second in the water carries him over bar_level")
+	expect(drunkenness.bar_winding_up(0), "the crossing in the water is registered")
+	expect_false(drunkenness.uses_bar(0), "but the bar does not apply yet")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 2.0, false, true)
+	expect(drunkenness.bar_winding_up(0), "the wind-up does not count down while he floats")
+	expect_false(drunkenness.uses_bar(0), "so he cannot come aboard already on the bar")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 2.0, false, true, false)
+	expect(drunkenness.bar_winding_up(0), "nor while he floats without a beer")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.bar_winding_up(0), "back aboard it counts down: halfway, still announcing")
+	expect_false(drunkenness.uses_bar(0), "still not applied")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.uses_bar(0), "the full wind-up ran aboard, then the bar applies")
+	expect_false(drunkenness.bar_winding_up(0), "the announcement is over")
+	drunkenness.drink(0, 3.0, false, true)
+	expect(drunkenness.uses_bar(0), "once applied, the bar holds through another dip in the water")
 
 
 func test_tuning_resource_loads_with_placeholders() -> void:
@@ -146,8 +204,10 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(loaded is DrinkTuning, "data/drink_tuning.tres is a DrinkTuning")
 	var drink: DrinkTuning = loaded
 	expect(drink.start_level > 0.0, "the guys start tipsy, not sober")
-	expect(drink.start_level < drink.scramble_level, "nobody starts scrambled")
-	expect(drink.scramble_level <= 1.0, "the top tier is reachable")
+	expect(drink.start_level < drink.bar_level, "nobody starts on the bar")
+	expect(drink.bar_level <= 1.0, "the top tier is reachable")
+	expect(drink.bar_period > 0.0, "the bar sweeps")
+	expect(drink.green_width > 0.0 and drink.green_width < 1.0, "a thin green zone: not none, not the whole bar")
 	expect(drink.drink_rate > 0.0, "the crate gets drunk")
 	expect(drink.break_drink_multiplier > 1.0, "a break drinks faster")
 	expect(drink.water_drink_multiplier > drink.break_drink_multiplier, "the water drinks faster still")

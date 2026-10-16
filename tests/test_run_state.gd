@@ -5,6 +5,8 @@ extends "res://tools/test_case.gd"
 ## T9 · RunState wires Rescue: beer_overboard() and guy_overboard() take a guy off the boat,
 ## pickup() brings him back, a swimmer drinks only while he has a beer, and shore_touched() while
 ## crossing (never while launching) restores the starting conditions (GDD › Systems › Setbacks).
+## T31 · On the timing bar (the top drunkenness tier) a release in the green zone is the normal
+## stroke and one outside it a backwards stroke of the same power; both burn stamina.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -136,14 +138,57 @@ func test_missed_stroke_never_lands_but_still_costs_the_effort() -> void:
 	state.free()
 
 
-func test_scrambled_key_drives_the_seat_beside_him() -> void:
+## A RunState whose guys are sober except `seat`, who is on the timing bar with its wind-up
+## over: bar_period 2 s and green_width 0.2, so a hold of 0.5 s is a hit and 1.0 s a miss.
+func bar_state(seat: int) -> Node:
 	var state: Node = drunk_state(0.0, 0.0, 0.0)
-	state.drunkenness.set_level(Paddling.Seat.LEFT_BACK, state.drunkenness.tuning.scramble_level)
-	state.stroke(Paddling.Seat.LEFT_BACK, 10.0)
+	state.drunkenness.tuning.bar_period = 2.0
+	state.drunkenness.tuning.green_width = 0.2
+	state.drunkenness.set_level(seat, state.drunkenness.tuning.bar_level)
+	state.step(Drunkenness.BAR_WINDUP)
+	return state
+
+
+func test_a_bar_hit_gives_the_normal_stroke_and_burns_its_stamina() -> void:
+	var state: Node = bar_state(Paddling.Seat.LEFT_BACK)
+	expect(state.drunkenness.uses_bar(Paddling.Seat.LEFT_BACK), "the bar applies after the wind-up")
+	var before: float = state.guys[Paddling.Seat.LEFT_BACK].stamina
+	state.stroke(Paddling.Seat.LEFT_BACK, 0.5)
+	var cost: float = state.stamina.burn_of(state.paddling.stroke_force(0.5))
+	expect(cost > 0.0, "the stroke costs something")
+	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, before - cost, 0.0001, "a hit burns the stroke's stamina")
 	var motion: RefCounted = state.step(TICK)
-	expect(motion.turn < 0.0, "his key paddled the right hull, so the boat turns left")
-	expect(state.guys[Paddling.Seat.RIGHT_BACK].stamina < 1.0, "the right back guy did the work")
-	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, 1.0, 0.0001, "the key owner burnt nothing")
+	expect_near(motion.thrust, state.paddling.stroke_force(0.5), 0.0001, "a hit is the normal stroke")
+	expect_near(motion.turn, state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 0.5), 0.0001, "with its normal turn")
+	expect(motion.turn > 0.0, "a left-side stroke turns right")
+	state.free()
+
+
+func test_a_bar_miss_is_a_backwards_stroke_of_the_same_power_and_still_burns() -> void:
+	var state: Node = bar_state(Paddling.Seat.LEFT_BACK)
+	var before: float = state.guys[Paddling.Seat.LEFT_BACK].stamina
+	state.stroke(Paddling.Seat.LEFT_BACK, 1.0)
+	var cost: float = state.stamina.burn_of(state.paddling.stroke_force(1.0))
+	expect(cost > 0.0, "the stroke costs something")
+	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, before - cost, 0.0001, "a miss burns the same stamina as a hit")
+	expect_near(state.guys[Paddling.Seat.RIGHT_BACK].stamina, 1.0, 0.0001, "nobody else pays")
+	var motion: RefCounted = state.step(TICK)
+	expect_near(motion.thrust, -state.paddling.stroke_force(1.0), 0.0001, "a miss paddles backwards at the same power")
+	expect_near(motion.turn, -state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 1.0), 0.0001, "and turns the other way as much")
+	expect(motion.turn < 0.0, "a backwards left-side stroke turns left")
+	state.free()
+
+
+func test_strokes_are_plain_below_bar_level_and_during_the_wind_up() -> void:
+	var state: Node = drunk_state(0.0, 0.0, 0.0)
+	state.drunkenness.tuning.bar_period = 2.0
+	state.drunkenness.tuning.green_width = 0.2
+	state.stroke(Paddling.Seat.LEFT_FRONT, 1.0)
+	expect(state.step(TICK).thrust > 0.0, "below bar_level a would-be miss is a plain stroke")
+	state.drunkenness.set_level(Paddling.Seat.LEFT_FRONT, state.drunkenness.tuning.bar_level)
+	expect(state.drunkenness.bar_winding_up(Paddling.Seat.LEFT_FRONT), "crossing bar_level is announced first")
+	state.stroke(Paddling.Seat.LEFT_FRONT, 1.0)
+	expect(state.step(TICK).thrust > 0.0, "during the wind-up the stroke is still plain")
 	state.free()
 
 

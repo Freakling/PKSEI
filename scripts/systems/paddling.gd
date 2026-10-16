@@ -13,14 +13,17 @@ extends RefCounted
 enum Seat { LEFT_FRONT = 0, LEFT_BACK = 1, RIGHT_FRONT = 2, RIGHT_BACK = 3 }
 
 
-## One released stroke: who paddled and for how long his key was held.
+## One released stroke: who paddled, for how long his key was held, and whether he paddled
+## backwards (a timing-bar miss, GDD › Drunkenness): the same power, thrust and turn reversed.
 class Stroke extends RefCounted:
 	var seat: int = Seat.LEFT_FRONT
 	var hold_time: float = 0.0
+	var backwards: bool = false
 
-	func _init(stroke_seat: int, stroke_hold_time: float) -> void:
+	func _init(stroke_seat: int, stroke_hold_time: float, stroke_backwards: bool = false) -> void:
 		seat = stroke_seat
 		hold_time = stroke_hold_time
+		backwards = stroke_backwards
 
 
 ## What one timestep does to the boat.
@@ -57,12 +60,14 @@ func stroke_turn(seat: int, hold_time: float) -> float:
 	return seat_side(seat) * steer_share(seat) * tuning.turn_torque * stroke_force(hold_time)
 
 
-## Sums the strokes released this step, and the current's pull over `delta` seconds.
+## Sums the strokes released this step, a backwards one with its thrust and turn reversed, and
+## the current's pull over `delta` seconds.
 func step(strokes: Array[Stroke], delta: float) -> Motion:
 	var motion: Motion = Motion.new()
 	for stroke: Stroke in strokes:
-		motion.thrust += stroke_force(stroke.hold_time)
-		motion.turn += stroke_turn(stroke.seat, stroke.hold_time)
+		var direction: float = -1.0 if stroke.backwards else 1.0
+		motion.thrust += direction * stroke_force(stroke.hold_time)
+		motion.turn += direction * stroke_turn(stroke.seat, stroke.hold_time)
 	motion.drift_to_shore = tuning.current_speed * delta
 	return motion
 
