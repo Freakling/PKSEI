@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="LakeTuning" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
 [ext_resource type="Resource" path="res://data/hazards/log.tres" id="2_log"]
+[ext_resource type="Resource" path="res://data/hazards/geese.tres" id="3_geese"]
 
 [sub_resource type="Curve" id="Curve_density"]
 max_value = 3.0
@@ -18,4 +19,11 @@ band_length = 400.0
 density_curve = SubResource("Curve_density")
 path_width = 120.0
 path_wander = 200.0
-hazards = [ExtResource("2_log")]
+geese_radius = 160.0
+geese_warning = 1.0
+geese_attack_time = 4.0
+geese_speed = 140.0
+geese_peck_interval = 1.0
+geese_peck_range = 40.0
+geese_cooldown = 5.0
+hazards = [ExtResource("2_log"), ExtResource("3_geese")]

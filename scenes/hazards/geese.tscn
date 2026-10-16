@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/geese.gd" id="1_geese"]
+
+[node name="Geese" type="Node2D"]
+script = ExtResource("1_geese")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Nest" type="Node2D" parent="Visual"]
+
+[node name="Ring" type="Polygon2D" parent="Visual/Nest"]
+color = Color(0.55, 0.45, 0.25, 1)
+polygon = PackedVector2Array(-12, -8, 12, -8, 12, 8, -12, 8)
+
+[node name="Gosling1" type="Polygon2D" parent="Visual/Nest"]
+color = Color(1, 0.9, 0.3, 1)
+polygon = PackedVector2Array(-8, 0, -4, 0, -4, 4, -8, 4)
+
+[node name="Gosling2" type="Polygon2D" parent="Visual/Nest"]
+color = Color(1, 0.9, 0.3, 1)
+polygon = PackedVector2Array(-2, -5, 2, -5, 2, -1, -2, -1)
+
+[node name="Gosling3" type="Polygon2D" parent="Visual/Nest"]
+color = Color(1, 0.9, 0.3, 1)
+polygon = PackedVector2Array(4, 1, 8, 1, 8, 5, 4, 5)
+
+[node name="Geese" type="Node2D" parent="Visual"]
+
+[node name="Goose1" type="Polygon2D" parent="Visual/Geese"]
+color = Color(0.95, 0.95, 0.95, 1)
+polygon = PackedVector2Array(-14, -12, -6, -12, -6, -4, -14, -4)
+
+[node name="Goose2" type="Polygon2D" parent="Visual/Geese"]
+color = Color(0.8, 0.8, 0.82, 1)
+polygon = PackedVector2Array(-2, -16, 6, -16, 6, -8, -2, -8)
+
+[node name="Goose3" type="Polygon2D" parent="Visual/Geese"]
+color = Color(0.95, 0.95, 0.95, 1)
+polygon = PackedVector2Array(8, -10, 16, -10, 16, -2, 8, -2)
+
+[node name="Wings" type="Node2D" parent="Visual/Geese"]
+visible = false
+
+[node name="WingLeft" type="Polygon2D" parent="Visual/Geese/Wings"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-18, -14, -14, -22, -12, -14)
+
+[node name="WingMiddle" type="Polygon2D" parent="Visual/Geese/Wings"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(-4, -18, 2, -28, 8, -18)
+
+[node name="WingRight" type="Polygon2D" parent="Visual/Geese/Wings"]
+color = Color(1, 1, 1, 1)
+polygon = PackedVector2Array(12, -12, 16, -20, 18, -12)
+
+[node name="Beak" type="Polygon2D" parent="Visual/Geese/Wings"]
+color = Color(1, 0.4, 0.1, 1)
+polygon = PackedVector2Array(6, -13, 10, -12, 6, -11)

@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T40 · B4
+**Next IDs:** T41 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (46 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (53 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -160,11 +160,17 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: in debug builds (`OS.is_debug_build() or OS.has_feature("dev_tools")`) a translucent strip shows the corridor from `Hazards.corridor_x` so path_width and path_wander can be tuned by eye, toggled with a debug key (check: the gate is quoted) · the strip follows the planned path (play)
 - GDD: —
 
-### T15 · Angry geese guarding goslings · todo · M · agent
+### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
-- Touches: scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/lake_tuning.tres (+geese_radius, +geese_attack_time)
+- Touches: scripts/systems/geese.gd (new), scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/hazards/geese.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+geese_radius, +geese_warning, +geese_attack_time, +geese_speed, +geese_peck_interval, +geese_peck_range, +geese_cooldown), tests/test_geese.gd (new)
 - Done when: a flock hisses when the boat enters geese_radius, charges and pecks for geese_attack_time, each peck a beer overboard, then returns (test) · the warning and the attack read at a glance (play)
 - GDD: Systems › Hazards
+
+### T40 · The lake hands each hazard its tuning, so hazard scripts don't load lake_tuning.tres · todo · S · agent
+- Depends on: T15
+- Touches: scripts/lake.gd, scripts/hazards/geese.gd, scripts/hazards/log.gd
+- Done when: lake.gd sets `tuning` (and `spec`) on each spawned hazard that declares it, and no hazard script loads data/lake_tuning.tres itself (check)
+- GDD: —
 
 ### T16 · Motorboat wake · todo · M · agent
 - Depends on: T10
