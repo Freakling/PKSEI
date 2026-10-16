@@ -2,6 +2,8 @@ extends "res://tools/test_case.gd"
 ## T9 · Rescue: a beer overboard puts a guy in the water after it; the beer drifts with the
 ## current, he swims to it, then floats with it until the boat picks him up; no limit on how
 ## many are in (GDD › Systems › Setbacks).
+## B2 · Nothing loose drifts past the shoreline: beers and swimmers stop shore_margin above it,
+## and a floating guy lying there is washed up.
 
 const ALL: Array[int] = [
 	Paddling.Seat.LEFT_FRONT, Paddling.Seat.LEFT_BACK, Paddling.Seat.RIGHT_FRONT, Paddling.Seat.RIGHT_BACK,
@@ -17,6 +19,7 @@ var rescue: Rescue
 func before_each() -> void:
 	tuning = BoatTuning.new()
 	tuning.swim_speed = 10.0
+	tuning.shore_margin = 40.0
 	rescue = Rescue.new()
 
 
@@ -119,3 +122,48 @@ func test_reset_takes_everyone_out() -> void:
 	rescue.guy_overboard(Paddling.Seat.RIGHT_BACK, BOAT)
 	rescue.reset()
 	expect_eq(rescue.swimmers().size(), 0, "nobody in the water")
+
+
+## B2 regression: the current carries a floating guy and a loose beer to the shoreline and no
+## further; lying there he is washed up.
+func test_nothing_loose_drifts_past_the_shoreline() -> void:
+	var floater: int = Paddling.Seat.RIGHT_BACK
+	rescue.guy_overboard(floater, Vector2(50.0, -60.0))
+	rescue.beer_overboard(Rescue.Hull.LEFT, ALL, Vector2(100.0, -60.0), Vector2(200.0, -60.0))
+	rescue.step(1.0, CURRENT, tuning)
+	var floating: Rescue.Swimmer = rescue.swimmer_of(floater)
+	var swimming: Rescue.Swimmer = rescue.swimmer_of(Paddling.Seat.LEFT_FRONT)
+	expect_eq(floating.position, Vector2(50.0, -50.0), "still open water: he drifts as before")
+	expect_false(floating.washed_up, "not washed up yet")
+	expect_false(swimming.washed_up, "nor the swimmer")
+	rescue.step(5.0, CURRENT, tuning)
+	expect_eq(floating.position, Vector2(50.0, -40.0), "the floating guy stops shore_margin above the shoreline")
+	expect(floating.washed_up, "and is washed up")
+	expect_eq(floating.beer_position, floating.position, "nothing for him to reach past it")
+	expect_eq(swimming.beer_position, Vector2(200.0, -40.0), "the loose beer stops there too")
+	expect_near(swimming.position.y, -40.0, 0.0001, "and so does the guy swimming for it")
+	rescue.step(10.0, CURRENT, tuning)
+	expect_eq(floating.position, Vector2(50.0, -40.0), "the current can't take him further")
+	expect_eq(swimming.position, Vector2(200.0, -40.0), "the swimmer reached his beer along the shoreline")
+	expect_eq(swimming.state, Rescue.State.FLOATING, "and holds it")
+	expect(swimming.washed_up, "washed up with it")
+
+
+## B2 regression: a beer knocked over with the boat resting at the launch shore (y about -28, past
+## the shoreline) puts the guy and the beer at the shoreline at once; once he has the beer he is
+## washed up, though out of reach of the boat itself.
+func test_a_beer_over_at_the_launch_shore_washes_him_up() -> void:
+	var at_shore: Vector2 = Vector2(0.0, -28.0)
+	rescue.beer_overboard(Rescue.Hull.LEFT, ALL, at_shore, at_shore + Vector2(-32.0, 0.0))
+	var swimmer: Rescue.Swimmer = rescue.swimmer_of(Paddling.Seat.LEFT_FRONT)
+	expect_eq(rescue.washed_up(), [] as Array[int], "not washed up before he has his beer")
+	rescue.step(1.0, CURRENT, tuning)
+	expect_near(swimmer.position.y, -40.0, 0.0001, "held back to the shoreline at once")
+	expect_near(swimmer.beer_position.y, -40.0, 0.0001, "the beer too")
+	expect_eq(swimmer.state, Rescue.State.SWIMMING, "32 px along the shoreline at 10 px/s: still swimming")
+	expect_eq(rescue.washed_up(), [] as Array[int], "a guy still swimming is not listed")
+	rescue.step(3.0, CURRENT, tuning)
+	expect_eq(swimmer.state, Rescue.State.FLOATING, "he has it")
+	expect_eq(rescue.washed_up(), [Paddling.Seat.LEFT_FRONT] as Array[int], "washed up with his beer")
+	expect_eq(rescue.within_reach(at_shore, 20.0), [] as Array[int], "34 px from the boat: it can't reach him itself")
+	expect(rescue.pickup(Paddling.Seat.LEFT_FRONT), "picked up with his beer")

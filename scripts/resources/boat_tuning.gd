@@ -30,6 +30,10 @@ extends Resource
 @export var beer_toss: float = 32.0 ## PLACEHOLDER
 ## Pixels from the boat's centre within which a floating guy is picked up (the lake checks it).
 @export var pickup_radius: float = 20.0 ## PLACEHOLDER
+## Pixels above the shoreline (y = 0) where everything loose stops (B2): no beer or swimmer drifts
+## past y = -shore_margin, so a washed-up guy lies within pickup_radius of a boat resting at the
+## shore. Read by Rescue.
+@export var shore_margin: float = 40.0 ## PLACEHOLDER
 ## Water a guy bails out per second while his hull has water aboard (the water aboard effect,
 ## GDD › Systems › Hazards); his seat gives no strokes meanwhile. Read by RunState.
 @export var bail_rate: float = 1.0 ## PLACEHOLDER

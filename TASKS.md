@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (41 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (42 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -110,9 +110,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a band whose hazards have all drifted past the shore is re-planned from the attempt's seed and a band counter, so a long crossing never meets an empty lake (test) · respawned hazards appear outside the camera's look-ahead (play)
 - GDD: Systems › Hazards
 
-### B2 · A swimmer who drifts past the shoreline can't be picked up · todo · M · agent · med
+### B2 · A swimmer who drifts past the shoreline can't be picked up · done · M · agent · med
 - Depends on: T10
-- Touches: scripts/systems/rescue.gd, scripts/autoload/run_state.gd, tests/test_rescue.gd
+- Touches: scripts/systems/rescue.gd, scripts/autoload/run_state.gd, scripts/resources/boat_tuning.gd (+shore_margin), data/boat_tuning.tres, tests/test_rescue.gd, tests/test_run_state.gd
 - Repro: knock a beer over while the boat rests at the launch shore (a band-1 log drifting into it, or F5) → the swimmer drifts down through the shoreline where the boat can't reach him; shore_touched() does nothing in LAUNCH → expected: he washes up and climbs back aboard, or the shore stops him within reach / actual: stuck until the player paddles off and comes back for a shore reset
 - Found in: T10 review
 - GDD: Systems › Setbacks

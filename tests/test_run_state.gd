@@ -11,6 +11,8 @@ extends "res://tools/test_case.gd"
 ## the state he left when he is picked up (GDD › Systems › Stamina).
 ## B1 · A stroke released before its guy goes overboard never lands: the strokes still waiting to
 ## land are dropped when he goes in (GDD › Systems › Setbacks).
+## B2 · A guy washed up at the shoreline climbs back aboard on his own while the boat rests at the
+## launch shore (LAUNCH); under way (CROSSING) he waits there for the boat or the shore reset.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -464,4 +466,49 @@ func test_a_guy_in_the_water_stays_on_his_break_until_picked_up() -> void:
 	expect(state.stamina.time_left(seat) < break_left, "and counts down again")
 	state.step(2.5)
 	expect_eq(state.stamina.state_of(seat), Stamina.State.PADDLING, "the break ends after its time")
+	state.free()
+
+
+## B2 regression: F5 at the launch shore (boat centre y about -28, past the shoreline). The guy
+## and his beer are held at the shoreline; once he has the beer he climbs back aboard by himself.
+func test_a_washed_up_swimmer_climbs_back_aboard_while_launching() -> void:
+	var state: Node = sober_state()
+	var at_shore: Vector2 = Vector2(0.0, -28.0)
+	var shoreline: float = -state.paddling.tuning.shore_margin
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, at_shore)
+	state.step(TICK)
+	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
+	expect_near(swimmer.position.y, shoreline, 0.0001, "held at the shoreline, not under the shore")
+	expect_false(state.guys[seat].aboard, "still swimming for his beer: not aboard yet")
+	for i: int in 120:
+		state.step(TICK)
+	expect(state.guys[seat].aboard, "with his beer at the shoreline he climbed back aboard")
+	expect_false(state.rescue.is_in_water(seat), "out of the water")
+	expect(state.all_aboard(), "all four aboard again")
+	expect_eq(state.phase, RunStateScript.Phase.LAUNCH, "still launching")
+	expect_near(state.elapsed, TICK * 121.0, 0.0001, "no reset: the clock kept its time")
+	state.drunkenness.set_level(seat, 0.0)
+	state.stroke(seat, 10.0)
+	expect(state.step(TICK).thrust > 0.0, "his key paddles again")
+	state.free()
+
+
+## B2: under way, a guy the current carries to the shoreline stays in the water there until the
+## boat comes for him or touches the shore.
+func test_a_washed_up_swimmer_waits_at_the_shoreline_while_crossing() -> void:
+	var state: Node = sober_state()
+	var shoreline: float = -state.paddling.tuning.shore_margin
+	state.set_progress(0.4)
+	var seat: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	for i: int in 60:
+		state.step(1.0)
+	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
+	expect(swimmer != null, "still in the water")
+	expect_near(swimmer.position.y, shoreline, 0.0001, "lying at the shoreline")
+	expect(swimmer.washed_up, "washed up")
+	expect_false(state.guys[seat].aboard, "crossing: he doesn't climb aboard by himself")
+	expect_eq(state.phase, RunStateScript.Phase.CROSSING, "still under way")
+	state.shore_touched()
+	expect(state.guys[seat].aboard, "the boat back at the shore is the shore reset: everyone aboard")
+	expect_eq(state.rescue.swimmers().size(), 0, "nobody in the water")
 	state.free()

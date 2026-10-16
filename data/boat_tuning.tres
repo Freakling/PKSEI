@@ -15,6 +15,7 @@ camera_lead = 80.0
 swim_speed = 30.0
 beer_toss = 32.0
 pickup_radius = 20.0
+shore_margin = 40.0
 bail_rate = 1.0
 thrust_scale = 0.5
 turn_scale = 0.01

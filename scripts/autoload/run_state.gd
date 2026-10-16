@@ -8,7 +8,9 @@ extends Node
 ## stroke() on each key release and step() once per physics frame, and applies the Motion it
 ## gets back; the lake sets progress from the boat's position, calls arrive() at the island,
 ## pickup() when the boat reaches a floating guy and shore_touched() whenever the boat touches
-## the shore; RunState decides whether that is a shore reset. Hazard scenes call the effects
+## the shore; RunState decides whether that is a shore reset. While the boat still rests at the
+## launch shore (LAUNCH) a guy washed up at the shoreline climbs back aboard on his own in step()
+## (B2); under way he waits there for the boat or the shore reset. Hazard scenes call the effects
 ## palette (GDD › Systems › Hazards, Effects): beer_overboard(), shove(), snag(), stop(),
 ## force_break() and water_aboard(); the boat takes the shove and the stop with take_shove() and
 ## take_stop(), and a snagged or bailing seat gives no strokes. A guy who falls in without a
@@ -269,7 +271,8 @@ func stroke(seat: int, hold_time: float) -> void:
 	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
 
 
-## One physics frame: the swimmers and their beers move with the current, every guy drinks
+## One physics frame: the swimmers and their beers move with the current (while launching, a
+## guy washed up at the shoreline climbs back aboard with whatever beer he has), every guy drinks
 ## (a floating guy with his beer at the water rate; one without a beer not at all) and every guy
 ## aboard recovers or breaks (a guy in the water keeps his stamina, state and time left until he
 ## is picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, the snags count
@@ -286,6 +289,10 @@ func step(delta: float) -> Paddling.Motion:
 		if bailer_of(side as Rescue.Hull) != Rescue.NOBODY:
 			_water[side] = maxf(_water[side] - paddling.tuning.bail_rate * delta, 0.0)
 	rescue.step(delta, Vector2.DOWN * paddling.tuning.current_speed, paddling.tuning)
+	if phase == Phase.LAUNCH:
+		# The boat rests at the shore, so the launch shore never traps the player (B2).
+		for seat: int in rescue.washed_up():
+			pickup(seat)
 	for seat: int in GUY_COUNT:
 		var guy: Guy = guys[seat]
 		var swimmer: Rescue.Swimmer = rescue.swimmer_of(seat)

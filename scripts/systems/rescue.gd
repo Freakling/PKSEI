@@ -8,7 +8,9 @@ extends RefCounted
 ## toward it at swim_speed (on top of the current, like everything in the water) until he
 ## reaches it, then floats, drifting with the current and drinking. He never swims back; the boat
 ## has to come to him. A guy can also fall in without a beer (the pee antic, T13): he floats at
-## once and doesn't drink. There is no limit on how many are in the water at a time.
+## once and doesn't drink. There is no limit on how many are in the water at a time. Nothing loose
+## drifts past the shoreline: a beer or a guy stops shore_margin above it (B2) and a guy lying
+## there is washed up, within pickup_radius of a boat resting at the shore.
 
 ## Which hull a hazard hit; the guy who jumps comes from that side when one is aboard.
 enum Hull { LEFT, RIGHT }
@@ -26,6 +28,8 @@ class Swimmer extends RefCounted:
 	var beer_position: Vector2 = Vector2.ZERO
 	var state: State = State.SWIMMING
 	var has_beer: bool = true
+	## Lying at the shoreline, as far as the current takes him (set by step()).
+	var washed_up: bool = false
 
 	func _init(swimmer_seat: int, at: Vector2, beer_at: Vector2, swimmer_state: State, beer: bool) -> void:
 		seat = swimmer_seat
@@ -80,22 +84,32 @@ static func seats_on(side: Hull) -> Array[int]:
 
 ## One timestep: every loose beer and every floating guy drifts by `current` (pixels per second);
 ## a swimming guy drifts too and swims swim_speed toward his beer on top of it, and holds it
-## (FLOATING) once he reaches it this step.
+## (FLOATING) once he reaches it this step. Nothing drifts past the shoreline: beers and guys stop
+## at y = -shore_margin, and a guy lying there is washed_up.
 func step(delta: float, current: Vector2, tuning: BoatTuning) -> void:
 	var drift: Vector2 = current * delta
+	var shoreline: float = -tuning.shore_margin
 	for swimmer: Swimmer in _swimmers:
 		if swimmer.state == State.SWIMMING:
-			swimmer.beer_position += drift
+			swimmer.beer_position = held_back(swimmer.beer_position + drift, shoreline)
 			var reach: float = tuning.swim_speed * delta
-			var to_beer: Vector2 = swimmer.beer_position - (swimmer.position + drift)
+			var drifted: Vector2 = held_back(swimmer.position + drift, shoreline)
+			var to_beer: Vector2 = swimmer.beer_position - drifted
 			if to_beer.length() <= reach:
 				swimmer.position = swimmer.beer_position
 				swimmer.state = State.FLOATING
 			else:
-				swimmer.position += drift + to_beer.normalized() * reach
+				swimmer.position = drifted + to_beer.normalized() * reach
 		else:
-			swimmer.position += drift
+			swimmer.position = held_back(swimmer.position + drift, shoreline)
 			swimmer.beer_position = swimmer.position
+		swimmer.washed_up = swimmer.position.y >= shoreline
+
+
+## `at` held above the shoreline: the same point, no lower than `shoreline` (y grows toward the
+## shore).
+static func held_back(at: Vector2, shoreline: float) -> Vector2:
+	return Vector2(at.x, minf(at.y, shoreline))
 
 
 func swimmers() -> Array[Swimmer]:
@@ -119,6 +133,16 @@ func within_reach(boat_position: Vector2, radius: float) -> Array[int]:
 	var seats: Array[int] = []
 	for swimmer: Swimmer in _swimmers:
 		if swimmer.state == State.FLOATING and swimmer.position.distance_to(boat_position) <= radius:
+			seats.append(swimmer.seat)
+	return seats
+
+
+## The floating guys lying at the shoreline: the ones a boat resting at the shore reaches. A guy
+## still swimming for his beer reaches it there first (it stopped at the shoreline too).
+func washed_up() -> Array[int]:
+	var seats: Array[int] = []
+	for swimmer: Swimmer in _swimmers:
+		if swimmer.state == State.FLOATING and swimmer.washed_up:
 			seats.append(swimmer.seat)
 	return seats
 
