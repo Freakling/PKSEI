@@ -13,10 +13,10 @@ extends RefCounted
 ## The attempt's seed is the one truth. Each band is planned on its own
 ## (plan_band(tuning, seed, band, generation)) from a RandomNumberGenerator seeded with
 ## band_seed(): a hash of the seed, the band and the band's generation, so the same seed and
-## tuning always give the same lake, and a band whose hazards have all drifted past the shore can
-## be re-planned at the next generation without touching the others. plan() is the whole lake at
-## generation 0, band by band. lake.gd instances the placements under its Hazards node and
-## refills an emptied band from its next generation.
+## tuning always give the same lake, and a band can be re-planned at a later generation without
+## touching the others (for the path and future events; the lake itself plans generation 0 only).
+## plan() is the whole lake at generation 0, band by band. Hazards are objects and stay where they
+## are placed. lake.gd instances the placements under its Hazards node.
 ##
 ## The effects palette (GDD › Systems › Hazards, Effects) lives on RunState, which the boat and
 ## the guys answer to; a hazard scene calls beer_overboard(hull, at), shove(impulse),
@@ -80,7 +80,7 @@ static func allowed(tuning: LakeTuning, band: int) -> Array[int]:
 
 
 ## The RNG seed a band's plan is drawn from: a hash of the attempt's seed, the band and its
-## generation (0 the lake as launched, one more each time the band is refilled), so each triple
+## generation (0 the lake as launched, one more for each later re-plan of the band), so each triple
 ## has its own reproducible draw.
 static func band_seed(lake_seed: int, band: int, generation: int) -> int:
 	return hash("%d:%d:%d" % [lake_seed, band, generation])

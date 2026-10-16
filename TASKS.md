@@ -136,7 +136,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: beers and swimmers drift at loose_drift_speed while the boat drifts at current_speed, with loose_drift_speed the larger placeholder (test)
 - GDD: Systems › Catamaran and paddling · Systems › Setbacks
 
-### T36 · Objects are fixed: the log stops drifting, the band refill goes · todo · S · agent
+### T36 · Objects are fixed: the log stops drifting, the band refill goes · done · S · agent
 - Depends on: T33
 - Touches: scripts/hazards/log.gd, scripts/lake.gd, scripts/systems/hazards.gd, tests/test_hazards.gd
 - Done when: a log stays where it was planned (test) · no band refill code remains; plan_band stays for the path and future events (check) · the check passes (check)

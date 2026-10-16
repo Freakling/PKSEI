@@ -5,10 +5,11 @@ extends "res://tools/test_case.gd"
 ## calls on RunState that the boat and the guys answer to (GDD › Systems › Hazards, Effects).
 ## Hazards are planned only between the launch margin and the island's near edge, and the seed
 ## is drawn per attempt (new_attempt), not per shore reset. T33: each band is planned on its own
-## from (seed, band, generation), so an emptied band refills from its next generation (plan() is
-## generation 0 band by band) and stays inside its band.
+## from (seed, band, generation) (plan() is generation 0 band by band), and each band's draw stays
+## inside its band. T36: hazards are objects, so a planned log stays where the plan put it.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
+const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
 const TICK: float = 1.0 / 60.0
 const BOAT: Vector2 = Vector2(0.0, -300.0)
 ## The test lake: the island's centre 1000 px out with a radius of 100, a launch margin of 100,
@@ -172,19 +173,6 @@ func test_a_band_plans_the_same_for_the_same_seed_band_and_generation() -> void:
 	expect_ne(Hazards.band_seed(42, 1, 2), Hazards.band_seed(42, 1, 3), "another generation, another band seed")
 
 
-func test_a_bands_next_generation_is_another_draw() -> void:
-	var differs: int = 0
-	for lake_seed: int in 10:
-		var launched: Array[Hazards.Placement] = Hazards.plan_band(tuning, lake_seed, 1, 0)
-		var refilled: Array[Hazards.Placement] = Hazards.plan_band(tuning, lake_seed, 1, 1)
-		expect_eq(refilled.size(), launched.size(), "seed %d: a refill has the band's density again" % lake_seed)
-		for i: int in mini(launched.size(), refilled.size()):
-			if refilled[i].position != launched[i].position:
-				differs += 1
-	expect(differs > 0, "the refilled band is not the launched one again")
-	expect_ne(Hazards.plan_band(tuning, 5, 3, 1)[0].position, Hazards.plan_band(tuning, 5, 3, 2)[0].position, "and the generation after differs too")
-
-
 func test_the_lake_as_launched_is_each_bands_generation_zero_band_by_band() -> void:
 	var whole: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
 	var by_band: Array[Hazards.Placement] = []
@@ -196,7 +184,7 @@ func test_the_lake_as_launched_is_each_bands_generation_zero_band_by_band() -> v
 	expect_ne(other_band[0].position, by_band[1].position, "each band has its own draw, not a shared stream")
 
 
-func test_a_refilled_band_stays_inside_its_band_and_draws_what_the_band_allows() -> void:
+func test_a_band_at_any_generation_stays_inside_its_band_and_draws_what_the_band_allows() -> void:
 	for lake_seed: int in 10:
 		for band: int in DENSITIES.size():
 			for generation: int in 4:
@@ -213,7 +201,25 @@ func test_a_refilled_band_stays_inside_its_band_and_draws_what_the_band_allows()
 	expect_near(Hazards.near_edge(tuning, 3), MARGIN + 3.0 * BAND, 0.0001, "three bands further for band 3")
 	expect_eq(Hazards.plan_band(tuning, 1, 5, 0).size(), 0, "a band past the island plans nothing")
 	expect_eq(Hazards.plan_band(tuning, 1, -1, 0).size(), 0, "nor one before the shore")
-	expect_eq(Hazards.plan_band(tuning, 1, 0, 7).size(), DENSITIES[0], "the first band refills like any other")
+	expect_eq(Hazards.plan_band(tuning, 1, 0, 7).size(), DENSITIES[0], "the first band at generation 7 draws its density too")
+
+
+# --- objects ------------------------------------------------------------------------------------
+
+func test_a_planned_log_stays_where_the_plan_put_it() -> void:
+	var placements: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
+	expect(placements.size() > 0, "the lake has hazards")
+	for placement: Hazards.Placement in placements:
+		var hazard: Node2D = LogScene.instantiate() as Node2D
+		var spec: HazardSpec = tuning.hazards[placement.spec]
+		hazard.set(&"spec", spec)
+		hazard.position = placement.position
+		expect_eq(hazard.position, placement.position, "placed where the plan said")
+		# Ten seconds of frames: a fixed object does not move while the water runs.
+		for frame: int in 600:
+			hazard.call(&"_physics_process", TICK)
+		expect_eq(hazard.position, placement.position, "still where the plan put it after ten seconds")
+		hazard.free()
 
 
 # --- effects ------------------------------------------------------------------------------------

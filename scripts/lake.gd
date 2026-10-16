@@ -10,14 +10,11 @@ extends Node2D
 ## still loose; a floating guy bobs and is tinted. When the boat comes within
 ## BoatTuning.pickup_radius of a floating guy the lake calls RunState.pickup(); whenever the boat
 ## touches the shore it calls RunState.shore_touched(), and puts the boat back at its start when
-## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are placed band by
-## band from Hazards.plan_band() at RunState.lake_seed under the Hazards node, on start and again
-## after each shore reset (the seed stays, so the same lake comes back), each scene handed its
-## HazardSpec. The lake counts each band's hazards still in the tree; once a band has lost them
-## all (a log frees itself past the shore line) it is refilled from the band's next generation,
-## but only while the band is off-screen up-screen of the boat, a whole view plus the camera's
-## lead above it, so a refill never pops into view. No rules and no randomness live here: the
-## plan, and what a band's next generation is, are Hazards'.
+## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are objects, fixed
+## where Hazards.plan() put them for RunState.lake_seed: they are placed under the Hazards node on
+## start and again after each shore reset (the seed stays, so the same lake comes back), each scene
+## handed its HazardSpec, and none moves or comes back once it is placed. No rules and no
+## randomness live here: the plan is Hazards'.
 
 const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
 const GUY_SIZE: float = 4.0
@@ -30,11 +27,6 @@ const BOB_HEIGHT: float = 1.0
 const BOB_PERIOD: float = 1.2
 ## Radius the island's placeholder polygon is drawn at; it is scaled to LakeTuning.island_radius.
 const ISLAND_ART_RADIUS: float = 60.0
-## The viewport's height in pixels (project settings, 640×360). An emptied band is refilled only
-## once its near edge is this plus BoatTuning.camera_lead up-screen of the boat: the camera sits
-## at the boat plus at most camera_lead of lead and sees half this above itself, so the band is
-## out of view with half a view to spare.
-const VIEW_HEIGHT: float = 360.0
 
 @onready var _boat: CharacterBody2D = $Catamaran
 @onready var _shore: StaticBody2D = $Shore
@@ -52,10 +44,6 @@ var _markers: Dictionary[int, Node2D] = {}
 ## One beer square per seat winding up, at the loose beer's position.
 var _loose_beers: Dictionary[int, Polygon2D] = {}
 var _bob_clock: float = 0.0
-## Per band with hazards: the generation spawned last, and how many of its hazards are still in
-## the tree. A band that spawned nothing is not kept, so it is never refilled.
-var _generation: Dictionary[int, int] = {}
-var _alive: Dictionary[int, int] = {}
 
 
 func _ready() -> void:
@@ -79,7 +67,6 @@ func _physics_process(delta: float) -> void:
 	var tuning: BoatTuning = RunState.paddling.tuning
 	for seat: int in RunState.rescue.within_reach(_boat.position, tuning.pickup_radius):
 		RunState.pickup(seat)
-	_refill_bands(tuning.camera_lead)
 	_show_swimmers(delta)
 	_show_loose_beers()
 
@@ -94,59 +81,23 @@ func _on_shore_reset_done() -> void:
 	_spawn_hazards()
 
 
-## Replaces the hazards with this attempt's as launched: every band at generation 0 of the plan
-## for RunState.lake_seed. The old ones leave the tree now, not at queue_free's deferred time,
-## so their tree_exited counts against the bands being dropped, not the new ones. Debug builds
-## print the seed, so a lake can be had again.
+## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed.
+## The old ones leave the tree at once, not at queue_free's deferred time, so only the new ones
+## are in it. Debug builds print the seed, so a lake can be had again.
 func _spawn_hazards() -> void:
 	for child: Node in _hazards.get_children():
 		_hazards.remove_child(child)
 		child.queue_free()
-	_generation.clear()
-	_alive.clear()
 	if OS.is_debug_build() or OS.has_feature("dev_tools"):
 		print("lake seed %d" % RunState.lake_seed)
-	for band: int in Hazards.band_count(TUNING):
-		_spawn_band(band, 0)
-
-
-## Spawns one band at one generation: each placement's scene instanced under Hazards at its
-## position with its spec, counted for the band until it leaves the tree. A band that spawns
-## nothing (no spec with a scene) is forgotten, so it is never refilled.
-func _spawn_band(band: int, generation: int) -> void:
-	_generation[band] = generation
-	_alive[band] = 0
-	for placement: Hazards.Placement in Hazards.plan_band(TUNING, RunState.lake_seed, band, generation):
+	for placement: Hazards.Placement in Hazards.plan(TUNING, RunState.lake_seed):
 		var spec: HazardSpec = TUNING.hazards[placement.spec]
 		if spec.scene == null:
 			continue
 		var hazard: Node2D = spec.scene.instantiate() as Node2D
 		hazard.position = placement.position
 		hazard.set(&"spec", spec)
-		hazard.tree_exited.connect(_on_hazard_gone.bind(band))
 		_hazards.add_child(hazard)
-		_alive[band] += 1
-	if _alive[band] == 0:
-		_generation.erase(band)
-		_alive.erase(band)
-
-
-## A hazard left the tree (a log past the shore line frees itself): one fewer in its band.
-func _on_hazard_gone(band: int) -> void:
-	if _alive.has(band):
-		_alive[band] -= 1
-
-
-## Refills every band that has lost all its hazards from its next generation, once the band's
-## near edge is a whole view plus the camera's lead up-screen of the boat, so the refill is out
-## of view. A band still in view, or behind the boat, waits.
-func _refill_bands(camera_lead: float) -> void:
-	for band: int in _alive.keys():
-		if _alive[band] > 0:
-			continue
-		var near_y: float = -Hazards.near_edge(TUNING, band)
-		if _boat.position.y - near_y >= VIEW_HEIGHT + camera_lead:
-			_spawn_band(band, _generation[band] + 1)
 
 
 ## Whether the boat slid against the shore last frame.
