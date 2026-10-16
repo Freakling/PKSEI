@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (0 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (1 placeholder) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -37,13 +37,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a note compares Getting Over It, A Difficult Game About Climbing, Jump King, Pogostuck and QWOP on setbacks, control, fairness and comedy, and ends with 5–8 principles plus a proposal for Q1, Q2 and Q4 for the human to decide in a design session (check)
 - GDD: Design Pillars
 
-### T3 · RunState autoload: the current attempt · in-progress 2026-10-16 · M · agent
+### T3 · RunState autoload: the current attempt · done · M · agent
 - Depends on: T2
 - Touches: scripts/autoload/run_state.gd (new), project.godot (autoload)
 - Done when: `reset()` restores the starting conditions: four guys, mildly tipsy, all aboard, zero progress, phase `launch` (test) · the check runs the autoload without errors (check)
 - GDD: Core Loop › Starting conditions
 
-### T4 · Paddling rule class: four charged strokes to thrust and turn, against the current · todo · M · agent
+### T4 · Paddling rule class: four charged strokes to thrust and turn, against the current · in-progress 2026-10-16 · M · agent
 - Depends on: T2
 - Touches: scripts/systems/paddling.gd (new), scripts/resources/boat_tuning.gd (new, +stroke_force_min, +stroke_force_max, +charge_time, +turn_torque, +steer_share_front, +steer_share_back, +current_speed), data/boat_tuning.tres (new), tests/test_paddling.gd (new)
 - Done when: stroke power grows with hold time from stroke_force_min to stroke_force_max over charge_time (test) · equal strokes on both sides give forward thrust and no turn (test) · a left-side stroke turns the boat right and a right-side stroke left (test) · a back-seat stroke turns the boat by steer_share_back and a front-seat stroke by steer_share_front, with the same forward push (test) · with no strokes the boat moves toward the shore at current_speed (test)

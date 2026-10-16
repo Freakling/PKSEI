@@ -5,6 +5,10 @@ config/name="PKSEI"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 run/main_scene="res://scenes/main.tscn"
 
+[autoload]
+
+RunState="*res://scripts/autoload/run_state.gd"
+
 [debug]
 gdscript/warnings/untyped_declaration=2
 

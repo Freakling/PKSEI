@@ -29,7 +29,7 @@ One row per system: what it owns and where its boundary is. Screens depend on sy
 
 | System | Owns | Where | Talks to |
 |---|---|---|---|
-<!-- No code yet. T3 (RunState), T4 (Paddling) and T5 (Drunkenness) add the first rows when they land. -->
+| `RunState` (autoload) | the current attempt: four `Guy`s (seat, drunkenness, stamina, aboard), progress from the shore, elapsed time, phase; `reset()` | `scripts/autoload/run_state.gd` | rule classes (paddling, drunkenness, stamina) update it; screens read it; emits `run_reset` |
 
 ## Project rules
 <!-- Only where this project differs from the Godot Director defaults, as agreed with the human. -->
