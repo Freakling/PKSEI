@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (1 placeholder) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (8 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -43,13 +43,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `reset()` restores the starting conditions: four guys, mildly tipsy, all aboard, zero progress, phase `launch` (test) · the check runs the autoload without errors (check)
 - GDD: Core Loop › Starting conditions
 
-### T4 · Paddling rule class: four charged strokes to thrust and turn, against the current · in-progress 2026-10-16 · M · agent
+### T4 · Paddling rule class: four charged strokes to thrust and turn, against the current · done · M · agent
 - Depends on: T2
 - Touches: scripts/systems/paddling.gd (new), scripts/resources/boat_tuning.gd (new, +stroke_force_min, +stroke_force_max, +charge_time, +turn_torque, +steer_share_front, +steer_share_back, +current_speed), data/boat_tuning.tres (new), tests/test_paddling.gd (new)
 - Done when: stroke power grows with hold time from stroke_force_min to stroke_force_max over charge_time (test) · equal strokes on both sides give forward thrust and no turn (test) · a left-side stroke turns the boat right and a right-side stroke left (test) · a back-seat stroke turns the boat by steer_share_back and a front-seat stroke by steer_share_front, with the same forward push (test) · with no strokes the boat moves toward the shore at current_speed (test)
 - GDD: Systems › Catamaran and paddling
 
-### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · todo · M · agent
+### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · in-progress 2026-10-16 · M · agent
 - Depends on: T2
 - Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +break_drink_multiplier, +water_drink_multiplier, +start_level, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
 - Done when: each guy's level rises by drink_rate per second from start_level, times break_drink_multiplier while he is on a break, and times water_drink_multiplier while he floats in the water (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)

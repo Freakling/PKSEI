@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoatTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/boat_tuning.gd" id="1_boat"]
+
+[resource]
+script = ExtResource("1_boat")
+stroke_force_min = 20.0
+stroke_force_max = 100.0
+charge_time = 1.0
+turn_torque = 1.0
+steer_share_front = 0.2
+steer_share_back = 0.8
+current_speed = 10.0

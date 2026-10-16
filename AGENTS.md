@@ -30,6 +30,7 @@ One row per system: what it owns and where its boundary is. Screens depend on sy
 | System | Owns | Where | Talks to |
 |---|---|---|---|
 | `RunState` (autoload) | the current attempt: four `Guy`s (seat, drunkenness, stamina, aboard), progress from the shore, elapsed time, phase; `reset()` | `scripts/autoload/run_state.gd` | rule classes (paddling, drunkenness, stamina) update it; screens read it; emits `run_reset` |
+| `Paddling` (rule class) | stroke events (seat, hold time) and a timestep into thrust, signed turn (+ = right) and drift toward the shore; seats enum matching RunState; tuning in `BoatTuning` (`scripts/resources/boat_tuning.gd`, `data/boat_tuning.tres`) | `scripts/systems/paddling.gd` | pure: receives `BoatTuning`, touches nothing; the boat scene (T6) applies its `Motion` |
 
 ## Project rules
 <!-- Only where this project differs from the Godot Director defaults, as agreed with the human. -->
