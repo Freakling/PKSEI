@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T41 · B4
+**Next IDs:** T42 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (53 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (60 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -172,10 +172,16 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: lake.gd sets `tuning` (and `spec`) on each spawned hazard that declares it, and no hazard script loads data/lake_tuning.tres itself (check)
 - GDD: —
 
-### T16 · Motorboat wake · todo · M · agent
+### T16 · Motorboat wake · done · M · agent
 - Depends on: T10
-- Touches: scripts/hazards/wake.gd (new), scenes/hazards/wake.tscn (new), data/lake_tuning.tres (+wake_speed, +wake_shove, +wake_water), data/boat_tuning.tres (+bail_rate)
+- Touches: scripts/systems/wake.gd (new), scripts/hazards/wake.gd (new), scenes/hazards/wake.tscn (new), data/hazards/wake.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+wake_trigger_radius, +wake_boat_speed, +wake_lead, +wake_speed, +wake_head_on_angle, +wake_shove, +wake_water), tests/test_wake.gd (new)
 - Done when: a motorboat crosses ahead, then a wave front follows it; a head-on crossing does nothing, a broadside one knocks a beer overboard on the high side, shoves the boat sideways by wake_shove and puts wake_water aboard, which the guy on that side bails at bail_rate while his seat gives no strokes (test) · the boat is seen before the wave (play)
+- GDD: Systems › Hazards
+
+### T41 · Event triggers are placed on the path, objects beside it · todo · M · agent
+- Depends on: T16
+- Touches: scripts/resources/hazard.gd (+is_event), scripts/systems/hazards.gd, data/hazards/wake.tres, data/hazards/geese.tres, tests/test_hazards.gd, scripts/lake.gd (debug marker for triggers)
+- Done when: a HazardSpec marked `is_event` is placed inside the corridor (on the path the boat must take) and objects outside it, so every event can fire (test) · in debug builds a small marker shows each trigger point with the F7 overlay (play)
 - GDD: Systems › Hazards
 
 ### T17 · Wind: gusts and harsh-wind stretches · todo · M · agent

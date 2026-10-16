@@ -41,5 +41,22 @@ extends Resource
 @export var geese_peck_range: float = 40.0 ## PLACEHOLDER
 ## Seconds after returning to the nest before the flock can hiss again.
 @export var geese_cooldown: float = 5.0 ## PLACEHOLDER
+## Motorboat wake (the Motorboat wake row; read by MotorboatWake, scripts/systems/wake.gd).
+## Pixels from a wake trigger within which the boat sets the event off.
+@export var wake_trigger_radius: float = 240.0 ## PLACEHOLDER
+## Pixels per second the motorboat crosses the lake at, from one edge of lake_width to the other.
+@export var wake_boat_speed: float = 320.0 ## PLACEHOLDER
+## Pixels ahead of the trigger (toward the island) the motorboat's course runs; the wave front
+## starts there once it has crossed.
+@export var wake_lead: float = 160.0 ## PLACEHOLDER
+## Pixels per second the wave front rolls toward the shore.
+@export var wake_speed: float = 60.0 ## PLACEHOLDER
+## Degrees either side of straight into or straight away from the wave within which the front
+## passes under the boat harmlessly; any other heading is broadside.
+@export var wake_head_on_angle: float = 30.0 ## PLACEHOLDER
+## Pixels per second a broadside hit shoves the boat sideways, away from the wave.
+@export var wake_shove: float = 120.0 ## PLACEHOLDER
+## Water a broadside hit puts aboard the high hull, bailed at BoatTuning.bail_rate per second.
+@export var wake_water: float = 3.0 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []
