@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T32 · B1
+**Next IDs:** T33 · B2
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (26 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (29 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -80,10 +80,23 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the camera stays centred on the boat and leads toward its direction of travel by camera_lead (play)
 - GDD: Presentation and Platforms
 
-### T9 · Rescue: beers overboard, guys after them, fewer paddlers until each is picked up, shore reset · in-progress 2026-10-16 · L · agent
+### T9 · Rescue: beers overboard, guys after them, fewer paddlers until each is picked up, shore reset · done · L · agent
 - Depends on: T6, T5
-- Touches: scripts/systems/rescue.gd (new), scripts/resources/boat_tuning.gd (+swim_speed), scripts/autoload/run_state.gd, scenes/catamaran.tscn, scenes/lake.tscn, tests/test_rescue.gd (new)
+- Touches: scripts/systems/rescue.gd (new), scripts/resources/boat_tuning.gd (+swim_speed, +beer_toss, +pickup_radius), data/boat_tuning.tres, scripts/autoload/run_state.gd, scripts/catamaran.gd, scripts/lake.gd, scenes/lake.tscn, project.godot (debug_beer_left F5, debug_beer_right F6, debug builds only), scripts/systems/drunkenness.gd (drinking flag), tests/test_rescue.gd (new), tests/test_run_state.gd
 - Done when: each beer overboard puts one more guy in the water (the one on the side the hazard hit), with no limit, and strokes from his seat do nothing until he is back (test) · the beer drifts at current_speed, the swimmer swims to it at swim_speed, then drifts with it (test) · the boat reaching a swimmer puts him aboard (test) · with nobody aboard the boat drifts at current_speed, and reaching the shore resets the attempt to the starting conditions (test) · the guy visibly jumps, swims, floats drinking, and climbs back in (play)
+- GDD: Systems › Setbacks
+
+### T32 · Stamina pauses for a guy in the water · todo · S · agent
+- Depends on: T9
+- Touches: scripts/autoload/run_state.gd, tests/test_run_state.gd
+- Done when: a guy in the water neither recovers stamina nor rolls random breaks, and comes back in the state he left (test)
+- GDD: Systems › Stamina
+
+### B1 · A stroke released just before the guy jumps still lands · todo · S · agent · low
+- Depends on: T9
+- Touches: scripts/autoload/run_state.gd, scripts/catamaran.gd, tests/test_run_state.gd
+- Repro: release a key, then knock that guy's beer over (F5/F6 in a debug build) before the pending stroke lands (same physics frame, or within a drunk guy's lag) → expected: no stroke / actual: the stroke lands from the water
+- Found in: T9
 - GDD: Systems › Setbacks
 
 ### T10 · Hazard framework: seeded bands, effects palette, and the floating log · todo · M · agent

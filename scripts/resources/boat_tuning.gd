@@ -23,6 +23,14 @@ extends Resource
 ## (GDD › Presentation and Platforms, Camera). Read by scripts/lake_camera.gd.
 @export var camera_lead: float = 80.0 ## PLACEHOLDER
 
+## Rescue (GDD › Systems › Setbacks; read by Rescue through RunState).
+## How fast a guy swims for his beer, in pixels per second through the water (on top of the current).
+@export var swim_speed: float = 30.0 ## PLACEHOLDER
+## Pixels a beer knocked overboard lands from the boat's centre, to the side the hazard hit.
+@export var beer_toss: float = 32.0 ## PLACEHOLDER
+## Pixels from the boat's centre within which a floating guy is picked up (the lake checks it).
+@export var pickup_radius: float = 20.0 ## PLACEHOLDER
+
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER
 ## Radians per second of yaw one unit of turn adds.

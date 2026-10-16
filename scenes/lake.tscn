@@ -20,6 +20,8 @@ script = ExtResource("1_lake")
 color = Color(0.2, 0.5, 0.8, 1)
 polygon = PackedVector2Array(-3000, -4000, 3000, -4000, 3000, 400, -3000, 400)
 
+[node name="Swimmers" type="Node2D" parent="Visual"]
+
 [node name="Shore" type="StaticBody2D" parent="."]
 
 [node name="Visual" type="Polygon2D" parent="Shore"]

@@ -6,8 +6,8 @@ extends RefCounted
 ## A plain rule class: it receives its DrinkTuning and never touches the scene tree or RunState.
 ## It holds one level per seat (seats equal RunState.Guy.seat and Paddling.Seat) on a 0..1 scale,
 ## 0 sober and 1 blind drunk. Each step the caller says how a guy spent it: paddling, on a stamina
-## break, or floating in the water with his beer. A swimmer without a beer (he fell in while
-## peeing) is stepped with both flags false, since he isn't drinking.
+## break, or floating in the water; and whether he is drinking at all, which a swimmer without a
+## beer (he fell in while peeing) isn't, so his level holds.
 ##
 ## Lag and misses: stroke_delay() and miss_chance() read the tuning's curves at a level; whether
 ## a stroke misses is rolled by misses() from the caller's RandomNumberGenerator, so tests seed it.
@@ -42,15 +42,18 @@ func set_level(seat: int, level: float) -> void:
 	levels[seat] = clampf(level, 0.0, 1.0)
 
 
-## Advances one guy's level by `delta` seconds of paddling, a break or floating, and returns it.
-func drink(seat: int, delta: float, on_break: bool, in_water: bool) -> float:
-	levels[seat] = advance(levels[seat], delta, on_break, in_water)
+## Advances one guy's level by `delta` seconds of paddling, a break or floating, and returns it;
+## with `drinking` false (a swimmer with no beer) it holds.
+func drink(seat: int, delta: float, on_break: bool, in_water: bool, drinking: bool = true) -> float:
+	levels[seat] = advance(levels[seat], delta, on_break, in_water, drinking)
 	return levels[seat]
 
 
 ## The level `delta` seconds after `level`: drink_rate per second, times the break or water
-## multiplier, capped at 1.
-func advance(level: float, delta: float, on_break: bool, in_water: bool) -> float:
+## multiplier, capped at 1; unchanged when he isn't `drinking`.
+func advance(level: float, delta: float, on_break: bool, in_water: bool, drinking: bool = true) -> float:
+	if not drinking:
+		return level
 	var gained: float = tuning.drink_rate * drink_multiplier(on_break, in_water) * delta
 	return clampf(level + gained, 0.0, 1.0)
 

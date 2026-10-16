@@ -5,13 +5,18 @@ extends CharacterBody2D
 ## Reads the four stroke keys, calls RunState.stroke() on each release and RunState.step() every
 ## physics frame, and moves by the Motion it gets back: thrust along its facing, turn as yaw, and
 ## the current's drift down-screen toward the shore (the island is up-screen). Damping stands in
-## for the water; the scales and damping are BoatTuning's, read through RunState.paddling. The guys' squares under `Visual` show the break telegraph from RunState's
-## Stamina state: a flashing marker during the warning, dimmed on the break. No rules live here.
+## for the water; the scales and damping are BoatTuning's, read through RunState.paddling. The
+## guys' squares under `Visual` show the break telegraph from RunState's Stamina state: a flashing
+## marker during the warning, dimmed on the break; a guy in the water has no square here (the
+## lake draws him). In debug builds F5/F6 knock a beer over on the left/right until hazards (T10)
+## do it. No rules live here.
 
 ## One input action per seat, in Paddling.Seat order (Q, A, I, K).
 const ACTIONS: Array[StringName] = [
 	&"stroke_left_front", &"stroke_left_back", &"stroke_right_front", &"stroke_right_back",
 ]
+## Debug-only: a beer overboard on each side (F5, F6), until hazards do it (T10).
+const DEBUG_BEER_ACTIONS: Array[StringName] = [&"debug_beer_left", &"debug_beer_right"]
 ## The guys' squares under Visual, in Paddling.Seat order.
 const GUY_PATHS: Array[String] = [
 	"Visual/LeftFront", "Visual/LeftBack", "Visual/RightFront", "Visual/RightBack",
@@ -39,6 +44,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_read_keys(delta)
+	if OS.is_debug_build() or OS.has_feature("dev_tools"):
+		_read_debug_keys()
 	var tuning: BoatTuning = RunState.paddling.tuning
 	var motion: Paddling.Motion = RunState.step(delta)
 	_stroke_velocity += Vector2.UP.rotated(rotation) * motion.thrust * tuning.thrust_scale
@@ -63,6 +70,28 @@ func _read_keys(delta: float) -> void:
 		if Input.is_action_just_released(action):
 			RunState.stroke(seat, _hold_times[seat])
 			_hold_times[seat] = 0.0
+
+
+## Debug-only (see DEBUG_BEER_ACTIONS): a beer overboard at the boat, on the key's side.
+func _read_debug_keys() -> void:
+	for side: int in DEBUG_BEER_ACTIONS.size():
+		if Input.is_action_just_pressed(DEBUG_BEER_ACTIONS[side]):
+			RunState.beer_overboard(side as Rescue.Hull, position)
+
+
+## Puts the boat at `at`, facing the island, still: the lake calls it after a shore reset.
+func place(at: Vector2) -> void:
+	position = at
+	rotation = 0.0
+	velocity = Vector2.ZERO
+	_stroke_velocity = Vector2.ZERO
+	_yaw_rate = 0.0
+	_hold_times.fill(0.0)
+
+
+## The colour of this guy's square, so the lake can draw him in the water in the same colour.
+func guy_colour(seat: int) -> Color:
+	return _guys[seat].color
 
 
 ## Visual only: a swimmer's square is hidden, a warned guy's marker flashes, a guy on a break is dim.

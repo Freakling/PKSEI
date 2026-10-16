@@ -3,10 +3,13 @@ extends Node
 ## GDD › Win and Loss).
 ##
 ## Holds the state and owns the rule classes that change it: four guys, progress along the
-## crossing, elapsed time and the phase, plus one Paddling, Drunkenness and Stamina (with their
-## data/*.tres tunings) and one RandomNumberGenerator for their rolls. The boat scene calls
+## crossing, elapsed time and the phase, plus one Paddling, Drunkenness, Stamina and Rescue (with
+## their data/*.tres tunings) and one RandomNumberGenerator for their rolls. The boat scene calls
 ## stroke() on each key release and step() once per physics frame, and applies the Motion it
-## gets back; the lake sets progress from the boat's position and calls arrive() at the island.
+## gets back; the lake sets progress from the boat's position, calls arrive() at the island,
+## pickup() when the boat reaches a floating guy and shore_touched() whenever the boat touches
+## the shore; RunState decides whether that is a shore reset. Hazards (T10) call
+## beer_overboard(); a guy who falls in without a beer (T13) goes through guy_overboard().
 ## Screens only read. Reads and writes no player data.
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
@@ -44,6 +47,9 @@ const STAMINA_FULL: float = 1.0
 
 ## Emitted after reset() has restored the starting conditions.
 signal run_reset()
+## Emitted after a shore reset: the boat under way touched the shore, and the attempt is back
+## at its starting conditions (after run_reset). The lake puts the boat back at its start.
+signal shore_reset_done()
 
 var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
@@ -54,6 +60,8 @@ var phase: Phase = Phase.LAUNCH
 var paddling: Paddling = Paddling.new(preload("res://data/boat_tuning.tres") as BoatTuning)
 var drunkenness: Drunkenness = Drunkenness.new(preload("res://data/drink_tuning.tres") as DrinkTuning)
 var stamina: Stamina = Stamina.new(preload("res://data/stamina_tuning.tres") as StaminaTuning)
+## The guys in the water and their beers; reads its tunables from paddling's BoatTuning.
+var rescue: Rescue = Rescue.new()
 ## Rolls the misses and the random breaks; tests seed it.
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -71,6 +79,7 @@ func _ready() -> void:
 func reset() -> void:
 	drunkenness.reset()
 	stamina.reset()
+	rescue.reset()
 	_pending.clear()
 	guys.clear()
 	for seat: int in GUY_COUNT:
@@ -79,6 +88,45 @@ func reset() -> void:
 	elapsed = 0.0
 	phase = Phase.LAUNCH
 	run_reset.emit()
+
+
+## The boat touched the shore. Once it is under way (CROSSING) that is the shore reset
+## (GDD › Setbacks, Shore reset), with or without anyone in the water: the attempt returns to
+## its starting conditions, then shore_reset_done tells the lake to replace the boat. While
+## launching the boat rests against the shore, so nothing happens; nor after the win.
+func shore_touched() -> void:
+	if phase != Phase.CROSSING:
+		return
+	reset()
+	shore_reset_done.emit()
+
+
+## A hazard knocked a beer over on `side` with the boat at `at_position`: the beer lands
+## beer_toss to that side, and the guy Rescue picks (that hull, front first) jumps in after it
+## and is no longer aboard. Returns his seat, or Rescue.NOBODY when nobody was aboard.
+func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
+	var toss: float = paddling.tuning.beer_toss
+	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
+	var seat: int = rescue.beer_overboard(side, _seats_aboard(), at_position, beer_at)
+	if seat != Rescue.NOBODY:
+		guys[seat].aboard = false
+	return seat
+
+
+## A guy fell in without a beer (GDD › Drunkenness: the pee antic, T13): he floats from the
+## start and doesn't drink. Nothing happens if he is already in the water.
+func guy_overboard(seat: int, at_position: Vector2) -> void:
+	if not guys[seat].aboard:
+		return
+	rescue.guy_overboard(seat, at_position)
+	guys[seat].aboard = false
+
+
+## The boat reached him: he is aboard again. Returns whether he brought his beer back.
+func pickup(seat: int) -> bool:
+	var had_beer: bool = rescue.pickup(seat)
+	guys[seat].aboard = true
+	return had_beer
 
 
 ## One key released: `seat` is the key's owner, `hold_time` how long it was held. The key drives
@@ -100,17 +148,23 @@ func stroke(seat: int, hold_time: float) -> void:
 	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
 
 
-## One physics frame: every guy drinks and recovers or breaks, the levels are mirrored into
-## the guys, elapsed advances, and the strokes that land this frame become the boat's Motion.
-## Nothing moves once the attempt is won.
+## One physics frame: the swimmers and their beers move with the current, every guy drinks
+## (a floating guy with his beer at the water rate; one without a beer not at all) and recovers
+## or breaks, the levels are mirrored into the guys, elapsed advances, and
+## the strokes that land this frame become the boat's Motion. With nobody aboard the Motion is
+## only the current's drift. Nothing moves once the attempt is won.
 func step(delta: float) -> Paddling.Motion:
 	if phase == Phase.WON:
 		return Paddling.Motion.new()
 	elapsed += delta
+	rescue.step(delta, Vector2.DOWN * paddling.tuning.current_speed, paddling.tuning)
 	for seat: int in GUY_COUNT:
 		var guy: Guy = guys[seat]
 		stamina.step(seat, delta, rng)
-		drunkenness.drink(seat, delta, stamina.on_break(seat), not guy.aboard)
+		var swimmer: Rescue.Swimmer = rescue.swimmer_of(seat)
+		var in_water: bool = swimmer != null
+		var drinking: bool = not in_water or swimmer.has_beer
+		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
 		guy.stamina = stamina.level_of(seat)
 		guy.drunkenness = drunkenness.level_of(seat)
 	return paddling.step(_land_strokes(delta), delta)
@@ -136,6 +190,14 @@ func all_aboard() -> bool:
 		if not guy.aboard:
 			return false
 	return true
+
+
+func _seats_aboard() -> Array[int]:
+	var seats: Array[int] = []
+	for guy: Guy in guys:
+		if guy.aboard:
+			seats.append(guy.seat)
+	return seats
 
 
 ## Counts the pending strokes down by `delta` and returns the ones that land now.
