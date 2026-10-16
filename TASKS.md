@@ -84,7 +84,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: —
 - Note: a flat-colour screen with a label; T6 replaces it with the grey-box lake.
 
-### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · todo · — · human
+### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · done · — · human
 - Depends on: —
 - Touches: export_presets.cfg, tools/ship.sh
 - Done when: Godot 4.7.2 web export templates are installed (Editor › Manage Export Templates) and `bash tools/ship.sh --export-only` produces build/web/index.html (check) · butler is installed and `butler login` done, `bash tools/ship.sh` pushes the html5 channel and the game runs at the itch.io page, with "This file will be played in the browser" set on that upload (play)
