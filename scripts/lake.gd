@@ -1,7 +1,8 @@
 extends Node2D
 ## Lake · the level (GDD › Systems › Lake and island): the shore strip at the bottom of the
 ## screen, open water, and the island up-screen. Places the island by LakeTuning.island_distance
-## and sizes it by LakeTuning.island_radius, reports the boat's progress to RunState every physics
+## and sizes it by LakeTuning.island_radius; sizes the water and the shore to the lake by
+## lake_width and island_distance. It reports the boat's progress to RunState every physics
 ## frame, and calls RunState.arrive() when the boat enters the island's area.
 ##
 ## The rescue (GDD › Systems › Setbacks) shows here: a beer bobbing away while its guy winds up
@@ -27,9 +28,16 @@ const BOB_HEIGHT: float = 1.0
 const BOB_PERIOD: float = 1.2
 ## Radius the island's placeholder polygon is drawn at; it is scaled to LakeTuning.island_radius.
 const ISLAND_ART_RADIUS: float = 60.0
+## Water and shore run this far past the lake's edges and past the island, in pixels, so the
+## camera (a 640 by 360 view) never sees the end of the water.
+const WATER_MARGIN: float = 400.0
+## The shore strip's depth in pixels, from the shore line (y = 0) down to the water's bottom edge.
+const SHORE_DEPTH: float = 400.0
 
 @onready var _boat: CharacterBody2D = $Catamaran
+@onready var _water: Polygon2D = $Visual/Water
 @onready var _shore: StaticBody2D = $Shore
+@onready var _shore_visual: Polygon2D = $Shore/Visual
 @onready var _island: Area2D = $Island
 @onready var _island_shape: CollisionShape2D = $Island/CollisionShape2D
 @onready var _island_visual: Node2D = $Island/Visual
@@ -52,6 +60,7 @@ func _ready() -> void:
 	if circle != null:
 		circle.radius = TUNING.island_radius
 	_island_visual.scale = Vector2.ONE * (TUNING.island_radius / ISLAND_ART_RADIUS)
+	_size_water()
 	_start = _boat.position
 	_edge_y = _island.position.y + TUNING.island_radius
 	RunState.shore_reset_done.connect(_on_shore_reset_done)
@@ -69,6 +78,15 @@ func _physics_process(delta: float) -> void:
 		RunState.pickup(seat)
 	_show_swimmers(delta)
 	_show_loose_beers()
+
+
+## Sizes the water and the shore to the lake: the water runs from the shore line up past the
+## island, and both run across lake_width plus WATER_MARGIN on each side of x = 0.
+func _size_water() -> void:
+	var half_width: float = TUNING.lake_width * 0.5 + WATER_MARGIN
+	var top: float = -(TUNING.island_distance + TUNING.island_radius + WATER_MARGIN)
+	_water.polygon = _rect(half_width, top, SHORE_DEPTH)
+	_shore_visual.polygon = _rect(half_width, 0.0, SHORE_DEPTH)
 
 
 func _on_island_body_entered(body: Node2D) -> void:
@@ -166,6 +184,14 @@ func _make_marker(seat: int) -> Node2D:
 	marker.add_child(beer)
 	_swimmers.add_child(marker)
 	return marker
+
+
+## A rectangle centred on x = 0, from top to bottom in lake pixels.
+static func _rect(half_width: float, top: float, bottom: float) -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(-half_width, top), Vector2(half_width, top),
+		Vector2(half_width, bottom), Vector2(-half_width, bottom),
+	])
 
 
 static func _square(half: float) -> PackedVector2Array:

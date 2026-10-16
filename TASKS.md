@@ -148,9 +148,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: no object is placed inside the corridor, whose centre moves by at most path_wander between neighbouring bands and stays inside the lake (test) · the corridor is continuous from the launch to the island (test)
 - GDD: Systems › Hazards
 
-### T38 · Size the lake for a five-minute clean crossing · todo · S · agent
+### T38 · Size the lake for a five-minute clean crossing · done · S · agent
 - Depends on: T37
-- Touches: data/lake_tuning.tres, data/boat_tuning.tres, scripts/lake.gd
+- Touches: data/lake_tuning.tres, scripts/lake.gd, scripts/resources/lake_tuning.gd
 - Done when: island_distance, lake_width and band_length are set so a steady full-power crossing with no incidents takes about five minutes at the current boat speed, and the water polygon covers the whole lake (check: the arithmetic quoted) · the crossing feels huge (play)
 - GDD: Core Loop › Session
 

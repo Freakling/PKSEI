@@ -10,12 +10,12 @@ point_count = 2
 
 [resource]
 script = ExtResource("1_lake")
-island_distance = 800.0
+island_distance = 24000.0
 island_radius = 60.0
 launch_margin = 96.0
-lake_width = 480.0
-band_length = 160.0
+lake_width = 1600.0
+band_length = 400.0
 density_curve = SubResource("Curve_density")
 path_width = 120.0
-path_wander = 160.0
+path_wander = 200.0
 hazards = [ExtResource("2_log")]

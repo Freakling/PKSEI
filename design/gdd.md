@@ -83,7 +83,7 @@ Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard
 There is no limit on how many guys can be in the water. The cascade is the point: one guy gone makes the crossing much harder, two makes it close to impossible, and with all four in the water nobody paddles and the boat drifts home. **Shore reset:** when the boat drifts all the way back to the shore, with or without anyone aboard, the attempt returns to its Starting conditions: everyone aboard, mildly tipsy, stamina full, progress zero. It is the bottom of the mountain, not a game over.
 
 ### Lake and island
-The lake is the level: a launch shore, open water with hazards and the current, and the island at the end. The first version is a single short lake.
+The lake is the level: a launch shore, a huge stretch of open water with hazards and the headwind, and the island on the far side. One lake.
 
 ## Characters and Units
 Four guys. They are the comedy: the bodies the player drives and the thing that goes wrong. Whether they differ from one another (weight, tolerance, personality) is undecided and can wait until the loop is playable.

@@ -8,7 +8,7 @@ extends Resource
 ## band's place in the lake (x: 0 the first band, 1 the island band) to hazards per band (y);
 ## DrinkTuning.ramp() builds a straight one.
 
-## Pixels from the shore line (y = 0) to the island's centre. The first lake is short.
+## Pixels from the shore line (y = 0) to the island's centre.
 @export var island_distance: float = 800.0 ## PLACEHOLDER
 ## The island's radius in pixels: its collision circle, and where the planned hazards stop.
 @export var island_radius: float = 60.0 ## PLACEHOLDER
