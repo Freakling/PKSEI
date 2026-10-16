@@ -25,7 +25,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `bash tools/check.sh` exits 0 after deleting `.godot/` (check)
 - GDD: —
 
-### T2 · Create the folder layout · todo · S · agent
+### T2 · Create the folder layout · done · S · agent
 - Depends on: —
 - Touches: scripts/autoload/.gitkeep (new), scripts/systems/.gitkeep (new), scripts/resources/.gitkeep (new), scripts/ui/.gitkeep (new), scenes/.gitkeep (new), data/.gitkeep (new), tests/.gitkeep (new)
 - Done when: every folder in AGENTS.md › Layout exists in git (check) · the check still passes (check)
