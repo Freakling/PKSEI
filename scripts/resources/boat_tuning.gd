@@ -3,7 +3,8 @@ extends Resource
 ## BoatTuning · the catamaran's tunables (GDD › Systems › Catamaran and paddling).
 ##
 ## Schema only. The instance the human tunes is data/boat_tuning.tres; Paddling reads the stroke
-## and current values, the boat scene (scripts/catamaran.gd) the motion ones.
+## and current values, RunState the loose-things drift, the boat scene (scripts/catamaran.gd) the
+## motion ones.
 
 ## Power of a tapped stroke (key held for no time).
 @export var stroke_force_min: float = 20.0 ## PLACEHOLDER
@@ -19,6 +20,9 @@ extends Resource
 @export var steer_share_back: float = 0.8 ## PLACEHOLDER
 ## Speed of the current toward the shore, in pixels per second (the boat applies it as velocity).
 @export var current_speed: float = 10.0 ## PLACEHOLDER
+## Pixels per second the wind carries beers and swimmers back toward the shore; larger than
+## current_speed (GDD › Systems › Catamaran and paddling). Read by RunState, passed to Rescue.
+@export var loose_drift_speed: float = 30.0 ## PLACEHOLDER
 ## Pixels the camera leads the boat by at full speed, toward its direction of travel
 ## (GDD › Presentation and Platforms, Camera). Read by scripts/lake_camera.gd.
 @export var camera_lead: float = 80.0 ## PLACEHOLDER

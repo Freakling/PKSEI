@@ -272,7 +272,8 @@ func stroke(seat: int, hold_time: float) -> void:
 
 
 ## One physics frame with the boat at `boat_at`: the loose beers, the swimmers and their beers
-## move with the current, and a guy whose wind-up ends this frame jumps in from `boat_at`, is no
+## move with the wind (loose_drift_speed, faster than the boat's current), and a guy whose
+## wind-up ends this frame jumps in from `boat_at`, is no
 ## longer aboard and loses his strokes still waiting to land (while launching, a guy washed up
 ## at the shoreline climbs back aboard with whatever beer he has); every guy drinks (a floating
 ## guy with his beer at the water rate; one without a beer not at all) and every guy aboard
@@ -290,8 +291,9 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	for side: int in Rescue.Hull.size():
 		if bailer_of(side as Rescue.Hull) != Rescue.NOBODY:
 			_water[side] = maxf(_water[side] - paddling.tuning.bail_rate * delta, 0.0)
-	var current: Vector2 = Vector2.DOWN * paddling.tuning.current_speed
-	for seat: int in rescue.step(delta, current, paddling.tuning, boat_at):
+	# Beers and swimmers drift faster than the boat (GDD › Systems › Catamaran and paddling).
+	var loose_drift: Vector2 = Vector2.DOWN * paddling.tuning.loose_drift_speed
+	for seat: int in rescue.step(delta, loose_drift, paddling.tuning, boat_at):
 		guys[seat].aboard = false
 		_drop_pending(seat)
 	if phase == Phase.LAUNCH:

@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (43 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (44 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -130,9 +130,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a beer overboard floats loose for jump_delay seconds before the chosen guy leaves the boat; his seat still paddles until he jumps (test) · the wind-up reads on the guy and the beer is visible drifting during the delay (play)
 - GDD: Systems › Setbacks
 
-### T35 · Loose things drift faster than the boat · todo · S · agent
+### T35 · Loose things drift faster than the boat · done · S · agent
 - Depends on: T9
-- Touches: scripts/resources/boat_tuning.gd (+loose_drift_speed), data/boat_tuning.tres, scripts/autoload/run_state.gd, scripts/systems/rescue.gd, tests/test_rescue.gd, tests/test_run_state.gd
+- Touches: scripts/resources/boat_tuning.gd (+loose_drift_speed), data/boat_tuning.tres, scripts/autoload/run_state.gd, tests/test_run_state.gd
 - Done when: beers and swimmers drift at loose_drift_speed while the boat drifts at current_speed, with loose_drift_speed the larger placeholder (test)
 - GDD: Systems › Catamaran and paddling · Systems › Setbacks
 

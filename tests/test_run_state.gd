@@ -15,6 +15,8 @@ extends "res://tools/test_case.gd"
 ## launch shore (LAUNCH); under way (CROSSING) he waits there for the boat or the shore reset.
 ## T34 · A beer overboard leaves its guy aboard and paddling for BoatTuning.jump_delay; step()
 ## takes him off the boat when he jumps, and drops his strokes still waiting then.
+## T35 · Beers and swimmers drift at BoatTuning.loose_drift_speed while the boat drifts at
+## current_speed (GDD › Systems › Catamaran and paddling).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -306,14 +308,35 @@ func test_each_beer_puts_one_more_guy_in_until_nobody_is_aboard_and_the_boat_sti
 	state.free()
 
 
-func test_the_swimmers_and_their_beers_move_with_the_current_each_step() -> void:
+## T35 · Beers and swimmers drift at loose_drift_speed, the boat at current_speed: a floating
+## swimmer moves by loose_drift_speed * delta per step while Motion.drift_to_shore is
+## current_speed * delta (GDD › Systems › Catamaran and paddling).
+func test_loose_things_drift_at_loose_drift_speed_and_the_boat_at_current_speed() -> void:
+	var loaded: BoatTuning = load("res://data/boat_tuning.tres") as BoatTuning
+	expect(loaded.loose_drift_speed > loaded.current_speed, "loose things drift faster than the boat")
+	var state: Node = sober_state()
+	state.paddling.tuning.beer_toss = 0.0
+	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
+	state.step(0.0, BOAT)
+	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
+	expect_eq(swimmer.state, Rescue.State.FLOATING, "he floats with his beer")
+	var before: Vector2 = swimmer.position
+	var delta: float = 0.5
+	var motion: RefCounted = state.step(delta, BOAT)
+	expect_near(swimmer.position.y - before.y, state.paddling.tuning.loose_drift_speed * delta, 0.0001, "the swimmer drifts at loose_drift_speed")
+	expect_near(swimmer.position.x, before.x, 0.0001, "straight down-screen")
+	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * delta, 0.0001, "the boat drifts at current_speed")
+	state.free()
+
+
+func test_the_swimmers_and_their_beers_move_with_the_loose_drift_each_step() -> void:
 	var state: Node = sober_state()
 	var seat: int = jump_now(state, Rescue.Hull.LEFT, BOAT)
 	state.step(1.0, BOAT)
 	var swimmer: RefCounted = state.rescue.swimmer_of(seat)
-	var current: Vector2 = Vector2.DOWN * state.paddling.tuning.current_speed
+	var loose: Vector2 = Vector2.DOWN * state.paddling.tuning.loose_drift_speed
 	var toss: float = state.paddling.tuning.beer_toss
-	expect_eq(swimmer.beer_position, BOAT + Vector2(-toss, 0.0) + current, "the beer drifted down-screen at current_speed")
+	expect_eq(swimmer.beer_position, BOAT + Vector2(-toss, 0.0) + loose, "the beer drifted down-screen at loose_drift_speed")
 	expect(swimmer.position.y > BOAT.y, "the swimmer drifted too")
 	expect(swimmer.position.x < BOAT.x, "and swam toward the beer")
 	state.free()
