@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (8 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (15 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -49,13 +49,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: stroke power grows with hold time from stroke_force_min to stroke_force_max over charge_time (test) · equal strokes on both sides give forward thrust and no turn (test) · a left-side stroke turns the boat right and a right-side stroke left (test) · a back-seat stroke turns the boat by steer_share_back and a front-seat stroke by steer_share_front, with the same forward push (test) · with no strokes the boat moves toward the shore at current_speed (test)
 - GDD: Systems › Catamaran and paddling
 
-### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · in-progress 2026-10-16 · M · agent
+### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · done · M · agent
 - Depends on: T2
 - Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +break_drink_multiplier, +water_drink_multiplier, +start_level, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
 - Done when: each guy's level rises by drink_rate per second from start_level, times break_drink_multiplier while he is on a break, and times water_drink_multiplier while he floats in the water (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)
 - GDD: Systems › Drunkenness
 
-### T14 · Stamina rule class: strokes burn it, breaks recover it, telegraphed · todo · M · agent
+### T14 · Stamina rule class: strokes burn it, breaks recover it, telegraphed · in-progress 2026-10-16 · M · agent
 - Depends on: T2
 - Touches: scripts/systems/stamina.gd (new), scripts/resources/stamina_tuning.gd (new, +burn_per_power, +recover_rate, +break_recover_rate, +break_duration, +break_warning, +random_break_curve), data/stamina_tuning.tres (new), tests/test_stamina.gd (new)
 - Done when: a stroke burns stamina in proportion to its power, and stamina recovers at recover_rate between strokes (test) · a burnt-out guy gets a warning of break_warning, then a break of break_duration during which his seat gives no strokes and stamina recovers at break_recover_rate (test) · the chance of a random break per second rises with burnt stamina per random_break_curve, from a seeded random, and gets the same warning (test)
@@ -63,7 +63,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T6 · Grey-box lake: catamaran, four guys and the island, set as main scene · todo · L · agent
 - Depends on: T3, T4, T14
-- Touches: scenes/lake.tscn (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions)
+- Touches: scenes/lake.tscn (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions), scripts/autoload/run_state.gd (reset() reads DrinkTuning.start_level and drops STARTING_DRUNKENNESS; wires Paddling, Drunkenness and Stamina)
 - Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · a guy's break warning and break read at a glance on him (play) · the HUD shows progress and each guy's drunkenness and stamina (play)
 - GDD: Systems › Lake and island · Win and Loss
 

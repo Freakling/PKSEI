@@ -31,6 +31,7 @@ One row per system: what it owns and where its boundary is. Screens depend on sy
 |---|---|---|---|
 | `RunState` (autoload) | the current attempt: four `Guy`s (seat, drunkenness, stamina, aboard), progress from the shore, elapsed time, phase; `reset()` | `scripts/autoload/run_state.gd` | rule classes (paddling, drunkenness, stamina) update it; screens read it; emits `run_reset` |
 | `Paddling` (rule class) | stroke events (seat, hold time) and a timestep into thrust, signed turn (+ = right) and drift toward the shore; seats enum matching RunState; tuning in `BoatTuning` (`scripts/resources/boat_tuning.gd`, `data/boat_tuning.tres`) | `scripts/systems/paddling.gd` | pure: receives `BoatTuning`, touches nothing; the boat scene (T6) applies its `Motion` |
+| `Drunkenness` (rule class) | one 0..1 level per seat; drink rate by state (break, water); stroke delay and miss chance per level (`Curve`s); seeded miss roll; scrambled-key mapping at `scramble_level` (fixed: same row, other hull); tuning in `DrinkTuning` (`scripts/resources/drink_tuning.gd`, `data/drink_tuning.tres`) | `scripts/systems/drunkenness.gd` | pure: receives `DrinkTuning` and an RNG; T6 wires it to `RunState` |
 
 ## Project rules
 <!-- Only where this project differs from the Godot Director defaults, as agreed with the human. -->
