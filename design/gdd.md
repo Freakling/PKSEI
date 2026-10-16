@@ -42,7 +42,7 @@ Two aluminium canoes lashed side by side, two guys per hull: a front and a back 
 **Seats matter.** All four seats give the same forward push, but steering comes mostly from the back: a back-seat stroke turns the boat about four times as much as a front-seat stroke (the shares are tunables, meant to feel like 80/20). The front seats are the engine and the back seats the rudder, so which drunk guy sits where matters. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
 
 ### Drunkenness
-Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, faster while a guy is on a stamina break, and by one beer each time a guy is rescued with the one he jumped in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
+Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, faster while a guy is on a stamina break, and faster still while a guy floats in the water drinking the beer he went in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
 - **Lag and misses.** A drunker guy's stroke lands later after the release, and sometimes not at all; the fumble shows in his animation. Delay and miss chance rise with the level.
 - **Antics.** At drunkenness thresholds a guy does something stupid, always with a visible wind-up and a recovery: he stands up and rocks the boat, drops his paddle and has to fish for it, or nods off as dead weight.
 - **Scrambled keys.** Only at the top tier, a guy's key stops being his: announced with a wind-up, shown on screen next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds.
@@ -55,7 +55,9 @@ Each guy has his own stamina. Every stroke burns some, more for a stronger strok
 Random hazards along the crossing. Their main effect is knocking a beer overboard, which starts a Rescue; which hazards exist, what else they do, and how they are randomised so they stay readable is open (Q3). Every hazard is visible before it matters, so the player can react (pillar "Hard but fair").
 
 ### Setbacks
-Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard knocks a beer overboard, and a guy jumps in after it. While he is in the water the boat has three paddlers, so it is slower and harder to steer, and the current drifts it back toward the shore. The player has to paddle to the guy and pick him up; there are no calm areas that stop the drift, so the water lost is however much the recovery cost. Back aboard, he drinks the beer on the spot, so every setback makes the next stretch harder. Whether more than one guy can be in the water at once, and whether the swimmer drifts too, is open (Q6).
+Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard knocks a beer overboard, and a guy jumps in after it. The beer drifts with the current; he swims to it, and once he has it he floats, drifting with the current and drinking it. He never swims back on his own. Every guy in the water is one paddler fewer, so the boat is slower and harder to steer while the current drifts it back toward the shore. The player has to paddle to each swimmer and pick him up; there are no calm areas that stop the drift, so the water lost is however much the recovery cost, and the longer he floats the drunker he comes back.
+
+There is no limit on how many guys can be in the water. The cascade is the point: one guy gone makes the crossing much harder, two makes it close to impossible, and with all four in the water nobody paddles and the boat drifts home. **Shore reset:** when the boat drifts all the way back to the shore, with or without anyone aboard, the attempt returns to its Starting conditions: everyone aboard, mildly tipsy, stamina full, progress zero. It is the bottom of the mountain, not a game over.
 
 ### Lake and island
 The lake is the level: a launch shore, open water with hazards and the current, and the island at the end. The first version is a single short lake.
@@ -70,7 +72,7 @@ None planned for the first version. The crossing is the whole game.
 A lake, four drunk guys, a catamaran made of two canoes, a crate of beer, and an island they have decided to reach. No further story.
 
 ## Difficulty and Scaling
-Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, from stamina breaks that get likelier the harder the player pushes, and from the hazards getting denser toward the island. Numbers for all of these are tunables.
+Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, from stamina breaks that get likelier the harder the player pushes, from the rescue cascade (each swimmer makes the next rescue harder), and from the hazards getting denser toward the island. Numbers for all of these are tunables.
 
 ## Win and Loss
 - **Win:** the catamaran reaches the island with all four guys aboard.
@@ -93,7 +95,8 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 | Catamaran | The two aluminium canoes lashed together; the boat. It never capsizes. |
 | Crossing | The run: shore to island on one lake. |
 | Current | The constant pull from the island toward the shore. The game's gravity. |
-| Rescue | The setback: a guy in the water after a beer, three paddlers, the boat drifting until he is picked up. |
+| Rescue | The setback: a guy in the water after a drifting beer, one paddler fewer, the boat drifting until he is picked up. |
+| Shore reset | The boat drifting all the way back to the shore: everyone aboard, sober-ish, full stamina, start over. |
 | Hazard | A random obstacle or event on the lake; its main effect is knocking a beer overboard. |
 | Antic | A telegraphed stupid thing a drunk guy does: stands up, drops his paddle, nods off. |
 | Stamina | A guy's reserve for strong strokes. Burnt by paddling, recovered by resting. |
@@ -104,6 +107,5 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 to design/decisions.md, and delete the question here. -->
 - **Q3 · Hazards.** Which hazards exist (logs, wakes, swimmers, geese, currents, wind), what they do besides knocking a beer overboard, and how they are randomised so they stay readable. Gates T10.
 - **Q5 · Local co-op.** One guy per player with stroke and lean keys: in the first version, or a later mode once single-player is proven?
-- **Q6 · Rescue details.** Can more than one guy be in the water at once, or does a second beer overboard wait? Does the swimmer drift with the current or tread water by the beer? Gates the edge cases in T9.
 
 **Next:** Q7

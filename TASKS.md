@@ -7,7 +7,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 ## Milestones
 | Milestone | Status |
 |---|---|
-| Design: pitch, pillars and core loop decided | 🟨 in progress (Q3, Q5, Q6 open) |
+| Design: pitch, pillars and core loop decided | 🟨 in progress (Q3, Q5 open) |
 | Foundation: project settings, first system with a test, check passing | 🟨 in progress (T1 done) |
 | Core loop playable (grey-box) | ⬜ |
 | Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (0 placeholders) |
@@ -49,8 +49,8 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · todo · M · agent
 - Depends on: T2
-- Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +break_drink_multiplier, +start_level, +beer_amount, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
-- Done when: each guy's level rises by drink_rate per second from start_level, times break_drink_multiplier while he is on a break, and by beer_amount per rescued beer (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)
+- Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +break_drink_multiplier, +water_drink_multiplier, +start_level, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
+- Done when: each guy's level rises by drink_rate per second from start_level, times break_drink_multiplier while he is on a break, and times water_drink_multiplier while he floats in the water (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)
 - GDD: Systems › Drunkenness
 
 ### T14 · Stamina rule class: strokes burn it, breaks recover it, telegraphed · todo · M · agent
@@ -71,10 +71,10 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the camera stays centred on the boat and leads toward its direction of travel by camera_lead (play)
 - GDD: Presentation and Platforms
 
-### T9 · Rescue: a beer overboard, a guy after it, three paddlers until he is picked up · todo · M · agent
+### T9 · Rescue: beers overboard, guys after them, fewer paddlers until each is picked up, shore reset · todo · L · agent
 - Depends on: T6, T5
-- Touches: scripts/systems/rescue.gd (new), scripts/autoload/run_state.gd, scenes/catamaran.tscn, tests/test_rescue.gd (new)
-- Done when: a beer overboard puts one guy in the water, and strokes from his seat do nothing until he is back (test) · the boat reaching the swimmer puts him aboard and raises his level by one beer (test) · the swimmer's position and a second beer overboard follow Q6, placeholders until it is answered (test) · the guy visibly jumps, swims and climbs back in (play)
+- Touches: scripts/systems/rescue.gd (new), scripts/resources/boat_tuning.gd (+swim_speed), scripts/autoload/run_state.gd, scenes/catamaran.tscn, scenes/lake.tscn, tests/test_rescue.gd (new)
+- Done when: each beer overboard puts one more guy in the water (the one on the side the hazard hit), with no limit, and strokes from his seat do nothing until he is back (test) · the beer drifts at current_speed, the swimmer swims to it at swim_speed, then drifts with it (test) · the boat reaching a swimmer puts him aboard (test) · with nobody aboard the boat drifts at current_speed, and reaching the shore resets the attempt to the starting conditions (test) · the guy visibly jumps, swims, floats drinking, and climbs back in (play)
 - GDD: Systems › Setbacks
 
 ### T10 · Hazard framework with one placeholder hazard · todo · M · agent
@@ -103,5 +103,5 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Presentation and Platforms
 
 ## Notes
-- Q6 (rescue edge cases) gates only T9's edge cases; Q3 (hazard set) gates T10's content, not its framework.
+- Q3 (hazard set) gates T10's content, not its framework.
 - T3, T4, T5 and T14 don't share files and can be built in any order after T2.
