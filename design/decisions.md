@@ -42,3 +42,8 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-16 · A missed stroke still burns stamina · why: he swung; drunk guys tire for nothing · from: conversation
 - 2026-10-16 · The shore reset fires on any shore contact once the boat has left (phase CROSSING), crew aboard or not; never at launch · why: the GDD's "with or without anyone aboard", made precise so the launch shore doesn't loop · from: conversation
 - 2026-10-17 · One lake seed per attempt: a shore reset replays the same hazard layout; a new seed only comes with a new attempt · why: the lake is learnable like Getting Over It's mountain; matches "one seed per attempt" · from: conversation
+- 2026-10-17 · The lake is a big static map the boat moves through; objects (logs, rocks, buoys, reeds, flock, dinghy, stripes) are fixed and events (wake, gust, harsh wind, jet-ski, geese charge) happen as the boat passes; only beers and swimmers drift · why: the human's first play: the world shouldn't move around the boat · from: conversation
+- 2026-10-17 · The boat drifts back slowly when nobody paddles; loose things drift noticeably faster (refines the constant current) · why: keeps the pressure and the rescue cascade without the boat feeling swept · from: conversation
+- 2026-10-17 · Placement stays seeded bands, with a guaranteed winding corridor no object is placed in · why: replayable and still always passable · from: conversation
+- 2026-10-17 · A clean crossing takes five minutes or more; the lake is huge · why: the human wants an epic crossing · from: conversation
+- 2026-10-17 · A beer overboard bobs away for two or three seconds while the guy visibly winds up before jumping · why: telegraphs the setback; the player can see it coming · from: conversation

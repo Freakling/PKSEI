@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T34 · B4
+**Next IDs:** T39 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -124,6 +124,36 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Found in: ad hoc (the human's first play)
 - GDD: Presentation and Platforms
 
+### T34 · A beer bobs away for a moment before a guy winds up and jumps · todo · M · agent
+- Depends on: T9
+- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+jump_delay), data/boat_tuning.tres, scripts/lake.gd, scripts/catamaran.gd, tests/test_rescue.gd
+- Done when: a beer overboard floats loose for jump_delay seconds before the chosen guy leaves the boat; his seat still paddles until he jumps (test) · the wind-up reads on the guy and the beer is visible drifting during the delay (play)
+- GDD: Systems › Setbacks
+
+### T35 · Loose things drift faster than the boat · todo · S · agent
+- Depends on: T9
+- Touches: scripts/resources/boat_tuning.gd (+loose_drift_speed), data/boat_tuning.tres, scripts/autoload/run_state.gd, scripts/systems/rescue.gd, tests/test_rescue.gd, tests/test_run_state.gd
+- Done when: beers and swimmers drift at loose_drift_speed while the boat drifts at current_speed, with loose_drift_speed the larger placeholder (test)
+- GDD: Systems › Catamaran and paddling · Systems › Setbacks
+
+### T36 · Objects are fixed: the log stops drifting, the band refill goes · todo · S · agent
+- Depends on: T33
+- Touches: scripts/hazards/log.gd, scripts/lake.gd, scripts/systems/hazards.gd, tests/test_hazards.gd
+- Done when: a log stays where it was planned (test) · no band refill code remains; plan_band stays for the path and future events (check) · the check passes (check)
+- GDD: Systems › Hazards
+
+### T37 · A guaranteed path winds through every band · todo · M · agent
+- Depends on: T36
+- Touches: scripts/systems/hazards.gd, scripts/resources/lake_tuning.gd (+path_width, +path_wander), data/lake_tuning.tres, tests/test_hazards.gd
+- Done when: no object is placed inside the corridor, whose centre moves by at most path_wander between neighbouring bands and stays inside the lake (test) · the corridor is continuous from the launch to the island (test)
+- GDD: Systems › Hazards
+
+### T38 · Size the lake for a five-minute clean crossing · todo · S · agent
+- Depends on: T37
+- Touches: data/lake_tuning.tres, data/boat_tuning.tres, scripts/lake.gd
+- Done when: island_distance, lake_width and band_length are set so a steady full-power crossing with no incidents takes about five minutes at the current boat speed, and the water polygon covers the whole lake (check: the arithmetic quoted) · the crossing feels huge (play)
+- GDD: Core Loop › Session
+
 ### T15 · Angry geese guarding goslings · todo · M · agent
 - Depends on: T10
 - Touches: scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/lake_tuning.tres (+geese_radius, +geese_attack_time)
@@ -234,7 +264,8 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Presentation and Platforms
 
 ## Notes
-- T15–T21 are independent of each other once T10 is done; T17 also needs T14 (stamina).
+- T34–T38 come from the human's first play (2026-10-17) and go before the hazard set: static objects, slow boat drift, the guaranteed path, a huge lake.
+- T15–T21 are independent of each other once T10 is done; T17 also needs T14 (stamina). Objects (T15 flock, T18 stripe, T19 rock, T20 line) are fixed; events (T15 charge, T16, T17, T21) happen as the boat passes.
 - Stages, as the human wants them: functionality (through T21), then pixel art and animation with telegraphs first (T22–T24), then audio with telegraphs first (T25–T26).
 - Player settings have no item yet; the human will decide what they should do later.
 - T3, T4, T5 and T14 don't share files and can be built in any order after T2.

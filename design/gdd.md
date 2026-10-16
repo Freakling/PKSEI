@@ -27,10 +27,10 @@ Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout.
 Charge-and-release paddling against a constant current. Each guy has one key: hold to wind up, release to stroke, with no on-screen meter; the power of the stroke comes from how long the key was held. The boat gains speed, turns and wobbles from the mix of who strokes when and how hard. Strong strokes burn a guy's stamina, so the player balances power against stamina for each guy. The player juggles four wind-ups at once while drunkenness makes each guy less reliable, and the current pulls the boat back toward the shore whenever the strokes stop.
 
 ### Session
-A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. Target crossing time for the first version: a few minutes for a competent player. The number is a tunable.
+A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. A clean crossing with no incidents at a steady pace takes five minutes or more; with incidents a real crossing is far longer. The lake length is a tunable.
 
 ### Run / campaign
-One lake, one crossing, from the launch shore to the island in the middle. Hazards are randomised per attempt. The first version is a short lake; it grows longer once the loop is proven.
+One lake, one crossing, from the launch shore to the island on the far side. The lake is huge; hazards are randomised per attempt along a guaranteed path.
 
 ### Starting conditions
 Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate of beer aboard. Drunkenness climbs with time, faster while a guy is on a break or floating in the water, so the first stretch teaches control before it degrades.
@@ -39,7 +39,7 @@ Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate o
 ### Catamaran and paddling
 Two aluminium canoes lashed side by side, two guys per hull: a front and a back seat on each. A stroke on the left turns the boat to the right and a stroke on the right turns it left, as with an outboard at the stern; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one. A strong stroke burns more stamina (see Stamina).
 
-**Seats matter.** All four seats give the same forward push, but steering comes mostly from the back: a back-seat stroke turns the boat about four times as much as a front-seat stroke (the shares are tunables, meant to feel like 80/20). The front seats are the engine and the back seats the rudder, so which drunk guy sits where matters. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
+**Seats matter.** All four seats give the same forward push, but steering comes mostly from the back: a back-seat stroke turns the boat about four times as much as a front-seat stroke (the shares are tunables, meant to feel like 80/20). The front seats are the engine and the back seats the rudder, so which drunk guy sits where matters. The catamaran never capsizes: a wobble is cosmetic. A constant headwind blows from the island toward the shore: a boat nobody paddles loses a little water, slowly, while loose things on the water, beers and swimmers, are carried back noticeably faster. The lake itself is a big static place the boat moves through; the shore and the island are fixed. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
 
 ### Drunkenness
 Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, faster while a guy is on a stamina break, and faster still while a guy floats in the water drinking the beer he went in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
@@ -52,7 +52,7 @@ Input is always honoured instantly in the animation; what the drunk body then do
 Each guy has his own stamina. Every stroke burns some, more for a stronger stroke, and it recovers while he rests between strokes. When a guy is burnt out he takes a **break**: he stops paddling for a few seconds, his seat gives no strokes, his stamina recovers quickly, and he cracks open beers faster, so his drunkenness climbs. He may also take a break before he is burnt out: the chance rises with how much stamina he has burnt. Every break, forced or random, is telegraphed on the guy a second or two in advance, so the player can see it coming and compensate with the other three (pillar "Hard but fair"). The player's trade-off is power now against a break later, four times over.
 
 ### Hazards
-Random hazards along the crossing. Every hazard is visible, or audibly announced, before it matters, so the player can react (pillar "Hard but fair"). Hazards combine: a wake or a gust can push the boat into a log or a flock, and that is intended.
+Random hazards along the crossing, of two kinds. **Objects** are fixed on the map: logs, rocks and buoys, reed beds, the geese's nesting flock, the fisherman's dinghy and line, cross-current stripes; the path winds around them and they never drift. **Events** happen as the boat passes: a motorboat's wake, a gust, a harsh-wind stretch, the jet-ski, the geese's charge. Only beers and swimmers drift. Every hazard is visible, or audibly announced, before it matters, so the player can react (pillar "Hard but fair"). Hazards combine: a wake or a gust can push the boat into a log or a flock, and that is intended.
 
 **Effects** a hazard can have, alone or combined:
 - *Beer overboard* on the side hit, which starts a Rescue (see Setbacks).
@@ -65,7 +65,7 @@ Random hazards along the crossing. Every hazard is visible, or audibly announced
 **The set** for the first lake:
 | Hazard | Telegraph | What it does |
 |---|---|---|
-| Floating log | Drifts toward you with the current | Bump: beer overboard on the side hit, and a shove that kills speed |
+| Log | Fixed on the water, visible from far off | Bump: beer overboard on the side hit, and a shove that kills speed |
 | Angry geese | A flock guarding goslings; hissing and raised wings as you near them | They charge the boat and peck: beer overboard. They give up and return after a few seconds |
 | Rock or buoy | Fixed, visible from far off | Hit: stop the boat, beer overboard |
 | Fishing line | A fisherman in a dinghy, the line visible across the water | Crossing it snags the paddle on that side for a few seconds |
@@ -75,10 +75,10 @@ Random hazards along the crossing. Every hazard is visible, or audibly announced
 | Cross-current stripe | A visible band of faster water | Pushes sideways or backward while the boat is in it |
 | Jet-ski idiot | Loud from offscreen, then crosses your path on a straight line at speed | Hit: a hard shove and a beer overboard |
 
-**Placement.** The lake is a series of bands from shore to island. Each band draws its hazards from a weighted list, with a density that rises toward the island, from one seed per attempt: reproducible for testing, different between attempts. The density curve and the weights are tunables.
+**Placement.** The lake is a series of bands from shore to island. Each band draws its hazards from a weighted list, with a density that rises toward the island, from one seed per attempt: reproducible for testing, different between attempts. A guaranteed path winds through every band: a corridor no object is placed in, whose position wanders from band to band so the crossing is never a straight line. The density curve, the weights, the corridor's width and how far it wanders are tunables.
 
 ### Setbacks
-Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard knocks a beer overboard, and a guy jumps in after it. The beer drifts with the current; he swims to it, and once he has it he floats, drifting with the current and drinking it. He never swims back on his own. Every guy in the water is one paddler fewer, so the boat is slower and harder to steer while the current drifts it back toward the shore. The player has to paddle to each swimmer and pick him up; there are no calm areas that stop the drift, so the water lost is however much the recovery cost, and the longer he floats the drunker he comes back.
+Nobody dies and the boat never capsizes. The setback is the **Rescue**: a hazard knocks a beer overboard; it bobs away for two or three seconds while a guy winds up, visibly, and then he jumps in after it. The beer drifts with the wind; he swims to it, and once he has it he floats, drifting with the current and drinking it. He never swims back on his own. Every guy in the water is one paddler fewer, so the boat is slower and harder to steer while the current drifts it back toward the shore. The player has to paddle to each swimmer and pick him up; there are no calm areas that stop the drift, so the water lost is however much the recovery cost, and the longer he floats the drunker he comes back.
 
 There is no limit on how many guys can be in the water. The cascade is the point: one guy gone makes the crossing much harder, two makes it close to impossible, and with all four in the water nobody paddles and the boat drifts home. **Shore reset:** when the boat drifts all the way back to the shore, with or without anyone aboard, the attempt returns to its Starting conditions: everyone aboard, mildly tipsy, stamina full, progress zero. It is the bottom of the mountain, not a game over.
 
