@@ -37,7 +37,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a note compares Getting Over It, A Difficult Game About Climbing, Jump King, Pogostuck and QWOP on setbacks, control, fairness and comedy, and ends with 5–8 principles plus a proposal for Q1, Q2 and Q4 for the human to decide in a design session (check)
 - GDD: Design Pillars
 
-### T3 · RunState autoload: the current attempt · todo · M · agent
+### T3 · RunState autoload: the current attempt · in-progress 2026-10-16 · M · agent
 - Depends on: T2
 - Touches: scripts/autoload/run_state.gd (new), project.godot (autoload)
 - Done when: `reset()` restores the starting conditions: four guys, mildly tipsy, all aboard, zero progress, phase `launch` (test) · the check runs the autoload without errors (check)
@@ -163,10 +163,10 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: reaching the island with all four aboard sets the phase to `won` (test) · the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
 - GDD: Win and Loss
 
-### T13 · Antics: stand up, drop the paddle, nod off, each with a wind-up · todo · M · agent
-- Depends on: T5, T6
-- Touches: scripts/systems/antics.gd (new), scripts/resources/drink_tuning.gd (+antic_thresholds, +windup_time), scenes/catamaran.tscn, tests/test_antics.gd (new)
-- Done when: crossing an antic threshold starts a wind-up of windup_time before the antic fires (test) · standing up rocks the boat, dropping the paddle disables that seat until it is fished out, nodding off makes the seat dead weight; each recovers on its own (test) · each antic reads at a glance on the guy (play)
+### T13 · Antics: stand up, drop the paddle, nod off, pee, each with a wind-up · todo · M · agent
+- Depends on: T5, T6, T9
+- Touches: scripts/systems/antics.gd (new), scripts/resources/drink_tuning.gd (+antic_thresholds, +windup_time, +pee_time, +pee_fall_shove), scenes/catamaran.tscn, tests/test_antics.gd (new)
+- Done when: crossing an antic threshold starts a wind-up of windup_time before the antic fires (test) · standing up rocks the boat, dropping the paddle disables that seat until it is fished out, nodding off makes the seat dead weight, peeing disables the seat for pee_time; each recovers on its own (test) · a shove of pee_fall_shove or more during a pee puts that guy in the water without a beer, handled by Rescue (test) · each antic reads at a glance on the guy (play)
 - GDD: Systems › Drunkenness
 
 ### T12 · Placeholder main scene so the web export has something to ship · done · S · agent
