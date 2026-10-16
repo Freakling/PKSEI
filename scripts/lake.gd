@@ -16,8 +16,16 @@ extends Node2D
 ## start and again after each shore reset (the seed stays, so the same lake comes back), each scene
 ## handed its HazardSpec, and none moves or comes back once it is placed. No rules and no
 ## randomness live here: the plan is Hazards'.
+##
+## Debug builds only (the gate is _debug_tools): PathOverlay under Visual draws the corridor the
+## hazards keep clear, for tuning path_width and path_wander by eye. It is filled when the hazards
+## are placed, so it follows the attempt's seed, and F7 (debug_toggle_path) shows or hides it. In
+## release builds it stays hidden and empty.
 
 const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
+const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
+## Points the debug overlay samples per band of the corridor (the band's edges are among them).
+const PATH_OVERLAY_STEPS: int = 4
 const GUY_SIZE: float = 4.0
 const BEER_SIZE: float = 1.5
 const BEER_COLOUR: Color = Color(0.95, 0.85, 0.2, 1.0)
@@ -43,6 +51,11 @@ const SHORE_DEPTH: float = 400.0
 @onready var _island_visual: Node2D = $Island/Visual
 @onready var _swimmers: Node2D = $Visual/Swimmers
 @onready var _hazards: Node2D = $Hazards
+@onready var _path_overlay: Line2D = $Visual/PathOverlay
+
+## Debug tools (the debug overlay, the F5/F6-style keys) exist only in debug builds and when the
+## dev_tools feature is set; release builds never read them.
+var _debug_tools: bool = OS.is_debug_build() or OS.has_feature("dev_tools")
 
 ## Where the boat starts (progress 0) and the island's near edge (progress 1).
 var _start: Vector2 = Vector2.ZERO
@@ -78,6 +91,8 @@ func _physics_process(delta: float) -> void:
 		RunState.pickup(seat)
 	_show_swimmers(delta)
 	_show_loose_beers()
+	if _debug_tools and Input.is_action_just_pressed(DEBUG_PATH_ACTION):
+		_path_overlay.visible = not _path_overlay.visible
 
 
 ## Sizes the water and the shore to the lake: the water runs from the shore line up past the
@@ -101,13 +116,14 @@ func _on_shore_reset_done() -> void:
 
 ## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed.
 ## The old ones leave the tree at once, not at queue_free's deferred time, so only the new ones
-## are in it. Debug builds print the seed, so a lake can be had again.
+## are in it. Debug builds print the seed, so a lake can be had again, and fill the path overlay.
 func _spawn_hazards() -> void:
 	for child: Node in _hazards.get_children():
 		_hazards.remove_child(child)
 		child.queue_free()
-	if OS.is_debug_build() or OS.has_feature("dev_tools"):
+	if _debug_tools:
 		print("lake seed %d" % RunState.lake_seed)
+		_fill_path_overlay()
 	for placement: Hazards.Placement in Hazards.plan(TUNING, RunState.lake_seed):
 		var spec: HazardSpec = TUNING.hazards[placement.spec]
 		if spec.scene == null:
@@ -116,6 +132,25 @@ func _spawn_hazards() -> void:
 		hazard.position = placement.position
 		hazard.set(&"spec", spec)
 		_hazards.add_child(hazard)
+
+
+## Debug only: the overlay's centre line, from the launch margin to the island's near edge, with
+## PATH_OVERLAY_STEPS points per band, so it bends where Hazards' corridor does. The corridor's
+## centres are drawn once for the attempt's seed (corridor_at, the same values corridor_x gives).
+## The overlay is drawn at path_width, so its strip is the corridor.
+func _fill_path_overlay() -> void:
+	var bands: int = Hazards.band_count(TUNING)
+	var points: PackedVector2Array = PackedVector2Array()
+	if bands > 0:
+		var centers: PackedFloat64Array = Hazards.path_centers(TUNING, RunState.lake_seed)
+		var launch: float = TUNING.launch_margin
+		var far: float = Hazards.far_edge(TUNING)
+		var steps: int = bands * PATH_OVERLAY_STEPS
+		for i: int in steps + 1:
+			var distance: float = lerpf(launch, far, float(i) / float(steps))
+			points.append(Vector2(Hazards.corridor_at(TUNING, centers, -distance), -distance))
+	_path_overlay.width = TUNING.path_width
+	_path_overlay.points = points
 
 
 ## Whether the boat slid against the shore last frame.

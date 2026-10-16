@@ -154,9 +154,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: island_distance, lake_width and band_length are set so a steady full-power crossing with no incidents takes about five minutes at the current boat speed, and the water polygon covers the whole lake (check: the arithmetic quoted) · the crossing feels huge (play)
 - GDD: Core Loop › Session
 
-### T39 · Debug overlay draws the guaranteed path · todo · S · agent
+### T39 · Debug overlay draws the guaranteed path · done · S · agent
 - Depends on: T37
-- Touches: scripts/lake.gd, scenes/lake.tscn
+- Touches: scripts/lake.gd, scenes/lake.tscn, project.godot (debug_toggle_path F7)
 - Done when: in debug builds (`OS.is_debug_build() or OS.has_feature("dev_tools")`) a translucent strip shows the corridor from `Hazards.corridor_x` so path_width and path_wander can be tuned by eye, toggled with a debug key (check: the gate is quoted) · the strip follows the planned path (play)
 - GDD: —
 

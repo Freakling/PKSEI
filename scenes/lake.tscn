@@ -20,6 +20,13 @@ script = ExtResource("1_lake")
 color = Color(0.2, 0.5, 0.8, 1)
 polygon = PackedVector2Array(-3000, -4000, 3000, -4000, 3000, 400, -3000, 400)
 
+[node name="PathOverlay" type="Line2D" parent="Visual"]
+visible = false
+default_color = Color(1, 1, 1, 0.25)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
 [node name="Swimmers" type="Node2D" parent="Visual"]
 
 [node name="Shore" type="StaticBody2D" parent="."]
