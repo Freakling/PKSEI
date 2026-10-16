@@ -104,7 +104,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each band draws hazards from the weighted list with density per density_curve, from one seed, so the same seed gives the same lake (test) · the effects beer overboard, shove, snag, stop, forced break and water aboard exist as calls on the boat and the guys (test) · a floating log drifts at current_speed, is visible before it reaches the boat, and a bump knocks a beer overboard on the side hit and shoves the boat (play)
 - GDD: Systems › Hazards
 
-### T33 · Hazards respawn: a lake that has drifted its hazards past the shore refills ahead of the boat · todo · M · agent
+### T33 · Hazards respawn: a lake that has drifted its hazards past the shore refills ahead of the boat · done · M · agent
 - Depends on: T10
 - Touches: scripts/systems/hazards.gd, scripts/lake.gd, tests/test_hazards.gd
 - Done when: a band whose hazards have all drifted past the shore is re-planned from the attempt's seed and a band counter, so a long crossing never meets an empty lake (test) · respawned hazards appear outside the camera's look-ahead (play)

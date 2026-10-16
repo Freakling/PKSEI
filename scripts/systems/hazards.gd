@@ -8,9 +8,15 @@ extends RefCounted
 ## (y = -(island_distance - island_radius)), split up-screen into bands of band_length pixels,
 ## the last one possibly shorter. Each band draws round(density_curve) hazards from
 ## tuning.hazards, in proportion to HazardSpec.weight among the specs whose first_band allows the
-## band, each at a position inside the band, all from one RandomNumberGenerator seeded with the
-## attempt's seed: the same seed and tuning always give the same lake. lake.gd instances the
-## placements under its Hazards node.
+## band, each at a position inside the band.
+##
+## The attempt's seed is the one truth. Each band is planned on its own
+## (plan_band(tuning, seed, band, generation)) from a RandomNumberGenerator seeded with
+## band_seed(): a hash of the seed, the band and the band's generation, so the same seed and
+## tuning always give the same lake, and a band whose hazards have all drifted past the shore can
+## be re-planned at the next generation without touching the others. plan() is the whole lake at
+## generation 0, band by band. lake.gd instances the placements under its Hazards node and
+## refills an emptied band from its next generation.
 ##
 ## The effects palette (GDD › Systems › Hazards, Effects) lives on RunState, which the boat and
 ## the guys answer to; a hazard scene calls beer_overboard(hull, at), shove(impulse),
@@ -47,6 +53,12 @@ static func band_count(tuning: LakeTuning) -> int:
 	return ceili(span(tuning) / tuning.band_length)
 
 
+## Distance from the shore line to a band's near edge (the one toward the shore): the launch
+## margin for the first band, a band_length further for each band after it.
+static func near_edge(tuning: LakeTuning, band: int) -> float:
+	return tuning.launch_margin + band * tuning.band_length
+
+
 ## Hazards a band draws: density_curve sampled at the band's place in the lake (0 the first
 ## band, 1 the island band), rounded, never negative.
 static func density(tuning: LakeTuning, band: int) -> int:
@@ -67,18 +79,37 @@ static func allowed(tuning: LakeTuning, band: int) -> Array[int]:
 	return specs
 
 
-## Every hazard of the lake for this seed, band by band from the launch margin.
+## The RNG seed a band's plan is drawn from: a hash of the attempt's seed, the band and its
+## generation (0 the lake as launched, one more each time the band is refilled), so each triple
+## has its own reproducible draw.
+static func band_seed(lake_seed: int, band: int, generation: int) -> int:
+	return hash("%d:%d:%d" % [lake_seed, band, generation])
+
+
+## Every hazard of the lake for this seed as launched: each band's generation 0, band by band
+## from the launch margin.
 static func plan(tuning: LakeTuning, lake_seed: int) -> Array[Placement]:
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = lake_seed
 	var placements: Array[Placement] = []
 	for band: int in band_count(tuning):
-		var specs: Array[int] = allowed(tuning, band)
-		if specs.is_empty():
-			continue
-		for i: int in density(tuning, band):
-			var spec: int = draw(tuning, specs, rng)
-			placements.append(Placement.new(spec, band, place(tuning, band, rng)))
+		placements.append_array(plan_band(tuning, lake_seed, band, 0))
+	return placements
+
+
+## One band's hazards at one generation: its density's worth of weighted draws, each placed
+## inside the band, from an RNG seeded with band_seed(). Nothing for a band outside the planned
+## water, or one no spec may be drawn in.
+static func plan_band(tuning: LakeTuning, lake_seed: int, band: int, generation: int) -> Array[Placement]:
+	var placements: Array[Placement] = []
+	if band < 0 or band >= band_count(tuning):
+		return placements
+	var specs: Array[int] = allowed(tuning, band)
+	if specs.is_empty():
+		return placements
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = band_seed(lake_seed, band, generation)
+	for i: int in density(tuning, band):
+		var spec: int = draw(tuning, specs, rng)
+		placements.append(Placement.new(spec, band, place(tuning, band, rng)))
 	return placements
 
 
@@ -100,6 +131,6 @@ static func draw(tuning: LakeTuning, specs: Array[int], rng: RandomNumberGenerat
 ## ending at the island's near edge.
 static func place(tuning: LakeTuning, band: int, rng: RandomNumberGenerator) -> Vector2:
 	var half: float = tuning.lake_width * 0.5
-	var near: float = tuning.launch_margin + band * tuning.band_length
+	var near: float = near_edge(tuning, band)
 	var far: float = minf(near + tuning.band_length, far_edge(tuning))
 	return Vector2(rng.randf_range(-half, half), -rng.randf_range(near, far))

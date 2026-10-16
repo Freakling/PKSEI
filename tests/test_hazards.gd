@@ -4,7 +4,9 @@ extends "res://tools/test_case.gd"
 ## the effects palette (beer overboard, shove, snag, stop, forced break, water aboard) exists as
 ## calls on RunState that the boat and the guys answer to (GDD › Systems › Hazards, Effects).
 ## Hazards are planned only between the launch margin and the island's near edge, and the seed
-## is drawn per attempt (new_attempt), not per shore reset.
+## is drawn per attempt (new_attempt), not per shore reset. T33: each band is planned on its own
+## from (seed, band, generation), so an emptied band refills from its next generation (plan() is
+## generation 0 band by band) and stays inside its band.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -149,6 +151,69 @@ func test_weights_set_the_share_of_the_draws_over_many_seeds() -> void:
 				heavy += 1
 	var share: float = float(heavy) / float(total)
 	expect(share > 0.68 and share < 0.82, "weight 3 against 1 draws about three in four (got %.2f)" % share)
+
+
+func same_placements(a: Array[Hazards.Placement], b: Array[Hazards.Placement], what: String) -> void:
+	expect_eq(b.size(), a.size(), "%s: the same number of hazards" % what)
+	for i: int in mini(a.size(), b.size()):
+		expect_eq(b[i].spec, a[i].spec, "%s: hazard %d is the same kind" % [what, i])
+		expect_eq(b[i].band, a[i].band, "%s: hazard %d is in the same band" % [what, i])
+		expect_eq(b[i].position, a[i].position, "%s: hazard %d is in the same place" % [what, i])
+
+
+func test_a_band_plans_the_same_for_the_same_seed_band_and_generation() -> void:
+	for generation: int in 3:
+		var first: Array[Hazards.Placement] = Hazards.plan_band(tuning, 42, 1, generation)
+		expect_eq(first.size(), DENSITIES[1], "generation %d of band 1 draws its density" % generation)
+		same_placements(first, Hazards.plan_band(tuning, 42, 1, generation), "generation %d again" % generation)
+	expect_eq(Hazards.band_seed(42, 1, 2), Hazards.band_seed(42, 1, 2), "the band's seed is a function of the three")
+	expect_ne(Hazards.band_seed(42, 1, 2), Hazards.band_seed(43, 1, 2), "another lake seed, another band seed")
+	expect_ne(Hazards.band_seed(42, 1, 2), Hazards.band_seed(42, 2, 2), "another band, another band seed")
+	expect_ne(Hazards.band_seed(42, 1, 2), Hazards.band_seed(42, 1, 3), "another generation, another band seed")
+
+
+func test_a_bands_next_generation_is_another_draw() -> void:
+	var differs: int = 0
+	for lake_seed: int in 10:
+		var launched: Array[Hazards.Placement] = Hazards.plan_band(tuning, lake_seed, 1, 0)
+		var refilled: Array[Hazards.Placement] = Hazards.plan_band(tuning, lake_seed, 1, 1)
+		expect_eq(refilled.size(), launched.size(), "seed %d: a refill has the band's density again" % lake_seed)
+		for i: int in mini(launched.size(), refilled.size()):
+			if refilled[i].position != launched[i].position:
+				differs += 1
+	expect(differs > 0, "the refilled band is not the launched one again")
+	expect_ne(Hazards.plan_band(tuning, 5, 3, 1)[0].position, Hazards.plan_band(tuning, 5, 3, 2)[0].position, "and the generation after differs too")
+
+
+func test_the_lake_as_launched_is_each_bands_generation_zero_band_by_band() -> void:
+	var whole: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
+	var by_band: Array[Hazards.Placement] = []
+	for band: int in Hazards.band_count(tuning):
+		by_band.append_array(Hazards.plan_band(tuning, 42, band, 0))
+	expect_eq(whole.size(), 11, "the whole lake")
+	same_placements(whole, by_band, "band by band")
+	var other_band: Array[Hazards.Placement] = Hazards.plan_band(tuning, 42, 2, 0)
+	expect_ne(other_band[0].position, by_band[1].position, "each band has its own draw, not a shared stream")
+
+
+func test_a_refilled_band_stays_inside_its_band_and_draws_what_the_band_allows() -> void:
+	for lake_seed: int in 10:
+		for band: int in DENSITIES.size():
+			for generation: int in 4:
+				var placements: Array[Hazards.Placement] = Hazards.plan_band(tuning, lake_seed, band, generation)
+				expect_eq(placements.size(), DENSITIES[band], "seed %d band %d generation %d: the band's density" % [lake_seed, band, generation])
+				var near: float = -Hazards.near_edge(tuning, band)
+				var far: float = -minf(MARGIN + (band + 1) * BAND, FAR_EDGE)
+				for placement: Hazards.Placement in placements:
+					expect_eq(placement.band, band, "seed %d: placed in the band asked for" % lake_seed)
+					expect(placement.position.y <= near and placement.position.y >= far, "seed %d band %d generation %d: inside the band" % [lake_seed, band, generation])
+					expect(absf(placement.position.x) <= WIDTH * 0.5, "seed %d: within the lake's width" % lake_seed)
+					expect(Hazards.allowed(tuning, band).has(placement.spec), "seed %d band %d: a kind the band allows" % [lake_seed, band])
+	expect_near(Hazards.near_edge(tuning, 0), MARGIN, 0.0001, "the first band starts at the launch margin")
+	expect_near(Hazards.near_edge(tuning, 3), MARGIN + 3.0 * BAND, 0.0001, "three bands further for band 3")
+	expect_eq(Hazards.plan_band(tuning, 1, 5, 0).size(), 0, "a band past the island plans nothing")
+	expect_eq(Hazards.plan_band(tuning, 1, -1, 0).size(), 0, "nor one before the shore")
+	expect_eq(Hazards.plan_band(tuning, 1, 0, 7).size(), DENSITIES[0], "the first band refills like any other")
 
 
 # --- effects ------------------------------------------------------------------------------------
