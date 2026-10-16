@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T34 · B3
+**Next IDs:** T34 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -116,6 +116,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Repro: knock a beer over while the boat rests at the launch shore (a band-1 log drifting into it, or F5) → the swimmer drifts down through the shoreline where the boat can't reach him; shore_touched() does nothing in LAUNCH → expected: he washes up and climbs back aboard, or the shore stops him within reach / actual: stuck until the player paddles off and comes back for a shore reset
 - Found in: T10 review
 - GDD: Systems › Setbacks
+
+### B3 · The camera never followed the boat · done · S · agent · high
+- Depends on: T8
+- Touches: scenes/lake.tscn
+- Repro: paddle away from the shore → expected: the view follows the boat / actual: the view stays on the launch shore. The camera's exported `boat` node was null because the hand-written scene lacked the `node_paths` marker Godot needs to resolve an exported node.
+- Found in: ad hoc (the human's first play)
+- GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · todo · M · agent
 - Depends on: T10

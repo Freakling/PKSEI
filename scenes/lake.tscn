@@ -47,7 +47,7 @@ shape = SubResource("CircleShape2D_island")
 [node name="Catamaran" parent="." instance=ExtResource("2_boat")]
 position = Vector2(0, -48)
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Camera" type="Camera2D" parent="." node_paths=PackedStringArray("boat")]
 script = ExtResource("4_camera")
 boat = NodePath("../Catamaran")
 
