@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T30 · B1
+**Next IDs:** T32 · B1
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (21 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (25 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -61,11 +61,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a stroke burns stamina in proportion to its power, and stamina recovers at recover_rate between strokes (test) · a burnt-out guy gets a warning of break_warning, then a break of break_duration during which his seat gives no strokes and stamina recovers at break_recover_rate (test) · the chance of a random break per second rises with burnt stamina per random_break_curve, from a seeded random, and gets the same warning (test)
 - GDD: Systems › Stamina
 
-### T6 · Grey-box lake: catamaran, four guys and the island, set as main scene · in-progress 2026-10-16 · L · agent
+### T6 · Grey-box lake: catamaran, four guys and the island, set as main scene · done · L · agent
 - Depends on: T3, T4, T14
-- Touches: scenes/lake.tscn (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions), scripts/autoload/run_state.gd (reset() reads DrinkTuning.start_level and drops STARTING_DRUNKENNESS; wires Paddling, Drunkenness and Stamina)
+- Touches: scenes/lake.tscn (new), scripts/lake.gd (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions), scripts/autoload/run_state.gd (reset() reads DrinkTuning.start_level and drops STARTING_DRUNKENNESS; wires Paddling, Drunkenness and Stamina), tests/test_run_state.gd, scripts/resources/boat_tuning.gd (+thrust_scale, +turn_scale, +linear_damping, +angular_damping), data/boat_tuning.tres, scripts/resources/lake_tuning.gd (new, +island_distance), data/lake_tuning.tres (new)
 - Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · a guy's break warning and break read at a glance on him (play) · the HUD shows progress and each guy's drunkenness and stamina (play)
 - GDD: Systems › Lake and island · Win and Loss
+
+### T31 · Timing-bar strokes at the top drunkenness tier replace the scrambled keys · todo · M · agent
+- Depends on: T6
+- Touches: scripts/systems/drunkenness.gd (replace scrambled/key_target/scramble_target with the timing bar), scripts/resources/drink_tuning.gd (+bar_period, +green_width; scramble_level renamed bar_level), data/drink_tuning.tres, scripts/autoload/run_state.gd (stroke: outside the green zone the stroke is backwards), scripts/catamaran.gd (the bar next to the guy while his key is held), tests/test_drunkenness.gd, tests/test_run_state.gd
+- Done when: at bar_level and above, the bar position for a hold time sweeps back and forth with bar_period, and a release inside green_width of the centre counts as a hit (test) · a hit gives the normal stroke, a miss a backwards stroke of the same power, and both burn stamina (test) · the bar is visible next to the guy while his key is held, and the tier is announced with a wind-up (play) · nothing references the old scrambled-key mapping (check)
+- GDD: Systems › Drunkenness
+- Note: until this lands, T6's interim behaviour at the top tier is that the neighbour across the hulls strokes instead.
 
 ### T8 · Camera follows the boat with look-ahead · todo · S · agent
 - Depends on: T6
@@ -81,7 +88,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T10 · Hazard framework: seeded bands, effects palette, and the floating log · todo · M · agent
 - Depends on: T6, T9
-- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +weight, +first_band), scripts/resources/lake_tuning.gd (new, +band_length, +density_curve), data/lake_tuning.tres (new), scripts/hazards/log.gd (new), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
+- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +weight, +first_band), scripts/resources/lake_tuning.gd (+band_length, +density_curve), data/lake_tuning.tres, scripts/hazards/log.gd (new), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
 - Done when: each band draws hazards from the weighted list with density per density_curve, from one seed, so the same seed gives the same lake (test) · the effects beer overboard, shove, snag, stop, forced break and water aboard exist as calls on the boat and the guys (test) · a floating log drifts at current_speed, is visible before it reaches the boat, and a bump knocks a beer overboard on the side hit and shoves the boat (play)
 - GDD: Systems › Hazards
 
@@ -133,7 +140,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the `Visual` nodes show sprites drawn for the 640×360 canvas, nearest-filtered, in place of the primitives (play) · the human signs off the look (play)
 - GDD: Presentation and Platforms
 
-### T23 · Guy animations: stroke, fumble, break warning, antic wind-ups, scrambled-key tell · todo · M · agent
+### T23 · Guy animations: stroke, fumble, break warning, antic wind-ups, timing-bar tell · todo · M · agent
 - Depends on: T22, T13, T14
 - Touches: assets/sprites/guys/ (new), scenes/catamaran.tscn, scripts/catamaran.gd
 - Done when: every telegraph in GDD › Drunkenness and GDD › Stamina has its own animation that starts at the warning and ends at the effect (play) · a late or missed stroke is visible as a fumble (play)
@@ -163,10 +170,16 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: one `ramp()` helper exists and both tunings use it, with the existing tests still passing (check)
 - GDD: —
 
+### T30 · BoatTuning.current_speed doc says progress units; the boat applies pixels · done · S · agent
+- Depends on: T6
+- Touches: scripts/resources/boat_tuning.gd
+- Done when: the field's doc comment says pixels per second, matching how catamaran.gd applies drift (check)
+- GDD: —
+
 ### T28 · Win cutscene: the boys land, make camp and drink · todo · M · agent
 - Depends on: T6
-- Touches: scenes/win.tscn (new), scripts/win_cutscene.gd (new), scripts/autoload/run_state.gd (phase `won`)
-- Done when: reaching the island with all four aboard sets the phase to `won` (test) · the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
+- Touches: scenes/win.tscn (new), scripts/win_cutscene.gd (new), scenes/lake.tscn (hand-off on `WON`)
+- Done when: when RunState's phase becomes `WON` (already set by `arrive()`, T6) the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
 - GDD: Win and Loss
 
 ### T13 · Antics: stand up, drop the paddle, nod off, pee, each with a wind-up · todo · M · agent

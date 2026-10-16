@@ -16,8 +16,9 @@ Instructions for AI assistants working on this game. The workflow is Godot Direc
 | `scripts/systems/` | game-rule classes (`RefCounted`) |
 | `scripts/resources/` | Resource schemas for tunable data |
 | `scripts/ui/` | screen scripts (display only; checked by tools/check.cfg) |
+| `scripts/` (root) | scene scripts: `catamaran.gd` (input, motion, telegraphs), `lake.gd` (island arrival, progress; lake values in `LakeTuning`, `scripts/resources/lake_tuning.gd`, `data/lake_tuning.tres`) |
 | `scripts/hazards/` | hazard scene scripts (one per hazard; rules in `scripts/systems/hazards.gd`) |
-| `scenes/` | scenes; `scenes/hazards/` one scene per hazard |
+| `scenes/` | scenes: `main.tscn` → `lake.tscn` (water, shore, island, HUD) → `catamaran.tscn` (boat, guys, camera); `scenes/hazards/` one scene per hazard |
 | `data/` | `.tres` content: the values the human tunes |
 | `tests/` | rule tests (`test_*.gd`) |
 | `assets/sprites/`, `assets/audio/` | pixel art and sound (agent-made, human-reviewed; see Project rules) |
@@ -29,10 +30,10 @@ One row per system: what it owns and where its boundary is. Screens depend on sy
 
 | System | Owns | Where | Talks to |
 |---|---|---|---|
-| `RunState` (autoload) | the current attempt: four `Guy`s (seat, drunkenness, stamina, aboard), progress from the shore, elapsed time, phase; `reset()` | `scripts/autoload/run_state.gd` | rule classes (paddling, drunkenness, stamina) update it; screens read it; emits `run_reset` |
-| `Paddling` (rule class) | stroke events (seat, hold time) and a timestep into thrust, signed turn (+ = right) and drift toward the shore; seats enum matching RunState; tuning in `BoatTuning` (`scripts/resources/boat_tuning.gd`, `data/boat_tuning.tres`) | `scripts/systems/paddling.gd` | pure: receives `BoatTuning`, touches nothing; the boat scene (T6) applies its `Motion` |
-| `Drunkenness` (rule class) | one 0..1 level per seat; drink rate by state (break, water); stroke delay and miss chance per level (`Curve`s); seeded miss roll; scrambled-key mapping at `scramble_level` (fixed: same row, other hull); tuning in `DrinkTuning` (`scripts/resources/drink_tuning.gd`, `data/drink_tuning.tres`) | `scripts/systems/drunkenness.gd` | pure: receives `DrinkTuning` and an RNG; T6 wires it to `RunState` |
-| `Stamina` (rule class) | one 0..1 level per seat; burn per stroke power, recovery; per-seat PADDLING → WARNING → BREAK machine (`can_stroke`, `time_left`, `call_break` for hazards); random breaks from the caller's RNG; tuning in `StaminaTuning` (`scripts/resources/stamina_tuning.gd`, `data/stamina_tuning.tres`) | `scripts/systems/stamina.gd` | pure: receives `StaminaTuning` and an RNG; T6 wires it to `RunState` |
+| `RunState` (autoload) | the current attempt: four `Guy`s (seat, drunkenness, stamina, aboard), progress 0..1 from shore to island, elapsed time, phase LAUNCH → CROSSING → WON; owns the `Paddling`, `Drunkenness` and `Stamina` instances and one RNG; `reset()`, `stroke(seat, hold_time)`, `step(delta) -> Motion`, `set_progress()`, `arrive()` | `scripts/autoload/run_state.gd` | the boat scene calls `stroke`/`step` and applies the `Motion`; the lake sets progress and calls `arrive`; screens read it; emits `run_reset` |
+| `Paddling` (rule class) | stroke events (seat, hold time) and a timestep into thrust, signed turn (+ = right) and drift toward the shore; seats enum matching RunState; tuning in `BoatTuning` (`scripts/resources/boat_tuning.gd`, `data/boat_tuning.tres`) | `scripts/systems/paddling.gd` | pure: receives `BoatTuning`; `RunState` owns the instance; `catamaran.gd` applies its `Motion` with the boat feel values in `BoatTuning` (thrust_scale, turn_scale, damping) |
+| `Drunkenness` (rule class) | one 0..1 level per seat; drink rate by state (break, water); stroke delay and miss chance per level (`Curve`s); seeded miss roll; scrambled-key mapping at `scramble_level` (fixed: same row, other hull); tuning in `DrinkTuning` (`scripts/resources/drink_tuning.gd`, `data/drink_tuning.tres`) | `scripts/systems/drunkenness.gd` | pure: receives `DrinkTuning` and an RNG; `RunState` owns the instance and steps it |
+| `Stamina` (rule class) | one 0..1 level per seat; burn per stroke power, recovery; per-seat PADDLING → WARNING → BREAK machine (`can_stroke`, `time_left`, `call_break` for hazards); random breaks from the caller's RNG; tuning in `StaminaTuning` (`scripts/resources/stamina_tuning.gd`, `data/stamina_tuning.tres`) | `scripts/systems/stamina.gd` | pure: receives `StaminaTuning` and an RNG; `RunState` owns the instance and steps it; `catamaran.gd` reads its state for the telegraphs |
 
 ## Project rules
 <!-- Only where this project differs from the Godot Director defaults, as agreed with the human. -->

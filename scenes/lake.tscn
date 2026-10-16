@@ -1,0 +1,90 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
+[ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="3_hud"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
+size = Vector2(6000, 400)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_island"]
+radius = 60.0
+
+[node name="Lake" type="Node2D"]
+script = ExtResource("1_lake")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Water" type="Polygon2D" parent="Visual"]
+color = Color(0.2, 0.5, 0.8, 1)
+polygon = PackedVector2Array(-3000, -4000, 3000, -4000, 3000, 400, -3000, 400)
+
+[node name="Shore" type="StaticBody2D" parent="."]
+
+[node name="Visual" type="Polygon2D" parent="Shore"]
+color = Color(0.85, 0.75, 0.45, 1)
+polygon = PackedVector2Array(-3000, 0, 3000, 0, 3000, 400, -3000, 400)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Shore"]
+position = Vector2(0, 200)
+shape = SubResource("RectangleShape2D_shore")
+
+[node name="Island" type="Area2D" parent="."]
+position = Vector2(0, -800)
+
+[node name="Visual" type="Polygon2D" parent="Island"]
+color = Color(0.35, 0.65, 0.3, 1)
+polygon = PackedVector2Array(60, 0, 52, 30, 30, 52, 0, 60, -30, 52, -52, 30, -60, 0, -52, -30, -30, -52, 0, -60, 30, -52, 52, -30)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Island"]
+shape = SubResource("CircleShape2D_island")
+
+[node name="Catamaran" parent="." instance=ExtResource("2_boat")]
+position = Vector2(0, -48)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("3_hud")
+
+[node name="Margin" type="MarginContainer" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="Rows" type="VBoxContainer" parent="HUD/Margin"]
+layout_mode = 2
+
+[node name="Progress" type="ProgressBar" parent="HUD/Margin/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="Guys" type="GridContainer" parent="HUD/Margin/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+
+[node name="SpacerTop" type="Control" parent="HUD/Margin/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Won" type="Label" parent="HUD/Margin/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Made it!"
+horizontal_alignment = 1
+
+[node name="SpacerBottom" type="Control" parent="HUD/Margin/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[connection signal="body_entered" from="Island" to="." method="_on_island_body_entered"]

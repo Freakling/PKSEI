@@ -2,7 +2,8 @@ class_name BoatTuning
 extends Resource
 ## BoatTuning · the catamaran's tunables (GDD › Systems › Catamaran and paddling).
 ##
-## Schema only. The instance the human tunes is data/boat_tuning.tres; Paddling reads it.
+## Schema only. The instance the human tunes is data/boat_tuning.tres; Paddling reads the stroke
+## and current values, the boat scene (scripts/catamaran.gd) the motion ones.
 
 ## Power of a tapped stroke (key held for no time).
 @export var stroke_force_min: float = 20.0 ## PLACEHOLDER
@@ -16,5 +17,14 @@ extends Resource
 @export var steer_share_front: float = 0.2 ## PLACEHOLDER
 ## Share of turn_torque a back-seat stroke steers with.
 @export var steer_share_back: float = 0.8 ## PLACEHOLDER
-## Speed of the current toward the shore, in progress units per second.
+## Speed of the current toward the shore, in pixels per second (the boat applies it as velocity).
 @export var current_speed: float = 10.0 ## PLACEHOLDER
+
+## Pixels per second of speed one unit of stroke force adds.
+@export var thrust_scale: float = 0.5 ## PLACEHOLDER
+## Radians per second of yaw one unit of turn adds.
+@export var turn_scale: float = 0.01 ## PLACEHOLDER
+## The water's drag on speed, per second.
+@export var linear_damping: float = 1.0 ## PLACEHOLDER
+## The water's drag on yaw, per second.
+@export var angular_damping: float = 3.0 ## PLACEHOLDER

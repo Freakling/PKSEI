@@ -45,7 +45,7 @@ Two aluminium canoes lashed side by side, two guys per hull: a front and a back 
 Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, faster while a guy is on a stamina break, and faster still while a guy floats in the water drinking the beer he went in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
 - **Lag and misses.** A drunker guy's stroke lands later after the release, and sometimes not at all; the fumble shows in his animation. Delay and miss chance rise with the level.
 - **Antics.** At drunkenness thresholds a guy does something stupid, always with a visible wind-up and a recovery: he stands up and rocks the boat, drops his paddle and has to fish for it, nods off as dead weight, or needs to pee. While he pees at the edge his seat gives no strokes, and if a hazard rocks the boat hard enough he loses his balance and falls in: a swimmer to rescue like any other, but with no beer in hand, so he doesn't drink while he floats.
-- **Scrambled keys.** Only at the top tier, a guy's key stops being his: announced with a wind-up, shown on screen next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds.
+- **Timing bar.** Only at the top tier, a guy's stroke becomes a timing minigame: while his key is held, a bar sweeps back and forth next to him; releasing inside a thin green zone gives a normal stroke, releasing anywhere else makes him paddle backwards. Announced with a wind-up, shown next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds. A missed stroke, from lag or a fumble, still burns stamina: he swung.
 Input is always honoured instantly in the animation; what the drunk body then does with it is the comedy.
 
 ### Stamina
@@ -124,6 +124,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 | Band | A stretch of the lake, shore to island; hazards are drawn per band with rising density. |
 | Bailing | A guy scooping water out of the boat instead of paddling, after a hazard put it there. |
 | Antic | A telegraphed stupid thing a drunk guy does: stands up, drops his paddle, nods off, needs to pee. |
+| Timing bar | The top drunkenness tier: a sweeping bar next to the guy; release in the green or he paddles backwards. |
 | Stamina | A guy's reserve for strong strokes. Burnt by paddling, recovered by resting. |
 | Break | A guy's telegraphed pause of a few seconds: no strokes, fast stamina recovery, faster drinking. |
 

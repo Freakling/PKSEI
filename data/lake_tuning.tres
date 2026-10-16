@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
+
+[resource]
+script = ExtResource("1_lake")
+island_distance = 800.0
