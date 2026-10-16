@@ -3,6 +3,7 @@ config_version=5
 [application]
 config/name="PKSEI"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+run/main_scene="res://scenes/main.tscn"
 
 [debug]
 gdscript/warnings/untyped_declaration=2

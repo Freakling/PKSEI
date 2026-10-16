@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T12 · B1
+**Next IDs:** T13 · B1
 
 ## Milestones
 | Milestone | Status |
@@ -76,6 +76,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +spawn_rate), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
 - Done when: hazards spawn ahead of the boat from a seeded random so an attempt is reproducible (test) · a floating log pushes the boat on contact and is visible before it reaches the boat (play) · the hazard set is a placeholder until Q3
 - GDD: Systems › Hazards
+
+### T12 · Placeholder main scene so the web export has something to ship · done · S · agent
+- Depends on: —
+- Touches: scenes/main.tscn (new), project.godot (main scene)
+- Done when: `bash tools/ship.sh --export-only` writes build/web/index.html (check) · the check loads the scene (check)
+- GDD: —
+- Note: a flat-colour screen with a label; T6 replaces it with the grey-box lake.
 
 ### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · todo · — · human
 - Depends on: —
