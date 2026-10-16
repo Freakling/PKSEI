@@ -11,6 +11,7 @@ turn_torque = 1.0
 steer_share_front = 0.2
 steer_share_back = 0.8
 current_speed = 10.0
+camera_lead = 80.0
 thrust_scale = 0.5
 turn_scale = 0.01
 linear_damping = 1.0

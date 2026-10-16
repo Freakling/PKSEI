@@ -19,6 +19,9 @@ extends Resource
 @export var steer_share_back: float = 0.8 ## PLACEHOLDER
 ## Speed of the current toward the shore, in pixels per second (the boat applies it as velocity).
 @export var current_speed: float = 10.0 ## PLACEHOLDER
+## Pixels the camera leads the boat by at full speed, toward its direction of travel
+## (GDD › Presentation and Platforms, Camera). Read by scripts/lake_camera.gd.
+@export var camera_lead: float = 80.0 ## PLACEHOLDER
 
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER

@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (25 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (26 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -74,13 +74,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Systems › Drunkenness
 - Note: until this lands, T6's interim behaviour at the top tier is that the neighbour across the hulls strokes instead.
 
-### T8 · Camera follows the boat with look-ahead · todo · S · agent
+### T8 · Camera follows the boat with look-ahead · done · S · agent
 - Depends on: T6
-- Touches: scenes/lake.tscn, scripts/lake_camera.gd (new), data/boat_tuning.tres (+camera_lead)
+- Touches: scenes/lake.tscn, scenes/catamaran.tscn (camera moved out), scripts/lake_camera.gd (new), scripts/resources/boat_tuning.gd (+camera_lead), data/boat_tuning.tres
 - Done when: the camera stays centred on the boat and leads toward its direction of travel by camera_lead (play)
 - GDD: Presentation and Platforms
 
-### T9 · Rescue: beers overboard, guys after them, fewer paddlers until each is picked up, shore reset · todo · L · agent
+### T9 · Rescue: beers overboard, guys after them, fewer paddlers until each is picked up, shore reset · in-progress 2026-10-16 · L · agent
 - Depends on: T6, T5
 - Touches: scripts/systems/rescue.gd (new), scripts/resources/boat_tuning.gd (+swim_speed), scripts/autoload/run_state.gd, scenes/catamaran.tscn, scenes/lake.tscn, tests/test_rescue.gd (new)
 - Done when: each beer overboard puts one more guy in the water (the one on the side the hazard hit), with no limit, and strokes from his seat do nothing until he is back (test) · the beer drifts at current_speed, the swimmer swims to it at swim_speed, then drifts with it (test) · the boat reaching a swimmer puts him aboard (test) · with nobody aboard the boat drifts at current_speed, and reaching the shore resets the attempt to the starting conditions (test) · the guy visibly jumps, swims, floats drinking, and climbs back in (play)

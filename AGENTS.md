@@ -16,9 +16,9 @@ Instructions for AI assistants working on this game. The workflow is Godot Direc
 | `scripts/systems/` | game-rule classes (`RefCounted`) |
 | `scripts/resources/` | Resource schemas for tunable data |
 | `scripts/ui/` | screen scripts (display only; checked by tools/check.cfg) |
-| `scripts/` (root) | scene scripts: `catamaran.gd` (input, motion, telegraphs), `lake.gd` (island arrival, progress; lake values in `LakeTuning`, `scripts/resources/lake_tuning.gd`, `data/lake_tuning.tres`) |
+| `scripts/` (root) | scene scripts: `catamaran.gd` (input, motion, telegraphs), `lake.gd` (island arrival, progress; lake values in `LakeTuning`, `scripts/resources/lake_tuning.gd`, `data/lake_tuning.tres`), `lake_camera.gd` (follow with look-ahead by `BoatTuning.camera_lead`) |
 | `scripts/hazards/` | hazard scene scripts (one per hazard; rules in `scripts/systems/hazards.gd`) |
-| `scenes/` | scenes: `main.tscn` → `lake.tscn` (water, shore, island, HUD) → `catamaran.tscn` (boat, guys, camera); `scenes/hazards/` one scene per hazard |
+| `scenes/` | scenes: `main.tscn` → `lake.tscn` (water, shore, island, camera, HUD) → `catamaran.tscn` (boat, guys); `scenes/hazards/` one scene per hazard |
 | `data/` | `.tres` content: the values the human tunes |
 | `tests/` | rule tests (`test_*.gd`) |
 | `assets/sprites/`, `assets/audio/` | pixel art and sound (agent-made, human-reviewed; see Project rules) |
