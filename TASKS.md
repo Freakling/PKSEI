@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T11 · B1
+**Next IDs:** T12 · B1
 
 ## Milestones
 | Milestone | Status |
@@ -76,6 +76,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +spawn_rate), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
 - Done when: hazards spawn ahead of the boat from a seeded random so an attempt is reproducible (test) · a floating log pushes the boat on contact and is visible before it reaches the boat (play) · the hazard set is a placeholder until Q3
 - GDD: Systems › Hazards
+
+### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · todo · — · human
+- Depends on: —
+- Touches: export_presets.cfg, tools/ship.sh
+- Done when: Godot 4.7.2 web export templates are installed (Editor › Manage Export Templates) and `bash tools/ship.sh --export-only` produces build/web/index.html (check) · butler is installed and `butler login` done, `bash tools/ship.sh` pushes the html5 channel and the game runs at the itch.io page, with "This file will be played in the browser" set on that upload (play)
+- GDD: Presentation and Platforms
 
 ## Notes
 - Q1 (control scheme) gates T6's input mapping; T7's research is meant to inform Q1, Q2 and Q4, so run T7 before the design session that answers them.

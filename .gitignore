@@ -3,3 +3,11 @@
 /tools/godot_bin.local
 /.claude/settings.local.json
 *.gdir-new
+
+# Builds (tools/ship.sh)
+/build/
+
+# butler (itch.io CLI) dropped into the repo root; not part of the game
+/butler.exe
+/7z.dll
+/c7zip.dll
