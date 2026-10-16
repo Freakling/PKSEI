@@ -10,14 +10,15 @@ extends CharacterBody2D
 ## marker during the warning, dimmed on the break) and the timing bar from its Drunkenness (it
 ## blinks beside a guy while his tier is announced, then shows beside him while his key is held,
 ## the marker sweeping over the green band); a guy in the water has no square here (the lake
-## draws him). In debug builds F5/F6 knock a beer over on the left/right until hazards (T10) do
-## it. No rules live here.
+## draws him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
+## and yaw, take_shove() is added to its speed. In debug builds F5/F6 knock a beer over on the
+## left/right without a hazard. No rules live here.
 
 ## One input action per seat, in Paddling.Seat order (Q, A, I, K).
 const ACTIONS: Array[StringName] = [
 	&"stroke_left_front", &"stroke_left_back", &"stroke_right_front", &"stroke_right_back",
 ]
-## Debug-only: a beer overboard on each side (F5, F6), until hazards do it (T10).
+## Debug-only: a beer overboard on each side (F5, F6) without a hazard.
 const DEBUG_BEER_ACTIONS: Array[StringName] = [&"debug_beer_left", &"debug_beer_right"]
 ## The guys' squares under Visual, in Paddling.Seat order.
 const GUY_PATHS: Array[String] = [
@@ -65,6 +66,10 @@ func _physics_process(delta: float) -> void:
 	var motion: Paddling.Motion = RunState.step(delta)
 	_stroke_velocity += Vector2.UP.rotated(rotation) * motion.thrust * tuning.thrust_scale
 	_yaw_rate += motion.turn * tuning.turn_scale
+	if RunState.take_stop():
+		_stroke_velocity = Vector2.ZERO
+		_yaw_rate = 0.0
+	_stroke_velocity += RunState.take_shove()
 	_stroke_velocity *= exp(-tuning.linear_damping * delta)
 	_yaw_rate *= exp(-tuning.angular_damping * delta)
 	rotation += _yaw_rate * delta

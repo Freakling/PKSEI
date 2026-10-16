@@ -1,9 +1,25 @@
 class_name LakeTuning
 extends Resource
-## LakeTuning · the lake's tunables (GDD › Systems › Lake and island).
+## LakeTuning · the lake's tunables (GDD › Systems › Lake and island; GDD › Systems › Hazards,
+## Placement).
 ##
 ## Schema only. The instance the human tunes is data/lake_tuning.tres; the lake scene
-## (scripts/lake.gd) reads it. T10 adds the hazard bands here.
+## (scripts/lake.gd) reads the island, Hazards.plan() the bands. The curve maps a band's place
+## in the lake (x: 0 the first band, 1 the island band) to hazards per band (y);
+## DrinkTuning.ramp() builds a straight one.
 
 ## Pixels from the shore line (y = 0) to the island's centre. The first lake is short.
 @export var island_distance: float = 800.0 ## PLACEHOLDER
+## The island's radius in pixels: its collision circle, and where the planned hazards stop.
+@export var island_radius: float = 60.0 ## PLACEHOLDER
+## Pixels of water off the shore line kept clear of hazards: the beach and the boat at launch.
+@export var launch_margin: float = 96.0 ## PLACEHOLDER
+## Width of the water hazards are placed across, in pixels, centred on x = 0.
+@export var lake_width: float = 480.0 ## PLACEHOLDER
+## Pixels of crossing per band; the open water between launch_margin and the island's near edge
+## is ceil(span / band_length) bands, the last one possibly shorter.
+@export var band_length: float = 160.0 ## PLACEHOLDER
+## Hazards per band (y, rounded) against the band's place in the lake (x), rising toward the island.
+@export var density_curve: Curve = DrinkTuning.ramp(1.0, 3.0) ## PLACEHOLDER
+## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
+@export var hazards: Array[HazardSpec] = []

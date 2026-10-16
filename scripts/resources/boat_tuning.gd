@@ -30,6 +30,9 @@ extends Resource
 @export var beer_toss: float = 32.0 ## PLACEHOLDER
 ## Pixels from the boat's centre within which a floating guy is picked up (the lake checks it).
 @export var pickup_radius: float = 20.0 ## PLACEHOLDER
+## Water a guy bails out per second while his hull has water aboard (the water aboard effect,
+## GDD › Systems › Hazards); his seat gives no strokes meanwhile. Read by RunState.
+@export var bail_rate: float = 1.0 ## PLACEHOLDER
 
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER

@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T33 · B2
+**Next IDs:** T34 · B3
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (31 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (41 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -98,11 +98,24 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Found in: T9
 - GDD: Systems › Setbacks
 
-### T10 · Hazard framework: seeded bands, effects palette, and the floating log · todo · M · agent
+### T10 · Hazard framework: seeded bands, effects palette, and the floating log · done · M · agent
 - Depends on: T6, T9
-- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +weight, +first_band), scripts/resources/lake_tuning.gd (+band_length, +density_curve), data/lake_tuning.tres, scripts/hazards/log.gd (new), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
+- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +weight, +first_band, +shove_strength, +hit_cooldown), data/hazards/log.tres (new), scripts/resources/lake_tuning.gd (+lake_width, +band_length, +density_curve, +hazards, +launch_margin, +island_radius), data/lake_tuning.tres, scripts/resources/boat_tuning.gd (+bail_rate), data/boat_tuning.tres, scripts/autoload/run_state.gd (effects palette, lake_seed), scripts/lake.gd, scenes/lake.tscn, scripts/catamaran.gd, scripts/hazards/log.gd (new), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
 - Done when: each band draws hazards from the weighted list with density per density_curve, from one seed, so the same seed gives the same lake (test) · the effects beer overboard, shove, snag, stop, forced break and water aboard exist as calls on the boat and the guys (test) · a floating log drifts at current_speed, is visible before it reaches the boat, and a bump knocks a beer overboard on the side hit and shoves the boat (play)
 - GDD: Systems › Hazards
+
+### T33 · Hazards respawn: a lake that has drifted its hazards past the shore refills ahead of the boat · todo · M · agent
+- Depends on: T10
+- Touches: scripts/systems/hazards.gd, scripts/lake.gd, tests/test_hazards.gd
+- Done when: a band whose hazards have all drifted past the shore is re-planned from the attempt's seed and a band counter, so a long crossing never meets an empty lake (test) · respawned hazards appear outside the camera's look-ahead (play)
+- GDD: Systems › Hazards
+
+### B2 · A swimmer who drifts past the shoreline can't be picked up · todo · M · agent · med
+- Depends on: T10
+- Touches: scripts/systems/rescue.gd, scripts/autoload/run_state.gd, tests/test_rescue.gd
+- Repro: knock a beer over while the boat rests at the launch shore (a band-1 log drifting into it, or F5) → the swimmer drifts down through the shoreline where the boat can't reach him; shore_touched() does nothing in LAUNCH → expected: he washes up and climbs back aboard, or the shore stops him within reach / actual: stuck until the player paddles off and comes back for a shore reset
+- Found in: T10 review
+- GDD: Systems › Setbacks
 
 ### T15 · Angry geese guarding goslings · todo · M · agent
 - Depends on: T10

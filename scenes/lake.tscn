@@ -42,6 +42,8 @@ polygon = PackedVector2Array(60, 0, 52, 30, 30, 52, 0, 60, -30, 52, -52, 30, -60
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Island"]
 shape = SubResource("CircleShape2D_island")
 
+[node name="Hazards" type="Node2D" parent="."]
+
 [node name="Catamaran" parent="." instance=ExtResource("2_boat")]
 position = Vector2(0, -48)
 
