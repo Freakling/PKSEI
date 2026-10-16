@@ -43,8 +43,8 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T4 · Paddling rule class: four charged strokes to thrust and turn, against the current · todo · M · agent
 - Depends on: T2
-- Touches: scripts/systems/paddling.gd (new), scripts/resources/boat_tuning.gd (new, +stroke_force_min, +stroke_force_max, +charge_time, +turn_torque, +current_speed), data/boat_tuning.tres (new), tests/test_paddling.gd (new)
-- Done when: stroke power grows with hold time from stroke_force_min to stroke_force_max over charge_time (test) · equal strokes on both sides give forward thrust and no turn (test) · a stroke on one side turns the boat toward the other (test) · with no strokes the boat moves toward the shore at current_speed (test)
+- Touches: scripts/systems/paddling.gd (new), scripts/resources/boat_tuning.gd (new, +stroke_force_min, +stroke_force_max, +charge_time, +turn_torque, +steer_share_front, +steer_share_back, +current_speed), data/boat_tuning.tres (new), tests/test_paddling.gd (new)
+- Done when: stroke power grows with hold time from stroke_force_min to stroke_force_max over charge_time (test) · equal strokes on both sides give forward thrust and no turn (test) · a left-side stroke turns the boat right and a right-side stroke left (test) · a back-seat stroke turns the boat by steer_share_back and a front-seat stroke by steer_share_front, with the same forward push (test) · with no strokes the boat moves toward the shore at current_speed (test)
 - GDD: Systems › Catamaran and paddling
 
 ### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · todo · M · agent
@@ -56,7 +56,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 ### T6 · Grey-box lake: catamaran, four guys and the island, set as main scene · todo · L · agent
 - Depends on: T3, T4
 - Touches: scenes/lake.tscn (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions)
-- Done when: the check loads the main scene without errors (check) · four keys, hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · the HUD shows progress and each guy's drunkenness (play)
+- Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · the HUD shows progress and each guy's drunkenness (play)
 - GDD: Systems › Lake and island · Win and Loss
 
 ### T8 · Camera follows the boat with look-ahead · todo · S · agent

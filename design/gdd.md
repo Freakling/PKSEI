@@ -37,7 +37,9 @@ Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate o
 
 ## Systems
 ### Catamaran and paddling
-Two aluminium canoes lashed side by side, two guys per hull. A stroke on one side pushes that side forward and turns the boat toward the other; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
+Two aluminium canoes lashed side by side, two guys per hull: a front and a back seat on each. A stroke on the left turns the boat to the right and a stroke on the right turns it left, as with an outboard at the stern; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one.
+
+**Seats matter.** All four seats give the same forward push, but steering comes mostly from the back: a back-seat stroke turns the boat about four times as much as a front-seat stroke (the shares are tunables, meant to feel like 80/20). The front seats are the engine and the back seats the rudder, so which drunk guy sits where matters. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
 
 ### Drunkenness
 Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, and by one beer each time a guy is rescued with the one he jumped in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
@@ -74,7 +76,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 ## Presentation and Platforms
 - Platforms: Web (HTML5, itch.io). Desktop builds for development.
 - Target aspect ratios: 16:9 at a 640×360 canvas, integer-scaled (720p, 1080p, 1440p).
-- Input: keyboard, four keys, one per guy, hold to charge and release to stroke. Local co-op with one guy per player is a planned mode (Q5); there each player gets two keys, stroke and lean.
+- Input: keyboard, four keys, one per seat, hold to charge and release to stroke: Q left front, A left back, I right front, K right back. The left hand drives the left hull and the right hand the right hull. Local co-op with one guy per player is a planned mode (Q5); there each player gets two keys, stroke and lean.
 - Camera: top-down, follows the catamaran, biased toward the direction of travel so hazards show early.
 - Art direction: top-down, bright pixel art, a bit retro, lots of comedy. Godot primitives and flat colours until pixel art replaces them.
 - Audio: undecided; the comedy will want sound, so plan for stroke, splash and guy noises once the loop is playable.
@@ -84,6 +86,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 | Term | Meaning |
 |---|---|
 | Guy | One of the four drunk men the player controls at once. |
+| Seat | A guy's place on the boat: left or right hull, front (engine) or back (rudder). |
 | Catamaran | The two aluminium canoes lashed together; the boat. It never capsizes. |
 | Crossing | The run: shore to island on one lake. |
 | Current | The constant pull from the island toward the shore. The game's gravity. |
