@@ -150,9 +150,10 @@ func stroke(seat: int, hold_time: float) -> void:
 
 
 ## One physics frame: the swimmers and their beers move with the current, every guy drinks
-## (a floating guy with his beer at the water rate; one without a beer not at all) and recovers
-## or breaks, the levels are mirrored into the guys, elapsed advances, and
-## the strokes that land this frame become the boat's Motion. With nobody aboard the Motion is
+## (a floating guy with his beer at the water rate; one without a beer not at all) and every guy
+## aboard recovers or breaks (a guy in the water keeps his stamina, state and time left until he
+## is picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, elapsed advances,
+## and the strokes that land this frame become the boat's Motion. With nobody aboard the Motion is
 ## only the current's drift. Nothing moves once the attempt is won.
 func step(delta: float) -> Paddling.Motion:
 	if phase == Phase.WON:
@@ -161,9 +162,11 @@ func step(delta: float) -> Paddling.Motion:
 	rescue.step(delta, Vector2.DOWN * paddling.tuning.current_speed, paddling.tuning)
 	for seat: int in GUY_COUNT:
 		var guy: Guy = guys[seat]
-		stamina.step(seat, delta, rng)
 		var swimmer: Rescue.Swimmer = rescue.swimmer_of(seat)
 		var in_water: bool = swimmer != null
+		# In the water he neither recovers nor rolls a random break: the rule class is not stepped.
+		if not in_water:
+			stamina.step(seat, delta, rng)
 		var drinking: bool = not in_water or swimmer.has_beer
 		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
 		guy.stamina = stamina.level_of(seat)

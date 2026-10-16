@@ -7,6 +7,8 @@ extends "res://tools/test_case.gd"
 ## crossing (never while launching) restores the starting conditions (GDD › Systems › Setbacks).
 ## T31 · On the timing bar (the top drunkenness tier) a release in the green zone is the normal
 ## stroke and one outside it a backwards stroke of the same power; both burn stamina.
+## T32 · A guy in the water neither recovers stamina nor rolls random breaks, and comes back in
+## the state he left when he is picked up (GDD › Systems › Stamina).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -370,4 +372,56 @@ func test_shore_touched_while_crossing_with_a_swimmer_restores_the_starting_cond
 	expect_near(state.progress, 0.0, 0.0001, "progress zero")
 	expect_eq(state.phase, RunStateScript.Phase.LAUNCH, "phase launch")
 	expect_eq(fired.size(), 1, "shore_reset_done emitted once")
+	state.free()
+
+
+func test_a_guy_in_the_water_keeps_his_stamina_and_state_until_picked_up() -> void:
+	var state: Node = sober_state()
+	var warned: int = Paddling.Seat.LEFT_BACK
+	var burnt: int = Paddling.Seat.RIGHT_BACK
+	state.stamina.set_level(warned, 0.4)
+	state.stamina.call_break(warned)
+	state.stamina.set_level(burnt, 0.0)
+	state.stamina.set_level(Paddling.Seat.LEFT_FRONT, 0.5)
+	state.stamina.set_level(Paddling.Seat.RIGHT_FRONT, 0.5)
+	state.guy_overboard(warned, BOAT)
+	state.guy_overboard(burnt, BOAT)
+	var warning_left: float = state.stamina.time_left(warned)
+	for i: int in 5:
+		state.step(1.0)
+	expect_near(state.stamina.level_of(warned), 0.4, 0.0001, "in the water: no recovery")
+	expect_eq(state.stamina.state_of(warned), Stamina.State.WARNING, "still in his warning")
+	expect_near(state.stamina.time_left(warned), warning_left, 0.0001, "the warning's time is frozen")
+	expect_near(state.guys[warned].stamina, 0.4, 0.0001, "the guy mirrors the frozen level")
+	expect_near(state.stamina.level_of(burnt), 0.0, 0.0001, "burnt out in the water: no break rolled")
+	expect_eq(state.stamina.state_of(burnt), Stamina.State.PADDLING, "and no break called")
+	expect(state.stamina.level_of(Paddling.Seat.LEFT_FRONT) > 0.5, "aboard guys still recover")
+	state.pickup(warned)
+	state.pickup(burnt)
+	state.step(TICK)
+	expect(state.stamina.level_of(warned) > 0.4, "picked up: he recovers again")
+	expect(state.stamina.time_left(warned) < warning_left, "and his warning counts down again")
+	expect_eq(state.stamina.state_of(burnt), Stamina.State.WARNING, "picked up burnt out: his break is called now")
+	state.free()
+
+
+func test_a_guy_in_the_water_stays_on_his_break_until_picked_up() -> void:
+	var state: Node = sober_state()
+	var seat: int = Paddling.Seat.LEFT_BACK
+	state.stamina.call_break(seat)
+	state.step(state.stamina.tuning.break_warning + 0.01)
+	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "on a break")
+	var level: float = state.stamina.level_of(seat)
+	state.guy_overboard(seat, BOAT)
+	var break_left: float = state.stamina.time_left(seat)
+	state.step(5.0)
+	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "still on the break while in the water")
+	expect_near(state.stamina.time_left(seat), break_left, 0.0001, "the break's time is frozen")
+	expect_near(state.stamina.level_of(seat), level, 0.0001, "his stamina is frozen")
+	state.pickup(seat)
+	state.step(1.0)
+	expect_eq(state.stamina.state_of(seat), Stamina.State.BREAK, "the break carries on once he is back")
+	expect(state.stamina.time_left(seat) < break_left, "and counts down again")
+	state.step(2.5)
+	expect_eq(state.stamina.state_of(seat), Stamina.State.PADDLING, "the break ends after its time")
 	state.free()

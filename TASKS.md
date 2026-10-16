@@ -85,7 +85,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each beer overboard puts one more guy in the water (the one on the side the hazard hit), with no limit, and strokes from his seat do nothing until he is back (test) · the beer drifts at current_speed, the swimmer swims to it at swim_speed, then drifts with it (test) · the boat reaching a swimmer puts him aboard (test) · with nobody aboard the boat drifts at current_speed, and reaching the shore resets the attempt to the starting conditions (test) · the guy visibly jumps, swims, floats drinking, and climbs back in (play)
 - GDD: Systems › Setbacks
 
-### T32 · Stamina pauses for a guy in the water · todo · S · agent
+### T32 · Stamina pauses for a guy in the water · done · S · agent
 - Depends on: T9
 - Touches: scripts/autoload/run_state.gd, tests/test_run_state.gd
 - Done when: a guy in the water neither recovers stamina nor rolls random breaks, and comes back in the state he left (test)
