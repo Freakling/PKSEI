@@ -7,6 +7,9 @@ extends "res://tools/test_case.gd"
 ## is drawn per attempt (new_attempt), not per shore reset. T33: each band is planned on its own
 ## from (seed, band, generation) (plan() is generation 0 band by band), and each band's draw stays
 ## inside its band. T36: hazards are objects, so a planned log stays where the plan put it.
+## T37: a guaranteed path winds through every band: a corridor path_width wide no object is placed
+## in, whose centre wanders by at most path_wander between bands, stays inside the lake, and runs
+## continuously from the launch (x = 0) to the island (x = 0), the same for the same seed.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
@@ -23,6 +26,11 @@ const FAR_EDGE: float = DISTANCE - RADIUS
 const BAND: float = 160.0
 const WIDTH: float = 400.0
 const DENSITIES: Array[int] = [1, 2, 2, 3, 3]
+## The path: a corridor 80 px wide whose centre moves by at most 100 px between bands, so it can
+## sit anywhere within 160 px of the middle with the whole corridor inside the 400 px of water.
+const PATH_WIDTH: float = 80.0
+const WANDER: float = 100.0
+const REACH: float = WIDTH * 0.5 - PATH_WIDTH * 0.5
 
 var tuning: LakeTuning
 
@@ -35,6 +43,8 @@ func before_each() -> void:
 	tuning.band_length = BAND
 	tuning.lake_width = WIDTH
 	tuning.density_curve = DrinkTuning.ramp(1.0, 3.0)
+	tuning.path_width = PATH_WIDTH
+	tuning.path_wander = WANDER
 	tuning.hazards = [spec(1.0, 0), spec(3.0, 2)]
 
 
@@ -202,6 +212,122 @@ func test_a_band_at_any_generation_stays_inside_its_band_and_draws_what_the_band
 	expect_eq(Hazards.plan_band(tuning, 1, 5, 0).size(), 0, "a band past the island plans nothing")
 	expect_eq(Hazards.plan_band(tuning, 1, -1, 0).size(), 0, "nor one before the shore")
 	expect_eq(Hazards.plan_band(tuning, 1, 0, 7).size(), DENSITIES[0], "the first band at generation 7 draws its density too")
+
+
+# --- the path -----------------------------------------------------------------------------------
+
+func test_no_object_is_placed_inside_the_corridor() -> void:
+	var total: int = 0
+	for lake_seed: int in 100:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			var gap: float = absf(placement.position.x - Hazards.corridor_x(tuning, lake_seed, placement.position.y))
+			expect(gap >= PATH_WIDTH * 0.5, "seed %d: clear of the corridor at its y (gap %.1f)" % [lake_seed, gap])
+			expect(absf(placement.position.x) <= WIDTH * 0.5, "seed %d: still within the lake's width" % lake_seed)
+			total += 1
+	expect_eq(total, 100 * 11, "every band still draws its density")
+	for lake_seed: int in 10:
+		for band: int in DENSITIES.size():
+			for generation: int in 3:
+				for placement: Hazards.Placement in Hazards.plan_band(tuning, lake_seed, band, generation):
+					var gap: float = absf(placement.position.x - Hazards.corridor_x(tuning, lake_seed, placement.position.y))
+					expect(gap >= PATH_WIDTH * 0.5, "seed %d band %d generation %d: a re-plan stays clear of the corridor too" % [lake_seed, band, generation])
+
+
+func test_objects_land_on_both_sides_of_the_corridor_and_right_up_to_it() -> void:
+	var left: int = 0
+	var right: int = 0
+	var closest: float = WIDTH
+	for lake_seed: int in 100:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			var offset: float = placement.position.x - Hazards.corridor_x(tuning, lake_seed, placement.position.y)
+			closest = minf(closest, absf(offset))
+			if offset < 0.0:
+				left += 1
+			else:
+				right += 1
+	expect(left > 300 and right > 300, "objects fall on either side of the path (%d left, %d right)" % [left, right])
+	expect(closest < PATH_WIDTH * 0.5 + 5.0, "and some sit right at its edge (closest %.1f)" % closest)
+
+
+func test_a_band_the_corridor_fills_places_nothing() -> void:
+	tuning.path_width = WIDTH
+	expect_near(Hazards.open_width(tuning), 0.0, 0.0001, "no water outside a corridor as wide as the lake")
+	expect_eq(Hazards.plan(tuning, 42).size(), 0, "nothing is placed in it")
+	tuning.path_width = WIDTH + 50.0
+	expect_eq(Hazards.plan(tuning, 42).size(), 0, "nor in a wider one")
+	expect_near(Hazards.corridor_x(tuning, 42, -500.0), 0.0, 0.0001, "whose centre can only be the middle")
+	tuning.path_width = WIDTH - 2.0
+	expect_eq(Hazards.plan(tuning, 42).size(), 11, "a sliver of open water on each side is enough to place in")
+	for placement: Hazards.Placement in Hazards.plan(tuning, 42):
+		expect(absf(placement.position.x) >= WIDTH * 0.5 - 2.0, "placed in the sliver")
+
+
+func test_the_paths_centre_moves_by_at_most_path_wander_and_stays_inside_the_lake() -> void:
+	var wandered: bool = false
+	var reached_far: bool = false
+	for lake_seed: int in 100:
+		var centers: PackedFloat64Array = Hazards.path_centers(tuning, lake_seed)
+		expect_eq(centers.size(), DENSITIES.size() + 1, "seed %d: a centre at every band's near edge and one at the island" % lake_seed)
+		expect_near(centers[0], 0.0, 0.0001, "seed %d: the path starts at the launch, x = 0" % lake_seed)
+		expect_near(centers[centers.size() - 1], 0.0, 0.0001, "seed %d: and ends on the island, x = 0" % lake_seed)
+		for band: int in centers.size():
+			expect_near(Hazards.path_center(tuning, lake_seed, band), centers[band], 0.0001, "seed %d band %d: path_center reads the same" % [lake_seed, band])
+			expect(absf(centers[band]) <= REACH + 0.0001, "seed %d band %d: the whole corridor inside the lake (centre %.1f)" % [lake_seed, band, centers[band]])
+			if band > 0:
+				var step: float = absf(centers[band] - centers[band - 1])
+				expect(step <= WANDER + 0.0001, "seed %d band %d: a step of at most path_wander (got %.1f)" % [lake_seed, band, step])
+			wandered = wandered or absf(centers[band]) > 1.0
+			reached_far = reached_far or absf(centers[band]) > REACH - 1.0
+	expect(wandered, "the path does wander")
+	expect(reached_far, "and over many seeds goes as far as the corridor's width allows")
+	expect_near(Hazards.path_center(tuning, 1, -1), 0.0, 0.0001, "no band before the shore")
+	expect_near(Hazards.path_center(tuning, 1, 9), 0.0, 0.0001, "no band past the island")
+
+
+func test_the_path_never_shares_a_bands_rng_with_its_objects() -> void:
+	expect(Hazards.PATH_GENERATION < 0, "the path's generation is none an object ever has")
+	for band: int in DENSITIES.size():
+		for generation: int in 4:
+			expect_ne(Hazards.band_seed(42, band, Hazards.PATH_GENERATION), Hazards.band_seed(42, band, generation), "band %d: the path's seed is not generation %d's" % [band, generation])
+
+
+func test_the_corridor_is_continuous_from_the_launch_to_the_island() -> void:
+	var step: float = 1.0
+	## The corridor moves at most path_wander over one band, so at most this much per pixel.
+	var slope: float = WANDER / BAND
+	for lake_seed: int in 20:
+		expect_near(Hazards.corridor_x(tuning, lake_seed, 0.0), 0.0, 0.0001, "seed %d: at the shore line the path is at x = 0" % lake_seed)
+		expect_near(Hazards.corridor_x(tuning, lake_seed, -MARGIN), 0.0, 0.0001, "seed %d: and still at the launch margin" % lake_seed)
+		expect_near(Hazards.corridor_x(tuning, lake_seed, -FAR_EDGE), 0.0, 0.0001, "seed %d: on the island's near edge, x = 0" % lake_seed)
+		expect_near(Hazards.corridor_x(tuning, lake_seed, -DISTANCE), 0.0, 0.0001, "seed %d: and at the island's centre" % lake_seed)
+		for band: int in DENSITIES.size():
+			var at_edge: float = Hazards.corridor_x(tuning, lake_seed, -Hazards.near_edge(tuning, band))
+			expect_near(at_edge, Hazards.path_center(tuning, lake_seed, band), 0.0001, "seed %d band %d: the band's centre at its near edge" % [lake_seed, band])
+		var previous: float = Hazards.corridor_x(tuning, lake_seed, 0.0)
+		var y: float = -step
+		while y >= -DISTANCE:
+			var x: float = Hazards.corridor_x(tuning, lake_seed, y)
+			expect(absf(x - previous) <= slope * step + 0.0001, "seed %d y %.0f: a small step down the lake moves the path a little (%.2f)" % [lake_seed, y, x - previous])
+			expect(absf(x) <= REACH + 0.0001, "seed %d y %.0f: the corridor stays inside the lake" % [lake_seed, y])
+			previous = x
+			y -= step
+
+
+func test_the_same_seed_gives_the_same_path_and_another_seed_another() -> void:
+	var first: PackedFloat64Array = Hazards.path_centers(tuning, 42)
+	expect_eq(Hazards.path_centers(tuning, 42), first, "the same centres again")
+	for y: int in range(0, int(DISTANCE), 7):
+		expect_near(Hazards.corridor_x(tuning, 42, -y), Hazards.corridor_x(tuning, 42, -y), 0.0001, "the same corridor at y = %d" % y)
+	expect_ne(Hazards.path_centers(tuning, 43), first, "another seed, another path")
+
+
+func test_no_wander_is_a_straight_path_up_the_middle() -> void:
+	tuning.path_wander = 0.0
+	for lake_seed: int in 20:
+		for band: int in DENSITIES.size() + 1:
+			expect_near(Hazards.path_center(tuning, lake_seed, band), 0.0, 0.0001, "seed %d band %d: dead centre" % [lake_seed, band])
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			expect(absf(placement.position.x) >= PATH_WIDTH * 0.5, "seed %d: nothing in the middle strip" % lake_seed)
 
 
 # --- objects ------------------------------------------------------------------------------------
