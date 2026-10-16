@@ -1,0 +1,5 @@
+# Godot Director
+.godot/
+/tools/godot_bin.local
+/.claude/settings.local.json
+*.gdir-new

@@ -1,0 +1,30 @@
+# godot-director 3.0.0
+# tools claude
+87b81683e9b94c5a96144b1e9595cbfd09d06dd3	.claude/agents/builder.md
+9134a76c3fce88c93b4065e23619177b3bcd6d90	.claude/agents/reviewer.md
+5acf07f5311dd09d282f0b2b462b1f6237161432	.claude/hooks/guard-git.sh
+b6155fba3698bd789724fd0522e4cad3d1fa6864	.claude/hooks/stop-check.sh
+ad04ea15c181808c04f10929bebff6d1a208cc65	.claude/settings.json
+b0f3481b6535fe46b4523778bd8651998287e2b0	.claude/skills/align/SKILL.md
+71b6b65928f63c224969e22bd970f50d109da80f	.claude/skills/design/SKILL.md
+3043ae560db0ae36846474b1f170d7084249fb50	.claude/skills/function-check/SKILL.md
+4333617d6b16495413a889832a5abfe7cbe988eb	.claude/skills/next-task/SKILL.md
+552eecf53d150c8c33ec086342bb8fe1f6a01b3e	.claude/skills/playtest/SKILL.md
+0440dcf90440862a101da592b90e8938fde52b96	.claude/skills/prune/SKILL.md
+d47bbcf59f6bd89726ab796001f7ae84d7de3920	.githooks/pre-commit
+7eaf95f60e4547cf8ae6db7074c4461ea952b393	.godot-director/LICENSE
+677d1212073446d7a1b73b2812531ab487beb107	.godot-director/procedures/align.md
+6a5897f17d82fbf60d2ffae55d661aeb22d1d40f	.godot-director/procedures/build.md
+49be147c3e68962b0ef6bd48e2ac2e38d3df5a92	.godot-director/procedures/design.md
+8baca35ab5bc093e55c6e30e07a3ffdd7eb7e4d6	.godot-director/procedures/function-check.md
+1aed799ed77d1c075159c5d11a33a4e7a1ac1123	.godot-director/procedures/next-task.md
+7fe25c08ef788360ad31a4b1e38f764927cf7fc7	.godot-director/procedures/playtest.md
+fe3274d311e87f866f13b1a436fe30d62da314d5	.godot-director/procedures/prune.md
+7a1949f5fe69e58fe5b1e00325cd43154d172881	.godot-director/procedures/review.md
+9faf5e4e4cee618c53ad31aa140175d5a7ad2b06	.godot-director/rules.md
+6143b53322f316f52e948e80d100335e8ab91aea	.godot-director/tasks.md
+0a33a80db34e4e84a9147c4413abf9cfb67cff61	playtesting/README.md
+ad4c676cc1a8139e8ded77f69d0133cdb2c8fb70	tools/check.gd
+b27d5ab4a409a899f04f3cae1e8b6e180adee1f1	tools/check.sh
+450d1d5c97d37fc8d498d51205fa776efc4ba76d	tools/setup-clone.sh
+49f57b4adb3dd5c0850dc6ef9b3a6a9306c2cc15	tools/test_case.gd
