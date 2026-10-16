@@ -2,16 +2,18 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T15 · B1
+**Next IDs:** T29 · B1
 
 ## Milestones
 | Milestone | Status |
 |---|---|
-| Design: pitch, pillars and core loop decided | 🟨 in progress (Q3, Q5 open) |
+| Design: pitch, pillars and core loop decided | ✅ done (Q5, co-op timing, still open) |
 | Foundation: project settings, first system with a test, check passing | 🟨 in progress (T1 done) |
-| Core loop playable (grey-box) | ⬜ |
+| Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
+| Hazards complete: T10, T15–T21 | ⬜ |
+| Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
+| Audio, telegraphs first: T25–T26 | ⬜ |
 | Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (0 placeholders) |
-| Production art and audio replace placeholders (human) | ⬜ |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -77,11 +79,89 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each beer overboard puts one more guy in the water (the one on the side the hazard hit), with no limit, and strokes from his seat do nothing until he is back (test) · the beer drifts at current_speed, the swimmer swims to it at swim_speed, then drifts with it (test) · the boat reaching a swimmer puts him aboard (test) · with nobody aboard the boat drifts at current_speed, and reaching the shore resets the attempt to the starting conditions (test) · the guy visibly jumps, swims, floats drinking, and climbs back in (play)
 - GDD: Systems › Setbacks
 
-### T10 · Hazard framework with one placeholder hazard · todo · M · agent
+### T10 · Hazard framework: seeded bands, effects palette, and the floating log · todo · M · agent
 - Depends on: T6, T9
-- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +spawn_rate), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
-- Done when: hazards spawn ahead of the boat from a seeded random so an attempt is reproducible (test) · a floating log is visible before it reaches the boat, and bumping it knocks a beer overboard and starts a Rescue (play) · the hazard set is a placeholder until Q3
+- Touches: scripts/systems/hazards.gd (new), scripts/resources/hazard.gd (new, +weight, +first_band), scripts/resources/lake_tuning.gd (new, +band_length, +density_curve), data/lake_tuning.tres (new), scripts/hazards/log.gd (new), scenes/hazards/log.tscn (new), tests/test_hazards.gd (new)
+- Done when: each band draws hazards from the weighted list with density per density_curve, from one seed, so the same seed gives the same lake (test) · the effects beer overboard, shove, snag, stop, forced break and water aboard exist as calls on the boat and the guys (test) · a floating log drifts at current_speed, is visible before it reaches the boat, and a bump knocks a beer overboard on the side hit and shoves the boat (play)
 - GDD: Systems › Hazards
+
+### T15 · Angry geese guarding goslings · todo · M · agent
+- Depends on: T10
+- Touches: scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/lake_tuning.tres (+geese_radius, +geese_attack_time)
+- Done when: a flock hisses when the boat enters geese_radius, charges and pecks for geese_attack_time, each peck a beer overboard, then returns (test) · the warning and the attack read at a glance (play)
+- GDD: Systems › Hazards
+
+### T16 · Motorboat wake · todo · M · agent
+- Depends on: T10
+- Touches: scripts/hazards/wake.gd (new), scenes/hazards/wake.tscn (new), data/lake_tuning.tres (+wake_speed, +wake_shove, +wake_water), data/boat_tuning.tres (+bail_rate)
+- Done when: a motorboat crosses ahead, then a wave front follows it; a head-on crossing does nothing, a broadside one knocks a beer overboard on the high side, shoves the boat sideways by wake_shove and puts wake_water aboard, which the guy on that side bails at bail_rate while his seat gives no strokes (test) · the boat is seen before the wave (play)
+- GDD: Systems › Hazards
+
+### T17 · Wind: gusts and harsh-wind stretches · todo · M · agent
+- Depends on: T10, T14
+- Touches: scripts/hazards/gust.gd (new), scripts/hazards/headwind.gd (new), scenes/hazards/gust.tscn (new), scenes/hazards/headwind.tscn (new), data/lake_tuning.tres (+gust_shove, +gust_time, +headwind_force)
+- Done when: ripples precede a gust by about a second, then the boat is shoved sideways by gust_shove for gust_time (test) · inside a headwind stretch the current is stronger by headwind_force, so only strong strokes gain water (test) · whitecaps mark the stretch before the boat reaches it (play)
+- GDD: Systems › Hazards
+
+### T18 · Cross-current stripe · todo · S · agent
+- Depends on: T10
+- Touches: scripts/hazards/cross_current.gd (new), scenes/hazards/cross_current.tscn (new), data/lake_tuning.tres (+stripe_force)
+- Done when: while the boat is inside the stripe it is pushed by stripe_force in the stripe's direction (test) · the stripe is visible as a band of faster water (play)
+- GDD: Systems › Hazards
+
+### T19 · Rock or buoy · todo · S · agent
+- Depends on: T10
+- Touches: scripts/hazards/rock.gd (new), scenes/hazards/rock.tscn (new)
+- Done when: hitting it stops the boat and knocks a beer overboard on the side hit (test)
+- GDD: Systems › Hazards
+
+### T20 · Fishing line · todo · S · agent
+- Depends on: T10
+- Touches: scripts/hazards/fishing_line.gd (new), scenes/hazards/fishing_line.tscn (new), data/lake_tuning.tres (+snag_time)
+- Done when: crossing the line snags the paddle on the side that crossed it for snag_time (test) · the dinghy and the line are visible before the boat reaches them (play)
+- GDD: Systems › Hazards
+
+### T21 · Jet-ski idiot · todo · M · agent
+- Depends on: T10
+- Touches: scripts/hazards/jetski.gd (new), scenes/hazards/jetski.tscn (new), data/lake_tuning.tres (+jetski_speed, +jetski_warning, +jetski_shove)
+- Done when: a warning of jetski_warning sounds from offscreen, then the jet-ski crosses on a straight line at jetski_speed; a hit shoves the boat hard and knocks a beer overboard (test) · the warning is loud enough to react to (play)
+- GDD: Systems › Hazards
+
+### T22 · Pixel art pass 1: catamaran, four guys, water, shore and island · todo · M · agent
+- Depends on: T6
+- Touches: assets/sprites/ (new), scenes/catamaran.tscn, scenes/lake.tscn
+- Done when: the `Visual` nodes show sprites drawn for the 640×360 canvas, nearest-filtered, in place of the primitives (play) · the human signs off the look (play)
+- GDD: Presentation and Platforms
+
+### T23 · Guy animations: stroke, fumble, break warning, antic wind-ups, scrambled-key tell · todo · M · agent
+- Depends on: T22, T13, T14
+- Touches: assets/sprites/guys/ (new), scenes/catamaran.tscn, scripts/catamaran.gd
+- Done when: every telegraph in GDD › Drunkenness and GDD › Stamina has its own animation that starts at the warning and ends at the effect (play) · a late or missed stroke is visible as a fumble (play)
+- GDD: Systems › Drunkenness · Systems › Stamina
+
+### T24 · Hazard telegraph animations · todo · M · agent
+- Depends on: T22, T15, T16, T17, T18, T19, T20, T21
+- Touches: assets/sprites/hazards/ (new), scenes/hazards/*.tscn
+- Done when: each telegraph in the GDD › Hazards table is an animation that plays before the effect (play)
+- GDD: Systems › Hazards
+
+### T25 · Audio framework: buses, stroke, splash and guy noises · todo · M · agent
+- Depends on: T6
+- Touches: assets/audio/ (new), scripts/autoload/audio.gd (new), project.godot (autoload, audio buses)
+- Done when: the check runs the autoload without errors (check) · strokes, splashes, jumps and pick-ups have sounds, and the master volume follows the player setting (play)
+- GDD: Presentation and Platforms
+
+### T26 · Audio telegraphs: engine before the wake, jet-ski offscreen, geese hiss, wind rising · todo · M · agent
+- Depends on: T25, T15, T16, T17, T21
+- Touches: assets/audio/hazards/ (new), scenes/hazards/wake.tscn, scenes/hazards/jetski.tscn, scenes/hazards/geese.tscn, scenes/hazards/gust.tscn, scenes/hazards/headwind.tscn
+- Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play)
+- GDD: Systems › Hazards
+
+### T28 · Win cutscene: the boys land, make camp and drink · todo · M · agent
+- Depends on: T6
+- Touches: scenes/win.tscn (new), scripts/win_cutscene.gd (new), scripts/autoload/run_state.gd (phase `won`)
+- Done when: reaching the island with all four aboard sets the phase to `won` (test) · the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
+- GDD: Win and Loss
 
 ### T13 · Antics: stand up, drop the paddle, nod off, each with a wind-up · todo · M · agent
 - Depends on: T5, T6
@@ -103,5 +183,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Presentation and Platforms
 
 ## Notes
-- Q3 (hazard set) gates T10's content, not its framework.
+- T15–T21 are independent of each other once T10 is done; T17 also needs T14 (stamina).
+- Stages, as the human wants them: functionality (through T21), then pixel art and animation with telegraphs first (T22–T24), then audio with telegraphs first (T25–T26).
+- Player settings have no item yet; the human will decide what they should do later.
 - T3, T4, T5 and T14 don't share files and can be built in any order after T2.

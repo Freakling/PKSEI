@@ -16,9 +16,11 @@ Instructions for AI assistants working on this game. The workflow is Godot Direc
 | `scripts/systems/` | game-rule classes (`RefCounted`) |
 | `scripts/resources/` | Resource schemas for tunable data |
 | `scripts/ui/` | screen scripts (display only; checked by tools/check.cfg) |
-| `scenes/` | scenes |
+| `scripts/hazards/` | hazard scene scripts (one per hazard; rules in `scripts/systems/hazards.gd`) |
+| `scenes/` | scenes; `scenes/hazards/` one scene per hazard |
 | `data/` | `.tres` content: the values the human tunes |
 | `tests/` | rule tests (`test_*.gd`) |
+| `assets/sprites/`, `assets/audio/` | pixel art and sound (agent-made, human-reviewed; see Project rules) |
 | `design/` | GDD, decisions and research notes (not loaded by Godot) |
 | `playtesting/` | playtest template and reports (not loaded by Godot) |
 
