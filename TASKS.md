@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T14 · B1
+**Next IDs:** T15 · B1
 
 ## Milestones
 | Milestone | Status |
@@ -49,14 +49,20 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T5 · Drunkenness rule class: level, lag, misses and scrambled keys · todo · M · agent
 - Depends on: T2
-- Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +start_level, +beer_amount, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
-- Done when: each guy's level rises by drink_rate per second from start_level, and by beer_amount per rescued beer (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)
+- Touches: scripts/systems/drunkenness.gd (new), scripts/resources/drink_tuning.gd (new, +drink_rate, +break_drink_multiplier, +start_level, +beer_amount, +lag_curve, +miss_curve, +scramble_level), data/drink_tuning.tres (new), tests/test_drunkenness.gd (new)
+- Done when: each guy's level rises by drink_rate per second from start_level, times break_drink_multiplier while he is on a break, and by beer_amount per rescued beer (test) · stroke delay and miss chance rise with the level per lag_curve and miss_curve (test) · at scramble_level and above, the guy's key maps to another guy's seat, steady until his level drops below it (test)
 - GDD: Systems › Drunkenness
 
+### T14 · Stamina rule class: strokes burn it, breaks recover it, telegraphed · todo · M · agent
+- Depends on: T2
+- Touches: scripts/systems/stamina.gd (new), scripts/resources/stamina_tuning.gd (new, +burn_per_power, +recover_rate, +break_recover_rate, +break_duration, +break_warning, +random_break_curve), data/stamina_tuning.tres (new), tests/test_stamina.gd (new)
+- Done when: a stroke burns stamina in proportion to its power, and stamina recovers at recover_rate between strokes (test) · a burnt-out guy gets a warning of break_warning, then a break of break_duration during which his seat gives no strokes and stamina recovers at break_recover_rate (test) · the chance of a random break per second rises with burnt stamina per random_break_curve, from a seeded random, and gets the same warning (test)
+- GDD: Systems › Stamina
+
 ### T6 · Grey-box lake: catamaran, four guys and the island, set as main scene · todo · L · agent
-- Depends on: T3, T4
+- Depends on: T3, T4, T14
 - Touches: scenes/lake.tscn (new), scenes/catamaran.tscn (new), scripts/catamaran.gd (new), scripts/ui/hud.gd (new), scenes/main.tscn (replaced), project.godot (main scene, input actions)
-- Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · the HUD shows progress and each guy's drunkenness (play)
+- Done when: the check loads the main scene without errors (check) · Q, A, I and K (left front, left back, right front, right back), hold to charge and release to stroke, paddle the boat from the shore against the current to the island, and reaching it with all four aboard ends the attempt (play) · a guy's break warning and break read at a glance on him (play) · the HUD shows progress and each guy's drunkenness and stamina (play)
 - GDD: Systems › Lake and island · Win and Loss
 
 ### T8 · Camera follows the boat with look-ahead · todo · S · agent
@@ -98,4 +104,4 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ## Notes
 - Q6 (rescue edge cases) gates only T9's edge cases; Q3 (hazard set) gates T10's content, not its framework.
-- T3, T4 and T5 don't share files and can be built in any order after T2.
+- T3, T4, T5 and T14 don't share files and can be built in any order after T2.

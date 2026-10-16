@@ -24,7 +24,7 @@ Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout.
 
 ## Core Loop
 ### Moment to moment
-Charge-and-release paddling against a constant current. Each guy has one key: hold to wind up, release to stroke, with no on-screen meter; the power of the stroke comes from how long the key was held. The boat gains speed, turns and wobbles from the mix of who strokes when and how hard. The player juggles four wind-ups at once while drunkenness makes each guy less reliable, and the current pulls the boat back toward the shore whenever the strokes stop.
+Charge-and-release paddling against a constant current. Each guy has one key: hold to wind up, release to stroke, with no on-screen meter; the power of the stroke comes from how long the key was held. The boat gains speed, turns and wobbles from the mix of who strokes when and how hard. Strong strokes burn a guy's stamina, so the player balances power against stamina for each guy. The player juggles four wind-ups at once while drunkenness makes each guy less reliable, and the current pulls the boat back toward the shore whenever the strokes stop.
 
 ### Session
 A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. Target crossing time for the first version: a few minutes for a competent player. The number is a tunable.
@@ -37,16 +37,19 @@ Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate o
 
 ## Systems
 ### Catamaran and paddling
-Two aluminium canoes lashed side by side, two guys per hull: a front and a back seat on each. A stroke on the left turns the boat to the right and a stroke on the right turns it left, as with an outboard at the stern; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one.
+Two aluminium canoes lashed side by side, two guys per hull: a front and a back seat on each. A stroke on the left turns the boat to the right and a stroke on the right turns it left, as with an outboard at the stern; strokes on both sides together go straight. Stroke power grows with how long the guy's key was held, up to a cap; a tap is a weak stroke, a long hold a strong one. A strong stroke burns more stamina (see Stamina).
 
 **Seats matter.** All four seats give the same forward push, but steering comes mostly from the back: a back-seat stroke turns the boat about four times as much as a front-seat stroke (the shares are tunables, meant to feel like 80/20). The front seats are the engine and the back seats the rudder, so which drunk guy sits where matters. The catamaran never capsizes: a wobble is cosmetic. A constant current runs from the island toward the shore, so a boat nobody paddles loses water. The physics stays readable: the same strokes give the same boat when the guys are sober (pillar "Hard but fair").
 
 ### Drunkenness
-Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, and by one beer each time a guy is rescued with the one he jumped in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
+Each guy has his own drunkenness level. It rises with time, as the guys drink from the crate, faster while a guy is on a stamina break, and by one beer each time a guy is rescued with the one he jumped in after. Rising drunkenness degrades that guy's control in three tiers, each visible on the guy himself (pillar "Drunker is funnier"):
 - **Lag and misses.** A drunker guy's stroke lands later after the release, and sometimes not at all; the fumble shows in his animation. Delay and miss chance rise with the level.
 - **Antics.** At drunkenness thresholds a guy does something stupid, always with a visible wind-up and a recovery: he stands up and rocks the boat, drops his paddle and has to fish for it, or nods off as dead weight.
 - **Scrambled keys.** Only at the top tier, a guy's key stops being his: announced with a wind-up, shown on screen next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds.
 Input is always honoured instantly in the animation; what the drunk body then does with it is the comedy.
+
+### Stamina
+Each guy has his own stamina. Every stroke burns some, more for a stronger stroke, and it recovers while he rests between strokes. When a guy is burnt out he takes a **break**: he stops paddling for a few seconds, his seat gives no strokes, his stamina recovers quickly, and he cracks open beers faster, so his drunkenness climbs. He may also take a break before he is burnt out: the chance rises with how much stamina he has burnt. Every break, forced or random, is telegraphed on the guy a second or two in advance, so the player can see it coming and compensate with the other three (pillar "Hard but fair"). The player's trade-off is power now against a break later, four times over.
 
 ### Hazards
 Random hazards along the crossing. Their main effect is knocking a beer overboard, which starts a Rescue; which hazards exist, what else they do, and how they are randomised so they stay readable is open (Q3). Every hazard is visible before it matters, so the player can react (pillar "Hard but fair").
@@ -67,7 +70,7 @@ None planned for the first version. The crossing is the whole game.
 A lake, four drunk guys, a catamaran made of two canoes, a crate of beer, and an island they have decided to reach. No further story.
 
 ## Difficulty and Scaling
-Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, and from the hazards getting denser toward the island. Numbers for all three are tunables.
+Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, from stamina breaks that get likelier the harder the player pushes, and from the hazards getting denser toward the island. Numbers for all of these are tunables.
 
 ## Win and Loss
 - **Win:** the catamaran reaches the island with all four guys aboard.
@@ -93,6 +96,8 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 | Rescue | The setback: a guy in the water after a beer, three paddlers, the boat drifting until he is picked up. |
 | Hazard | A random obstacle or event on the lake; its main effect is knocking a beer overboard. |
 | Antic | A telegraphed stupid thing a drunk guy does: stands up, drops his paddle, nods off. |
+| Stamina | A guy's reserve for strong strokes. Burnt by paddling, recovered by resting. |
+| Break | A guy's telegraphed pause of a few seconds: no strokes, fast stamina recovery, faster drinking. |
 
 ## Open Questions
 <!-- Numbered Q<n>, never reused. When one is answered: write the rule into its section, add a line
