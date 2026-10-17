@@ -18,6 +18,9 @@ extends "res://tools/test_case.gd"
 ## B5: the corridor never leads into the beast's edge zone: its outer edge stays beast_edge_margin
 ## plus the beast's half-width (beast_hit_radius) inside the lake's edge. T69: nor into the beast's
 ## warning band either: the outer edge stays beast_warn_margin further in as well.
+## T76: with object_spread an object's centre lies within object_spread of the corridor's centre at
+## its y, still clear of it by path_width / 2 + half_width; at 0 (or a spread wider than the lake)
+## objects go over the whole lake, as before.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
@@ -58,6 +61,8 @@ func before_each() -> void:
 	tuning.density_curve = Curves.ramp(1.0, 3.0)
 	tuning.path_width = PATH_WIDTH
 	tuning.path_wander = WANDER
+	## The lake-wide placement tests below mean the whole lake; the spread (T76) has its own tests.
+	tuning.object_spread = 0.0
 	tuning.beast_edge_margin = BEAST_MARGIN
 	tuning.beast_hit_radius = BEAST_RADIUS
 	tuning.beast_warn_margin = BEAST_WARN
@@ -274,6 +279,71 @@ func test_objects_land_on_both_sides_of_the_corridor_and_right_up_to_it() -> voi
 				right += 1
 	expect(left > 300 and right > 300, "objects fall on either side of the path (%d left, %d right)" % [left, right])
 	expect(closest < PATH_WIDTH * 0.5 + 5.0, "and some sit right at its edge (closest %.1f)" % closest)
+
+
+## T76: with object_spread 200 every object's centre is within 200 of the corridor at its y, and still
+## clear of it by its footprint; the bound is in use, as without the spread some sit further out.
+func test_with_object_spread_every_object_lies_within_it_of_the_corridor_and_clear_of_it() -> void:
+	tuning.object_spread = 200.0
+	var total: int = 0
+	for lake_seed: int in 100:
+		var centers: PackedFloat64Array = Hazards.path_centers(tuning, lake_seed)
+		for band: int in DENSITIES.size():
+			for generation: int in 2:
+				for placement: Hazards.Placement in Hazards.plan_band(tuning, lake_seed, band, generation):
+					var offset: float = absf(placement.position.x - Hazards.corridor_at(tuning, centers, placement.position.y))
+					var clear: float = PATH_WIDTH * 0.5 + tuning.hazards[placement.spec].half_width
+					expect(offset <= 200.0 + 0.0001, "seed %d band %d gen %d: within object_spread of the corridor (%.1f)" % [lake_seed, band, generation, offset])
+					expect(offset >= clear - 0.0001, "seed %d band %d gen %d: clear of the corridor by its footprint (%.1f, need %.1f)" % [lake_seed, band, generation, offset, clear])
+					total += 1
+	expect_eq(total, 100 * 2 * 11, "every band still draws its density, so every object was checked")
+	tuning.object_spread = 0.0
+	var beyond: bool = false
+	for lake_seed: int in 100:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			if gap(placement, lake_seed) > 200.0:
+				beyond = true
+	expect(beyond, "without the spread some objects sit further than 200 out, so the bound is what keeps them in")
+
+
+## T76: with object_spread 0 objects reach the lake's edges on both sides, as before the spread.
+func test_without_object_spread_objects_reach_the_lake_edges() -> void:
+	tuning.object_spread = 0.0
+	var leftmost: float = 0.0
+	var rightmost: float = 0.0
+	for lake_seed: int in 100:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			leftmost = minf(leftmost, placement.position.x)
+			rightmost = maxf(rightmost, placement.position.x)
+	expect(leftmost < -WIDTH * 0.5 + 10.0, "objects reach the left edge of the lake (%.1f)" % leftmost)
+	expect(rightmost > WIDTH * 0.5 - 10.0, "and the right edge (%.1f)" % rightmost)
+
+
+## T76: a spread wider than the lake is no narrower than the lake, so it places exactly as 0 does.
+func test_an_object_spread_wider_than_the_lake_places_as_zero_does() -> void:
+	tuning.object_spread = 0.0
+	for lake_seed: int in 20:
+		var whole: Array[Hazards.Placement] = Hazards.plan(tuning, lake_seed)
+		for spread: float in [WIDTH, WIDTH * 4.0]:
+			tuning.object_spread = spread
+			same_placements(whole, Hazards.plan(tuning, lake_seed), "seed %d, spread %.0f" % [lake_seed, spread])
+	tuning.object_spread = 0.0
+
+
+## T76: a footprint whose clear zone (path_width / 2 + half_width) reaches the spread's edge has no
+## water left, so nothing is placed; over the whole lake a footprint that clears the lake's edges still
+## fits where the corridor leaves it room.
+func test_a_footprint_whose_clear_zone_reaches_the_spread_has_no_water() -> void:
+	var wide: HazardSpec = spec(1.0, 0)
+	wide.half_width = 200.0
+	tuning.hazards = [wide]
+	tuning.object_spread = PATH_WIDTH * 0.5 + 200.0
+	expect_eq(Hazards.plan(tuning, 42).size(), 0, "a 200 footprint's clear zone (240) reaches the spread's edge: nothing is placed")
+	tuning.object_spread = 0.0
+	var placed: int = 0
+	for lake_seed: int in 20:
+		placed += Hazards.plan(tuning, lake_seed).size()
+	expect(placed > 0, "over the whole lake the same footprint fits where the path leaves room (%d placed)" % placed)
 
 
 func test_an_object_keeps_its_half_width_clear_of_the_corridor_on_both_sides() -> void:

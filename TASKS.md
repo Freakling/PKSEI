@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T76 · B6 · R1
+**Next IDs:** T77 · B6 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -346,6 +346,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
+
+### T76 · Logs and rocks crowd the path: objects land within object_spread of the corridor; more of them · done · S · agent
+- Depends on: T10, T20, T21
+- Touches: scripts/systems/hazards.gd (place), scripts/resources/lake_tuning.gd (+object_spread), data/lake_tuning.tres (object_spread, density_curve 2→4), data/hazards/log.tres, data/hazards/rock.tres (weight 3), tests/test_hazards.gd
+- Done when: with object_spread > 0 every object's centre lies within object_spread of the corridor's centre at its y while still keeping path_width / 2 + half_width clear of it, and with object_spread = 0 placement is over the whole lake as before (test) · logs and rocks weigh 3 against 1 for the rest and the density curve runs 2→4 per band, so a 400 px band holds about one to two obstacles beside the path (check: data quoted) · obstacles appear beside the path every screen or so in play (play)
+- GDD: Systems › Hazards
 
 ### T75 · Apply the upgraded Claude Code settings · todo · (none) · human
 - Depends on: (none)

@@ -12,8 +12,8 @@
 [ext_resource type="Resource" path="res://data/hazards/jetski.tres" id="10_jetski"]
 
 [sub_resource type="Curve" id="Curve_density"]
-max_value = 3.0
-_data = [Vector2(0, 1), 0.0, 2.0, 0, 1, Vector2(1, 3), 2.0, 0.0, 1, 0]
+max_value = 4.0
+_data = [Vector2(0, 2), 0.0, 2.0, 0, 1, Vector2(1, 4), 2.0, 0.0, 1, 0]
 point_count = 2
 
 [resource]
@@ -25,6 +25,7 @@ lake_width = 1600.0
 band_length = 400.0
 density_curve = SubResource("Curve_density")
 path_width = 120.0
+object_spread = 300.0
 path_wander = 200.0
 geese_radius = 160.0
 geese_warning = 1.0

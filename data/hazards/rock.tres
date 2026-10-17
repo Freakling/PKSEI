@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1_spec")
 scene = ExtResource("2_scene")
-weight = 1.0
+weight = 3.0
 first_band = 0
 shove_strength = 0.0
 hit_cooldown = 1.0

@@ -27,7 +27,7 @@ extends RefCounted
 ## corridor's x is the straight line from one to the next (corridor_x(tuning, seed, y)), so the
 ## corridor is continuous across band edges; off the shore it sits at 0 (the launch) and so does
 ## the island. An object's x is drawn from the water at its y that its footprint leaves clear of
-## the corridor on either side, and an object with no such water is not placed; an event's x is
+## the corridor on either side and within object_spread of it, and an object with no such water is not placed; an event's x is
 ## drawn from the corridor's middle (within EVENT_SPREAD of its half-width either side of the
 ## centre). A band that is all corridor (path_width at or above lake_width) places events only.
 ##
@@ -176,9 +176,12 @@ static func draw(tuning: LakeTuning, specs: Array[int], rng: RandomNumberGenerat
 ## near edge), at an x whose footprint stays out of the corridor. The centre must be at least
 ## path_width / 2 + half_width from the corridor's centre at its y, so the water it may take is the
 ## lake less that clear zone: one piece left of it and one right of it, each cut short where the
-## zone runs past a lake edge. An x is drawn uniformly over that water, so every point it allows is
-## as likely as any other (the open width less 2 × half_width when the corridor is central). Returns
-## NOWHERE when there is no water left for the footprint at this y. `centers` is path_centers().
+## zone runs past a lake edge. With object_spread above zero the water is also cut to object_spread
+## either side of the corridor's centre, so objects crowd the path; at zero (or a spread wider than the
+## lake) it is the whole lake. An x is drawn uniformly over that water, so every point it allows is
+## as likely as any other (the open width less 2 × half_width when the corridor is central and the
+## spread is not in the way). Returns NOWHERE when there is no water left for the footprint at this y.
+## `centers` is path_centers().
 static func place(tuning: LakeTuning, centers: PackedFloat64Array, band: int, half_width: float, rng: RandomNumberGenerator) -> Vector2:
 	var half: float = tuning.lake_width * 0.5
 	var near: float = near_edge(tuning, band)
@@ -188,14 +191,19 @@ static func place(tuning: LakeTuning, centers: PackedFloat64Array, band: int, ha
 	var centre: float = corridor_at(tuning, centers, y)
 	var left_end: float = clampf(centre - clear, -half, half)
 	var right_start: float = clampf(centre + clear, -half, half)
-	var left_width: float = left_end + half
-	var right_width: float = half - right_start
+	var left_start: float = -half
+	var right_end: float = half
+	if tuning.object_spread > 0.0:
+		left_start = maxf(-half, centre - tuning.object_spread)
+		right_end = minf(half, centre + tuning.object_spread)
+	var left_width: float = maxf(left_end - left_start, 0.0)
+	var right_width: float = maxf(right_end - right_start, 0.0)
 	var room: float = left_width + right_width
 	if room <= 0.0:
 		return NOWHERE
 	var u: float = rng.randf_range(0.0, room)
 	if u < left_width:
-		return Vector2(-half + u, y)
+		return Vector2(left_start + u, y)
 	return Vector2(right_start + (u - left_width), y)
 
 

@@ -24,6 +24,11 @@ extends Resource
 ## Width in pixels of the guaranteed path: the corridor no object is placed in, measured across
 ## the lake. A corridor as wide as the lake leaves nowhere to place anything.
 @export var path_width: float = 120.0 ## PLACEHOLDER
+## Pixels either side of the corridor's centre within which an object's centre is placed, so the
+## obstacles crowd the path; 0 places objects over the whole lake. An object's footprint still keeps
+## path_width / 2 + its half_width clear, so a spread no wider than that leaves an object no water
+## (a fishing line, half_width 200, needs a spread above 260 to fit).
+@export var object_spread: float = 300.0 ## PLACEHOLDER
 ## Furthest the corridor's centre moves across the lake, in pixels, between one band's near edge
 ## and the next's; 0 makes the path a straight line up the middle.
 @export var path_wander: float = 160.0 ## PLACEHOLDER
