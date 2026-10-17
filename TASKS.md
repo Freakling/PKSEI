@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T43 · B4
+**Next IDs:** T44 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (68 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (70 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -208,10 +208,16 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: hitting it stops the boat and knocks a beer overboard on the side hit (test)
 - GDD: Systems › Hazards
 
-### T20 · Fishing line · todo · S · agent
+### T20 · Fishing line · done · S · agent
 - Depends on: T10
-- Touches: scripts/hazards/fishing_line.gd (new), scenes/hazards/fishing_line.tscn (new), data/lake_tuning.tres (+snag_time)
+- Touches: scripts/hazards/fishing_line.gd (new), scenes/hazards/fishing_line.tscn (new), data/hazards/fishing_line.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+snag_time, +line_length), tests/test_fishing_line.gd (new)
 - Done when: crossing the line snags the paddle on the side that crossed it for snag_time (test) · the dinghy and the line are visible before the boat reaches them (play)
+- GDD: Systems › Hazards
+
+### T43 · Objects with an extent keep their whole footprint out of the corridor · todo · S · agent
+- Depends on: T37, T20
+- Touches: scripts/resources/hazard.gd (+half_width), scripts/systems/hazards.gd, data/hazards/fishing_line.tres, data/hazards/log.tres, data/hazards/rock.tres, data/hazards/geese.tres, tests/test_hazards.gd
+- Done when: placement keeps a spec's half_width clear of the corridor on both sides, so a fishing line's full length never crosses the path (test)
 - GDD: Systems › Hazards
 
 ### T21 · Jet-ski idiot · todo · M · agent

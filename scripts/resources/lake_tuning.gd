@@ -80,5 +80,10 @@ extends Resource
 ## Pixels of crossing a cross-current stripe covers, from its trigger toward the island, across the
 ## whole lake_width; the faster water covers it.
 @export var stripe_length: float = 300.0 ## PLACEHOLDER
+## Fishing line (the Fishing line row; read by scripts/hazards/fishing_line.gd).
+## Pixels the line runs sideways from its dinghy, across the water.
+@export var line_length: float = 200.0 ## PLACEHOLDER
+## Seconds a crossing of the line snags the paddle on the side that crossed it.
+@export var snag_time: float = 3.0 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []

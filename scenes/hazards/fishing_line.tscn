@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/fishing_line.gd" id="1_fishing_line"]
+
+[node name="FishingLine" type="Node2D"]
+script = ExtResource("1_fishing_line")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Line" type="Line2D" parent="Visual"]
+width = 1.0
+default_color = Color(0.85, 0.85, 0.85, 0.9)
+
+[node name="Dinghy" type="Polygon2D" parent="Visual"]
+color = Color(0.45, 0.3, 0.15, 1)
+polygon = PackedVector2Array(-10, -3, 10, -3, 10, 3, -10, 3)
+
+[node name="Fisherman" type="Polygon2D" parent="Visual"]
+color = Color(0.95, 0.75, 0.55, 1)
+polygon = PackedVector2Array(-2, -8, 2, -8, 2, -4, -2, -4)
+
+[node name="Snag" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Snag"]
+
+[connection signal="body_entered" from="Snag" to="." method="_on_body_entered"]

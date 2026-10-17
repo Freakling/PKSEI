@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LakeTuning" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
 [ext_resource type="Resource" path="res://data/hazards/log.tres" id="2_log"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/hazards/gust.tres" id="5_gust"]
 [ext_resource type="Resource" path="res://data/hazards/headwind.tres" id="6_headwind"]
 [ext_resource type="Resource" path="res://data/hazards/cross_current.tres" id="7_cross_current"]
+[ext_resource type="Resource" path="res://data/hazards/fishing_line.tres" id="9_fishing_line"]
 
 [sub_resource type="Curve" id="Curve_density"]
 max_value = 3.0
@@ -46,4 +47,6 @@ headwind_force = 25.0
 headwind_length = 400.0
 stripe_force = 40.0
 stripe_length = 300.0
-hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock")]
+line_length = 200.0
+snag_time = 3.0
+hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock"), ExtResource("9_fishing_line")]
