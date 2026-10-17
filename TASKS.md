@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T50 · B5
+**Next IDs:** T53 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -190,11 +190,29 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: at the launch shore, text scratched into the sand shows the four keys at their seats (Q A left, I K right, hold to charge, release to stroke) beside the boat's start, and nothing of it is on screen once the boat has left (play)
 - GDD: Presentation and Platforms
 
-### T49 · Remove the unused single-pose guy sprites and their generator branch · todo · S · agent
+### T49 · Remove the unused single-pose guy sprites and their generator branch · in-progress 2026-10-17 · S · agent
 - Depends on: T23
 - Touches: tools/gen_sprites.gd, assets/sprites/guy_0..3.png (+.import, deleted)
 - Done when: no scene or script references assets/sprites/guy_<seat>.png and the files and their generator code are gone (check)
 - GDD: —
+
+### T50 · The Loch-Brez beast: boundary enforcer and rare deep-water visitor · todo · L · agent
+- Depends on: T10, T9, T22
+- Touches: scripts/systems/beast.gd (new), scripts/hazards/beast.gd (new), scenes/hazards/beast.tscn (new), scripts/lake.gd (spawned once per lake, not planned), scripts/resources/lake_tuning.gd (+beast_edge_margin, +beast_beyond_island, +beast_warning, +beast_speed, +beast_shove, +beast_spit_distance, +beast_random_rate), data/lake_tuning.tres, scripts/autoload/run_state.gd (a guy spat out far back: guy_overboard at a far position), tools/gen_sprites.gd, assets/sprites/beast_*.png (new), tests/test_beast.gd (new)
+- Done when: the beast rises when the boat is within beast_edge_margin of a lake edge or beyond the island's far side by beast_beyond_island, and rarely elsewhere from the attempt's seed at beast_random_rate; it circles for beast_warning, then rams (a shove of beast_shove toward the lake's middle) and grabs the guy on the hull it hit, who is spat out beast_spit_distance back toward the shore as a swimmer (test) · it dives once the boat is back inside, or after one grab on a random visit (test) · the fin, the circling and the grab read at a glance (play)
+- GDD: Systems › Hazards
+
+### T51 · Once the geese hiss, the charge always comes · todo · S · agent
+- Depends on: T15
+- Touches: scripts/systems/geese.gd, tests/test_geese.gd
+- Done when: leaving geese_radius during the hiss no longer calms the flock; the charge follows the warning regardless (test)
+- GDD: Systems › Hazards
+
+### T52 · The jet-ski crosses on a diagonal from the lake edge · todo · S · agent
+- Depends on: T21
+- Touches: scripts/systems/jetski.gd, tests/test_jetski.gd
+- Done when: the course runs from the lake edge at the trigger's y through the point jetski_lead ahead of the boat and on past the far edge, at jetski_speed (test)
+- GDD: Systems › Hazards
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
