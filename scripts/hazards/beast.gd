@@ -68,8 +68,9 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Sound only (T26): the low rumble loops from the moment the beast rises (CIRCLING), through
-## the ram, until it dives. The grab's chomp is the Audio autoload's, from RunState.guy_grabbed.
+## Sound and the call-out (T26, T56): the low rumble loops from the moment the beast rises
+## (CIRCLING), through the ram, until it dives, and the guy on the fin's side calls it out. The
+## grab's chomp is the Audio autoload's, from RunState.guy_grabbed.
 func _sound_state() -> void:
 	var up: bool = _rule.state == Beast.State.CIRCLING or _rule.state == Beast.State.RAMMING
 	if up == _was_up:
@@ -77,6 +78,7 @@ func _sound_state() -> void:
 	_was_up = up
 	if up:
 		_start_loop(&"beast_rumble")
+		_telegraph(&"beast", _rule.position)
 	else:
 		_stop_loop()
 

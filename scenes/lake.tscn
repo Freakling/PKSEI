@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
 [ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/ui/offscreen_arrows.gd" id="8_arrows"]
 [ext_resource type="Texture2D" path="res://assets/sprites/sand_text.png" id="9_sandtext"]
 [ext_resource type="Script" path="res://scripts/ui/touch_pads.gd" id="10_pads"]
+[ext_resource type="Script" path="res://scripts/ui/speech_bubbles.gd" id="11_bubbles"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
 size = Vector2(6000, 400)
@@ -110,5 +111,15 @@ columns = 2
 
 [node name="OffscreenArrows" type="Node2D" parent="HUD"]
 script = ExtResource("8_arrows")
+
+[node name="SpeechBubbles" type="Control" parent="HUD" node_paths=PackedStringArray("boat")]
+script = ExtResource("11_bubbles")
+boat = NodePath("../../Catamaran")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [connection signal="body_entered" from="Island" to="." method="_on_island_body_entered"]

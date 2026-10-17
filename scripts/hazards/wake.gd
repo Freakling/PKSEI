@@ -60,8 +60,9 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Sound only (T26): the motorboat's engine loops from the moment it sets out (CROSSING, before
-## its wave is anywhere near) until the wave is spent.
+## Sound and the call-out (T26, T56): the motorboat's engine loops from the moment it sets out
+## (CROSSING, before its wave is anywhere near) until the wave is spent, and the guy on the side
+## it sets out from calls it out.
 func _sound_state() -> void:
 	var state: MotorboatWake.State = _wake.state
 	if state == _last_state:
@@ -69,6 +70,7 @@ func _sound_state() -> void:
 	_last_state = state
 	if state == MotorboatWake.State.CROSSING:
 		_start_loop(&"engine")
+		_telegraph(&"wake", _wake.motorboat)
 	elif state == MotorboatWake.State.SPENT:
 		_stop_loop()
 

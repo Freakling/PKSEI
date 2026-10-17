@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Lines" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/lines.gd" id="1_lines"]
+
+[resource]
+script = ExtResource("1_lines")
+lines = Dictionary[StringName, PackedStringArray]({
+&"stamina_warning": PackedStringArray("Fyfan va trött jag är!", "Jag orkar inte mer...", "Armarna är slut!", "Paus! Jag dör!"),
+&"antic_stand": PackedStringArray("Kolla, jag kan stå!", "Jag ska bara resa mig...", "Ser man ön härifrån?"),
+&"antic_paddle": PackedStringArray("Oj, paddeln!", "Va hal paddeln är!", "Håll den här... nej vänta"),
+&"antic_nap": PackedStringArray("Bara blunda lite...", "Väck mig vid ön", "Zzz... va?"),
+&"antic_pee": PackedStringArray("Jag måste pissa", "Kissnödig!", "Blåsan säger stopp"),
+&"bar_windup": PackedStringArray("Oj, allt snurrar!", "Vilket håll är fram?", "Nu är jag rund under fötterna"),
+&"jump_windup": PackedStringArray("Min öl!!", "Nej, inte ölen!", "Jag hämtar den!"),
+&"geese": PackedStringArray("Se upp för fåglarna!", "Gäss! Paddla!", "Jävla gäss!"),
+&"gust": PackedStringArray("Nu jävlar blåser det!", "Håll i hatten!", "Vind! Åt andra hållet!"),
+&"headwind": PackedStringArray("Motvind, fy fan", "Ta i nu, grabbar!", "Vågor framför!"),
+&"wake": PackedStringArray("Motorbåt! Vänd bogen!", "Svall på väg!", "Vem fan kör så?"),
+&"jetski": PackedStringArray("Vattenskoter! Se upp!", "Hör ni den där idioten?", "Ur vägen, skoter!"),
+&"beast": PackedStringArray("Nåt är i vattnet...", "Fenan! Det är odjuret!", "Loch-Brez! Paddla för fan!"),
+&"log": PackedStringArray("Stock rakt fram!", "Styr, det ligger en stock!", "Se upp för stocken!"),
+&"rock": PackedStringArray("Sten! Styr undan!", "Det är en sten där!", "Boj rakt fram!")
+})

@@ -58,6 +58,9 @@ extends Resource
 ## Seconds after a beer goes over during which no further beer goes over; hits inside the window
 ## still shove or stop the boat (GDD › Systems › Hazards, Beer overboard). Read by RunState.
 @export var beer_loss_cooldown: float = 2.0 ## PLACEHOLDER
+## Seconds a guy's bubble calling out a hazard stays up (T56, GDD › World and Narrative). Read by
+## scripts/ui/speech_bubbles.gd; a wind-up's bubble lasts the wind-up instead.
+@export var call_out_time: float = 2.5 ## PLACEHOLDER
 
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER

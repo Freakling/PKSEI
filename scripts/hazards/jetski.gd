@@ -56,8 +56,9 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Sound only (T26): the jet-ski is heard from offscreen through the warning, loops while it
-## crosses, and stops once it is spent.
+## Sound and the call-out (T26, T56): the jet-ski is heard from offscreen through the warning,
+## loops while it crosses, and stops once it is spent; as the warning starts the guy on the side
+## it comes from (the lake edge against its direction) calls it out.
 func _sound_state() -> void:
 	var state: JetSki.State = _rule.state
 	if state == _last_state:
@@ -65,6 +66,7 @@ func _sound_state() -> void:
 	_last_state = state
 	if state == JetSki.State.WARNING:
 		_start_loop(&"jetski")
+		_telegraph(&"jetski", _boat.global_position + Vector2(-_rule.direction * tuning.lake_width, 0.0))
 	elif state == JetSki.State.SPENT:
 		_stop_loop()
 

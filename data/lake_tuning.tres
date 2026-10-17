@@ -68,4 +68,5 @@ beast_spit_distance = 900.0
 beast_pause = 1.5
 beast_dive_time = 2.0
 beast_random_rate = 0.004
+call_out_distance = 160.0
 hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock"), ExtResource("9_fishing_line"), ExtResource("10_jetski")]

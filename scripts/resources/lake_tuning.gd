@@ -128,5 +128,9 @@ extends Resource
 ## Chance per second, while the boat is inside the bounds and in open water, that the beast
 ## rises anyway for one grab: the rare deep-water visit.
 @export var beast_random_rate: float = 0.004 ## PLACEHOLDER
+## Pixels from a log or a rock within which, with the boat heading toward it, a guy calls it out
+## in a bubble (T56; read by scripts/hazards/log.gd and rock.gd). Objects have no warning of their
+## own: being ahead on the path is theirs.
+@export var call_out_distance: float = 160.0 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []

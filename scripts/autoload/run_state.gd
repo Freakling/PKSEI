@@ -23,8 +23,11 @@ extends Node
 ## way than a jump (T13) goes through guy_overboard(); the beast's grab (T50, beast_grab) puts
 ## the hit hull's guy in the water a long way back toward the shore. new_attempt() draws lake_seed from the
 ## RNG, the seed the lake plans its hazards from (Hazards.plan), and then resets; a shore reset
-## only resets, so the attempt meets the same lake again. Screens only read. Reads and writes no
-## player data.
+## only resets, so the attempt meets the same lake again. The guys' lines (T56, GDD › World and
+## Narrative) live here too: a hazard whose warning starts calls telegraph(kind, hull), which
+## emits telegraphed for the speech bubbles (scripts/ui/speech_bubbles.gd), and pick_line(kind)
+## draws one of data/lines.tres's Swedish lines for a telegraph with the RNG, so no screen rolls
+## one. Screens only read. Reads and writes no player data.
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
 ## step() mirrors the rule classes' levels into them so screens read one place.
@@ -76,6 +79,10 @@ signal beer_overboard_started(hull: Rescue.Hull)
 signal guy_fell_in(seat: int)
 ## The beast grabbed a guy in beast_grab() (T50; T26: the chomp).
 signal guy_grabbed(seat: int)
+## A hazard's warning started (T56): `kind` is one of Lines.KINDS, `hull` the Rescue.Hull it
+## comes from, or Rescue.NOBODY when it comes from nowhere in particular (a headwind). Emitted
+## by telegraph(); the speech bubbles put the line on the guy on that hull.
+signal telegraphed(kind: StringName, hull: int)
 
 var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
@@ -90,6 +97,8 @@ var stamina: Stamina = Stamina.new(preload("res://data/stamina_tuning.tres") as 
 var antics: Antics = Antics.new(preload("res://data/drink_tuning.tres") as DrinkTuning)
 ## The guys in the water and their beers; reads its tunables from paddling's BoatTuning.
 var rescue: Rescue = Rescue.new()
+## What the guys say at each telegraph (T56), per kind; pick_line() draws from it.
+var lines: Lines = preload("res://data/lines.tres") as Lines
 ## Rolls the misses and the random breaks, and each attempt's lake_seed; tests seed it.
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## Seed of this attempt's hazard plan, drawn from rng at new_attempt(): the lake differs between
@@ -314,6 +323,19 @@ func force_break(side: Rescue.Hull) -> int:
 	if seat != Rescue.NOBODY:
 		stamina.call_break(seat)
 	return seat
+
+
+## A hazard's warning has started (GDD › Systems › Hazards: every hazard is announced before it
+## matters): `kind` names it (a Lines.KINDS entry) and `hull` is the side it comes from, or
+## Rescue.NOBODY for none in particular. Only emits telegraphed; the bubbles do the rest.
+func telegraph(kind: StringName, hull: int = Rescue.NOBODY) -> void:
+	telegraphed.emit(kind, hull)
+
+
+## One of the Swedish lines for `kind` (GDD › World and Narrative), drawn with the RNG here so
+## no screen rolls one; "" for a kind without lines.
+func pick_line(kind: StringName) -> String:
+	return lines.pick(kind, rng)
 
 
 ## Water comes in on `side` (Water aboard): `amount` of it, which that hull's guy bails at

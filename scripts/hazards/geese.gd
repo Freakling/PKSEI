@@ -59,7 +59,8 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Sound only (T26): the geese hiss as the hissing starts, each time it does.
+## Sound and the call-out (T26, T56): the geese hiss as the hissing starts, each time it does,
+## and the guy on the nest's side calls them out.
 func _sound_state() -> void:
 	var state: GeeseFlock.State = _flock.state
 	if state == _last_state:
@@ -67,6 +68,7 @@ func _sound_state() -> void:
 	_last_state = state
 	if state == GeeseFlock.State.HISSING:
 		Audio.play(&"geese_hiss")
+		_telegraph(&"geese", global_position)
 
 
 ## Visual only: the geese follow the flock, face the boat while hissing and the way they fly

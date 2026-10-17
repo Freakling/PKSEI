@@ -56,8 +56,9 @@ func _physics_process(delta: float) -> void:
 	_whitecaps.texture = WHITECAP_FRAMES[_frame_at(_clock, WHITECAP_FRAMES.size(), FRAME_PERIOD)]
 
 
-## Sound only (T26): the whitecaps' wind loops while the boat is inside the stretch, from the
-## step it enters to the step it leaves.
+## Sound and the call-out (T26, T56): the whitecaps' wind loops while the boat is inside the
+## stretch, from the step it enters to the step it leaves, and on entering a guy calls it out:
+## the stretch is lake-wide, so it comes from no hull in particular.
 func _sound_state() -> void:
 	var inside: bool = _wind.inside(_boat.global_position)
 	if inside == _was_inside:
@@ -65,5 +66,6 @@ func _sound_state() -> void:
 	_was_inside = inside
 	if inside:
 		_start_loop(&"whitecaps")
+		RunState.telegraph(&"headwind", Rescue.NOBODY)
 	else:
 		_stop_loop()

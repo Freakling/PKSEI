@@ -69,7 +69,8 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Sound only (T26): the wind rises as the warning starts, before the gust blows.
+## Sound and the call-out (T26, T56): the wind rises as the warning starts, before the gust
+## blows, and the guy on the side the wind comes from (against its direction) calls it out.
 func _sound_state() -> void:
 	var state: WindGust.State = _gust.state
 	if state == _last_state:
@@ -77,6 +78,7 @@ func _sound_state() -> void:
 	_last_state = state
 	if state == WindGust.State.WARNING:
 		Audio.play(&"wind_rise")
+		_telegraph(&"gust", _boat.global_position + Vector2(-_gust.direction * tuning.lake_width, 0.0))
 
 
 ## Visual only: the ripples show from the warning to the end of the push, racing the way the
