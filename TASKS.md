@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T61 · B6
+**Next IDs:** T62 · B6
 
 ## Milestones
 | Milestone | Status |
@@ -268,6 +268,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: data/lake_tuning.tres (beast_random_rate), scripts/resources/lake_tuning.gd
 - Done when: beast_random_rate is set so the expected number of random visits in a five-minute crossing is well below one (the arithmetic quoted) (check)
 - GDD: Systems › Hazards
+
+### T61 · The hazard boats are drawn big enough to recognise: motorboat, jet-ski, dinghy · in-progress 2026-10-17 · S · agent
+- Depends on: T24
+- Touches: tools/gen_sprites.gd, assets/sprites/hazards/{motorboat,motorboat_spray_0,motorboat_spray_1,jetski_0,jetski_1,dinghy}.png, scenes/hazards/{wake,jetski,fishing_line}.tscn, data/lake_tuning.tres (hit radii if needed)
+- Done when: the motorboat and the dinghy are at least the catamaran's size (40×56) and the jet-ski at least 32×18 with its rider, the sprays and the fisherman scaled with them, and the hit radii still match the art (check: sizes quoted) · they read at a glance in play (play)
+- GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
