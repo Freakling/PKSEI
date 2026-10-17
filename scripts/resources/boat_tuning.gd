@@ -20,6 +20,9 @@ extends Resource
 @export var steer_share_back: float = 0.8 ## PLACEHOLDER
 ## Speed of the current toward the shore, in pixels per second (the boat applies it as velocity).
 @export var current_speed: float = 10.0 ## PLACEHOLDER
+## Multiplier on current_speed while nobody is aboard: an empty boat drifts home this many times
+## faster (GDD › Systems › Setbacks). A harsh-wind stretch's extra drift is not multiplied. Read by RunState.
+@export var empty_drift_multiplier: float = 5.0 ## PLACEHOLDER
 ## Pixels per second the wind carries beers and swimmers back toward the shore; larger than
 ## current_speed (GDD › Systems › Catamaran and paddling). Read by RunState, passed to Rescue.
 @export var loose_drift_speed: float = 30.0 ## PLACEHOLDER
@@ -44,6 +47,9 @@ extends Resource
 ## Water a guy bails out per second while his hull has water aboard (the water aboard effect,
 ## GDD › Systems › Hazards); his seat gives no strokes meanwhile. Read by RunState.
 @export var bail_rate: float = 1.0 ## PLACEHOLDER
+## Seconds after a beer goes over during which no further beer goes over; hits inside the window
+## still shove or stop the boat (GDD › Systems › Hazards, Beer overboard). Read by RunState.
+@export var beer_loss_cooldown: float = 2.0 ## PLACEHOLDER
 
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER

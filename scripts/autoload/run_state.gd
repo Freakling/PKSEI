@@ -101,6 +101,9 @@ var _stop: bool = false
 ## Pixels per second a headwind adds to the current's pull this step; set each step the boat
 ## is in a stretch, consumed by step().
 var _extra_drift: float = 0.0
+## Seconds until another beer may go over (BoatTuning.beer_loss_cooldown, GDD › Systems › Hazards):
+## set when a beer goes over, counted down in step(), cleared by reset().
+var _beer_loss_left: float = 0.0
 ## Seconds each seat's paddle is still snagged; 0 when free.
 var _snag_left: Array[float] = []
 ## Water aboard per hull (Rescue.Hull order); the hull's guy bails it at BoatTuning.bail_rate.
@@ -136,6 +139,7 @@ func reset() -> void:
 	_push = Vector2.ZERO
 	_stop = false
 	_extra_drift = 0.0
+	_beer_loss_left = 0.0
 	_snag_left.clear()
 	_water.clear()
 	guys.clear()
@@ -165,12 +169,17 @@ func shore_touched() -> void:
 ## beer_toss to that side and bobs away, and the guy Rescue picks (that hull, front first, not
 ## already winding up) winds up for BoatTuning.jump_delay seconds (T34). He stays aboard and
 ## paddles meanwhile; step() takes him off the boat when he jumps. Returns his seat, or
-## Rescue.NOBODY when nobody was free to jump.
+## Rescue.NOBODY when nobody was free to jump. While the beer-loss cooldown runs (T46) nothing
+## goes over and NOBODY comes back; the cooldown starts only when a beer does go over. shove()
+## and stop() are not held back by it.
 func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
+	if _beer_loss_left > 0.0:
+		return Rescue.NOBODY
 	var toss: float = paddling.tuning.beer_toss
 	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
 	var seat: int = rescue.beer_overboard(side, _seats_aboard(), beer_at, paddling.tuning.jump_delay)
 	if seat != Rescue.NOBODY:
+		_beer_loss_left = paddling.tuning.beer_loss_cooldown
 		beer_overboard_started.emit(side)
 	return seat
 
@@ -345,12 +354,15 @@ func stroke(seat: int, hold_time: float) -> void:
 ## mirrored into the guys, the snags count down and the bailers bail, elapsed advances, and the
 ## strokes that land this frame become the boat's Motion, its turn plus the rock of any guy
 ## standing up, its drift the current's plus any headwind set for this step (set_extra_drift).
-## With nobody aboard the Motion is only the drift. Nothing moves once the attempt is won.
+## With nobody aboard (after this frame's jumps) the current's part of the drift is multiplied by
+## BoatTuning.empty_drift_multiplier, and the headwind's extra drift is added as it is (T47). The
+## beer-loss cooldown counts down (T46). Nothing moves once the attempt is won.
 func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	if phase == Phase.WON:
 		return Paddling.Motion.new()
 	elapsed += delta
 	_boat_at = boat_at
+	_beer_loss_left = maxf(_beer_loss_left - delta, 0.0)
 	for seat: int in GUY_COUNT:
 		_snag_left[seat] = maxf(_snag_left[seat] - delta, 0.0)
 	for side: int in Rescue.Hull.size():
@@ -381,6 +393,8 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 		guy.stamina = stamina.level_of(seat)
 		guy.drunkenness = drunkenness.level_of(seat)
 	var motion: Paddling.Motion = paddling.step(_land_strokes(delta), delta)
+	if _seats_aboard().is_empty():
+		motion.drift_to_shore *= paddling.tuning.empty_drift_multiplier
 	for seat: int in GUY_COUNT:
 		motion.turn += antics.rock(seat) * delta
 	motion.drift_to_shore += _extra_drift * delta

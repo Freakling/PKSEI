@@ -20,15 +20,25 @@ extends "res://tools/test_case.gd"
 ## T25 · RunState tells the Audio autoload what happened: stroke_landed, stroke_fumbled,
 ## guy_jumped, guy_picked_up and beer_overboard_started fire where those things happen
 ## (GDD › Presentation and Platforms, Audio).
+## T46 · After a beer goes over, beer_overboard() does nothing for BoatTuning.beer_loss_cooldown
+## seconds while shove() and stop() still reach the boat; the cooldown resets with the attempt.
+## T47 · With nobody aboard the boat's drift is current_speed times empty_drift_multiplier per
+## second; with anyone aboard it is current_speed (GDD › Systems › Setbacks).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
 const BOAT: Vector2 = Vector2(0.0, -300.0)
 const DELAY: float = 2.5
+## The beer-loss cooldown the T46 tests set on their own BoatTuning (GDD › Systems › Hazards).
+const COOLDOWN: float = 2.0
+## The empty-boat drift multiplier the T47 tests set on their own BoatTuning (GDD › Systems › Setbacks).
+const EMPTY_MULTIPLIER: float = 5.0
+## The harsh-wind extra drift the T47 test adds, per second.
+const WIND: float = 25.0
 
 
 ## A RunState whose guys are sober (no lag, no misses), whose rolls are seeded, and whose
-## BoatTuning is its own (jump_delay DELAY), so a test can change it.
+## BoatTuning is its own (jump_delay DELAY, no beer-loss cooldown), so a test can change it.
 func sober_state() -> Node:
 	var state: Node = RunStateScript.new()
 	state.rng.seed = 7
@@ -54,9 +64,11 @@ func drunk_state(lag: float, miss: float, level: float) -> Node:
 	return state
 
 
+## No beer-loss cooldown here: the cascade tests drop beers back to back. The T46 tests set it.
 func own_boat_tuning() -> BoatTuning:
 	var tuning: BoatTuning = BoatTuning.new()
 	tuning.jump_delay = DELAY
+	tuning.beer_loss_cooldown = 0.0
 	return tuning
 
 
@@ -307,7 +319,7 @@ func test_each_beer_puts_one_more_guy_in_until_nobody_is_aboard_and_the_boat_sti
 	var motion: RefCounted = state.step(TICK, BOAT)
 	expect_near(motion.thrust, 0.0, 0.0001, "no key moves the boat")
 	expect_near(motion.turn, 0.0, 0.0001, "or turns it")
-	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * TICK, 0.0001, "the boat drifts home at current_speed")
+	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * state.paddling.tuning.empty_drift_multiplier * TICK, 0.0001, "the boat drifts home at current_speed times empty_drift_multiplier (T47)")
 	state.free()
 
 
@@ -770,4 +782,86 @@ func test_a_standing_guy_rocks_the_boat_through_the_motion_and_the_reset_clears_
 	expect_eq(state.antics.state_of(1), Antics.State.IDLE, "and the fishing")
 	expect(state.can_paddle(1), "his seat strokes again")
 	expect_near(state.step(TICK, BOAT).turn, 0.0, 0.0001, "nobody rocks the boat")
+	state.free()
+
+
+## T46: after a beer goes over, beer_overboard() does nothing for beer_loss_cooldown seconds, while
+## shove() and stop() still reach the boat; once the cooldown has run out a beer goes over again
+## (GDD › Systems › Hazards: at most one beer every couple of seconds).
+func test_after_a_beer_goes_over_no_beer_does_for_the_cooldown_but_shoves_and_stops_still_apply() -> void:
+	var state: Node = sober_state()
+	state.paddling.tuning.beer_loss_cooldown = COOLDOWN
+	expect_ne(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "the first beer goes over")
+	state.step(COOLDOWN * 0.5, BOAT)
+	expect_eq(state.beer_overboard(Rescue.Hull.RIGHT, BOAT), Rescue.NOBODY, "a second beer inside the cooldown goes nowhere")
+	expect_eq(state.rescue.loose_beers().size(), 1, "still one beer loose")
+	state.shove(Vector2(50.0, 0.0))
+	state.stop()
+	expect_eq(state.take_shove(), Vector2(50.0, 0.0), "the shove still reaches the boat inside the cooldown")
+	expect(state.take_stop(), "and so does the stop")
+	state.step(COOLDOWN * 0.5, BOAT)
+	expect_ne(state.beer_overboard(Rescue.Hull.RIGHT, BOAT), Rescue.NOBODY, "the cooldown has run out: a beer goes over again")
+	expect_eq(state.rescue.loose_beers().size(), 2, "two beers loose")
+	state.free()
+
+
+## T46: the cooldown starts only when a beer actually goes over: with nobody free to jump, no beer
+## goes over and the next one goes over at once.
+func test_a_beer_that_goes_nowhere_starts_no_cooldown() -> void:
+	var state: Node = sober_state()
+	state.paddling.tuning.beer_loss_cooldown = COOLDOWN
+	for seat: int in state.guys.size():
+		state.guys[seat].aboard = false
+	expect_eq(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "nobody aboard: no beer goes over")
+	for seat: int in state.guys.size():
+		state.guys[seat].aboard = true
+	expect_ne(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "so the next beer goes over at once")
+	state.free()
+
+
+## T46: the cooldown resets with the attempt: a reset() (and a shore reset) lets a beer go over at once.
+func test_the_cooldown_resets_with_the_attempt() -> void:
+	var state: Node = sober_state()
+	state.paddling.tuning.beer_loss_cooldown = COOLDOWN
+	state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	expect_eq(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "blocked inside the cooldown")
+	state.reset()
+	expect_ne(state.beer_overboard(Rescue.Hull.LEFT, BOAT), Rescue.NOBODY, "a fresh attempt: a beer goes over at once")
+	expect_eq(state.rescue.loose_beers().size(), 1, "one beer loose")
+	state.set_progress(0.4)
+	state.shore_touched()
+	expect_ne(state.beer_overboard(Rescue.Hull.RIGHT, BOAT), Rescue.NOBODY, "and a shore reset does the same")
+	state.free()
+
+
+## T47: with nobody aboard the current's drift is current_speed times empty_drift_multiplier per
+## second; a harsh-wind stretch's extra drift is added as it is (GDD › Systems › Setbacks).
+func test_an_empty_boat_drifts_home_at_empty_drift_multiplier_times_the_current() -> void:
+	var state: Node = sober_state()
+	state.paddling.tuning.empty_drift_multiplier = EMPTY_MULTIPLIER
+	state.set_progress(0.4)
+	for seat: int in state.guys.size():
+		state.guy_overboard(seat, BOAT)
+	for seat: int in state.guys.size():
+		expect_false(state.guys[seat].aboard, "guy %d overboard" % seat)
+	var delta: float = 0.5
+	var motion: Paddling.Motion = state.step(delta, BOAT)
+	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * EMPTY_MULTIPLIER * delta, 0.0001, "nobody aboard: current_speed times the multiplier per second")
+	state.set_extra_drift(WIND)
+	motion = state.step(delta, BOAT)
+	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * EMPTY_MULTIPLIER * delta + WIND * delta, 0.0001, "a harsh-wind stretch adds its drift unmultiplied")
+	state.free()
+
+
+## T47: with anyone aboard the boat drifts at current_speed, not multiplied.
+func test_with_anyone_aboard_the_boat_drifts_at_current_speed() -> void:
+	var state: Node = sober_state()
+	state.paddling.tuning.empty_drift_multiplier = EMPTY_MULTIPLIER
+	state.set_progress(0.4)
+	for seat: int in range(1, state.guys.size()):
+		state.guy_overboard(seat, BOAT)
+	expect(state.guys[0].aboard, "one guy still aboard")
+	var delta: float = 0.5
+	var motion: Paddling.Motion = state.step(delta, BOAT)
+	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * delta, 0.0001, "one aboard: current_speed per second")
 	state.free()

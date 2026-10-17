@@ -615,6 +615,10 @@ func test_water_aboard_keeps_the_hulls_guy_bailing_until_it_is_out() -> void:
 
 func test_water_on_an_empty_hull_waits_for_a_guy() -> void:
 	var state: Node = sober_state()
+	# Two beers back to back: the beer-loss cooldown (T46) is not under test here, so none.
+	var boat_tuning: BoatTuning = BoatTuning.new()
+	boat_tuning.beer_loss_cooldown = 0.0
+	state.paddling = Paddling.new(boat_tuning)
 	state.beer_overboard(Rescue.Hull.LEFT, BOAT)
 	var back: int = state.beer_overboard(Rescue.Hull.LEFT, BOAT)
 	state.step(state.paddling.tuning.jump_delay, BOAT)

@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T46 · B5
+**Next IDs:** T48 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (87 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (89 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -170,6 +170,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T9, T22
 - Touches: scripts/ui/offscreen_arrows.gd (new), scenes/lake.tscn (HUD), tools/gen_sprites.gd, assets/sprites/arrow.png (new), tests/test_offscreen_arrows.gd (new)
 - Done when: for every swimmer outside the camera's view an arrow sits at the edge of the screen pointing at him, in his seat colour, and disappears when he is on screen or picked up (play) · the arrow's screen position is the clamped projection of his lake position, computed in a helper with a test (test)
+- GDD: Systems › Setbacks
+
+### T46 · At most one beer overboard per beer_loss_cooldown · done · S · agent
+- Depends on: T9
+- Touches: scripts/autoload/run_state.gd, scripts/resources/boat_tuning.gd (+beer_loss_cooldown), data/boat_tuning.tres, tests/test_run_state.gd, tests/test_hazards.gd
+- Done when: after a beer goes over, beer_overboard() does nothing for beer_loss_cooldown seconds while shove/stop still apply, then works again (test) · the cooldown resets with the attempt (test)
+- GDD: Systems › Hazards
+
+### T47 · An empty boat drifts home at empty_drift_multiplier times the headwind · done · S · agent
+- Depends on: T9
+- Touches: scripts/autoload/run_state.gd, scripts/resources/boat_tuning.gd (+empty_drift_multiplier), data/boat_tuning.tres, tests/test_run_state.gd
+- Done when: with nobody aboard, Motion.drift_to_shore is current_speed × empty_drift_multiplier per second; with anyone aboard it is current_speed (test)
 - GDD: Systems › Setbacks
 
 ### T15 · Angry geese guarding goslings · done · M · agent
