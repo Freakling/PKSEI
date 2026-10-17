@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/beast.gd" id="1_beast"]
+[ext_resource type="Texture2D" path="res://assets/sprites/beast_fin_0.png" id="2_fin"]
+[ext_resource type="Texture2D" path="res://assets/sprites/beast_head_0.png" id="3_head"]
+
+[node name="BeastHazard" type="Node2D"]
+script = ExtResource("1_beast")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Fin" type="Sprite2D" parent="Visual"]
+visible = false
+texture = ExtResource("2_fin")
+
+[node name="Head" type="Sprite2D" parent="Visual"]
+visible = false
+texture = ExtResource("3_head")

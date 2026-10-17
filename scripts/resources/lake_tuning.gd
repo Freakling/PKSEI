@@ -99,5 +99,34 @@ extends Resource
 @export var line_length: float = 200.0 ## PLACEHOLDER
 ## Seconds a crossing of the line snags the paddle on the side that crossed it.
 @export var snag_time: float = 3.0 ## PLACEHOLDER
+## The Loch-Brez beast (the Loch-Brez beast row; read by Beast, scripts/systems/beast.gd).
+## Pixels in from either edge of lake_width within which the boat has strayed too far and the
+## beast rises.
+@export var beast_edge_margin: float = 120.0 ## PLACEHOLDER
+## Pixels past the island's centre (up-screen, beyond its far side) at which the beast rises.
+@export var beast_beyond_island: float = 200.0 ## PLACEHOLDER
+## Seconds the fin circles the boat before the ram: the warning.
+@export var beast_warning: float = 2.5 ## PLACEHOLDER
+## Pixels per second the beast closes on the boat at while it rams.
+@export var beast_speed: float = 200.0 ## PLACEHOLDER
+## Pixels from the boat the head surfaces at when the ram starts, on the side away from the middle.
+@export var beast_ram_distance: float = 160.0 ## PLACEHOLDER
+## Pixels from the boat's centre within which the ram is a hit.
+@export var beast_hit_radius: float = 24.0 ## PLACEHOLDER
+## Seconds a ram lasts at most: one that hasn't hit by then (the boat outran it) gives up and
+## dives for beast_dive_time.
+@export var beast_ram_timeout: float = 6.0 ## PLACEHOLDER
+## Pixels per second the ram shoves the boat back toward the lake's middle: hard.
+@export var beast_shove: float = 260.0 ## PLACEHOLDER
+## Pixels back toward the shore (down-screen) from the boat the grabbed guy is spat out at.
+@export var beast_spit_distance: float = 900.0 ## PLACEHOLDER
+## Seconds under water between rams while the boat stays out of bounds.
+@export var beast_pause: float = 1.5 ## PLACEHOLDER
+## Seconds under water after the random visit's grab, after a ram that gave up, or after the boat
+## came back inside.
+@export var beast_dive_time: float = 2.0 ## PLACEHOLDER
+## Chance per second, while the boat is inside the bounds and in open water, that the beast
+## rises anyway for one grab: the rare deep-water visit.
+@export var beast_random_rate: float = 0.004 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []

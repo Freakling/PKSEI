@@ -23,8 +23,10 @@ extends Node2D
 ## Hazards.plan() put them for RunState.lake_seed, objects beside the path and events' triggers on
 ## it: they are placed under the Hazards node on start and again after each shore reset (the seed
 ## stays, so the same lake comes back), each scene handed its HazardSpec and the lake's
-## LakeTuning, and none moves or comes back once it is placed. No rules and no randomness live
-## here: the plan is Hazards'.
+## LakeTuning, and none moves or comes back once it is placed. The Loch-Brez beast is not
+## planned: exactly one beast scene (scenes/hazards/beast.tscn) is placed with them each time,
+## handed the LakeTuning only, and watches the boat from the whole lake. No rules and no
+## randomness live here: the plan is Hazards'.
 ##
 ## Debug builds only (the gate is _debug_tools): PathOverlay under Visual draws the corridor the
 ## objects keep clear, for tuning path_width and path_wander by eye, with a small magenta diamond
@@ -34,6 +36,8 @@ extends Node2D
 
 const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
 const WIN_SCENE: PackedScene = preload("res://scenes/win.tscn")
+## The one beast per attempt (T50), spawned with the plan, not by it.
+const BEAST_SCENE: PackedScene = preload("res://scenes/hazards/beast.tscn")
 const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
 ## Points the debug overlay samples per band of the corridor (the band's edges are among them).
 const PATH_OVERLAY_STEPS: int = 4
@@ -172,10 +176,10 @@ func _on_win_again() -> void:
 	_restart()
 
 
-## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed.
-## The old ones leave the tree at once, not at queue_free's deferred time, so only the new ones
-## are in it. Debug builds print the seed, so a lake can be had again, and fill the path overlay
-## and its trigger markers.
+## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed,
+## and one beast under water. The old ones leave the tree at once, not at queue_free's deferred
+## time, so only the new ones are in it. Debug builds print the seed, so a lake can be had
+## again, and fill the path overlay and its trigger markers.
 func _spawn_hazards() -> void:
 	for child: Node in _hazards.get_children():
 		_hazards.remove_child(child)
@@ -196,6 +200,9 @@ func _spawn_hazards() -> void:
 		hazard.set(&"spec", spec)
 		hazard.set(&"tuning", TUNING)
 		_hazards.add_child(hazard)
+	var beast: Node2D = BEAST_SCENE.instantiate() as Node2D
+	beast.set(&"tuning", TUNING)
+	_hazards.add_child(beast)
 
 
 ## Debug only: the overlay's centre line, from the launch margin to the island's near edge, with

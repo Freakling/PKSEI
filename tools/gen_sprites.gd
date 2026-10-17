@@ -53,6 +53,11 @@ const SPLASH: Color = Color8(255, 255, 255)
 const TENT: Color = Color8(226, 92, 60)
 const TENT_LIGHT: Color = Color8(246, 142, 104)
 const TENT_DARK: Color = Color8(168, 58, 44)
+const BEAST: Color = Color8(46, 112, 78)
+const BEAST_LIGHT: Color = Color8(92, 164, 108)
+const BEAST_DARK: Color = Color8(28, 74, 56)
+const BEAST_EYE: Color = Color8(250, 220, 60)
+const BEAST_MOUTH: Color = Color8(204, 60, 84)
 
 ## Shirt and hair per seat, in Paddling.Seat order (LF, LB, RF, RB). Hair alpha 0 = bald.
 const SHIRTS: Array[Color] = [
@@ -98,6 +103,9 @@ func _init() -> void:
 	_save(_island(), "island")
 	_save(_log(), "log")
 	_save(_arrow(), "arrow")
+	for frame: int in 2:
+		_save(_beast_fin(frame), "beast_fin_%d" % frame)
+		_save(_beast_head(frame), "beast_head_%d" % frame)
 	quit()
 
 
@@ -467,6 +475,56 @@ func _log() -> Image:
 	return img
 
 
+## 16×16 the beast's fin cutting the water, pointing up (scenes/hazards/beast.gd turns it the
+## way it goes), two frames: a dark green fin swept back, with a lighter leading edge, inside a
+## broken ripple ring that widens on the second frame. The fin is outlined; the ripple is not.
+func _beast_fin(frame: int) -> Image:
+	var img: Image = _new(16, 16)
+	var lean: int = frame
+	# The fin: a tall triangle swept back toward the bottom right.
+	for row: int in 8:
+		var y: int = 3 + row
+		var left: int = 8 - (row + 1) / 2 + lean * (row / 4)
+		var right: int = 8 + (row + 1) / 3 + lean * (row / 3)
+		_rect(img, left, y, right - left + 1, 1, BEAST_DARK)
+		_px(img, left, y, BEAST_LIGHT)
+	_outline(img, OUTLINE)
+	_ring(img, 8, 8, 6 + frame, WATER_LIGHT)
+	return img
+
+
+## 24×16 the beast's head surfaced and charging, seen from above and pointing up: a dark green
+## serpent head with a lighter spine, two yellow eyes and nostrils on the snout, a white bow
+## wave either side. On the second frame the jaws are open (a red mouth with teeth) and the
+## eyes narrowed.
+func _beast_head(frame: int) -> Image:
+	var img: Image = _new(24, 16)
+	_ellipse(img, 12, 10, 8, 5, BEAST)
+	_ellipse(img, 12, 5, 5, 4, BEAST)
+	_rect(img, 12, 3, 1, 11, BEAST_LIGHT)
+	for scale: Vector2i in [Vector2i(8, 11), Vector2i(16, 11), Vector2i(7, 13), Vector2i(17, 13),
+			Vector2i(10, 14), Vector2i(14, 14)]:
+		_px(img, scale.x, scale.y, BEAST_LIGHT)
+	_px(img, 10, 2, OUTLINE)
+	_px(img, 14, 2, OUTLINE)
+	if frame == 0:
+		_rect(img, 8, 6, 2, 2, BEAST_EYE)
+		_rect(img, 14, 6, 2, 2, BEAST_EYE)
+		_px(img, 9, 7, OUTLINE)
+		_px(img, 14, 7, OUTLINE)
+	else:
+		_rect(img, 8, 7, 2, 1, BEAST_EYE)
+		_rect(img, 14, 7, 2, 1, BEAST_EYE)
+		_rect(img, 9, 1, 6, 2, BEAST_MOUTH)
+		_px(img, 10, 1, SPLASH)
+		_px(img, 13, 1, SPLASH)
+	_outline(img, OUTLINE)
+	for splash: Vector2i in [Vector2i(2, 7 + frame), Vector2i(1, 10), Vector2i(21, 7 + frame),
+			Vector2i(22, 10), Vector2i(3, 14), Vector2i(20, 14)]:
+		_px(img, splash.x, splash.y, SPLASH)
+	return img
+
+
 ## 11×11 arrow pointing up, white so a scene can tint it (the off-screen swimmer arrows in
 ## scripts/ui/offscreen_arrows.gd modulate it per seat): a 7-wide head over a 3-wide shaft,
 ## outlined, with a 1-px clear border so the outline fits.
@@ -600,6 +658,16 @@ static func _disc(img: Image, cx: int, cy: int, radius: int, colour: Color) -> v
 		for dx: int in range(-radius, radius + 1):
 			if dx * dx + dy * dy <= radius * radius + radius:
 				_px(img, cx + dx, cy + dy, colour)
+
+
+## A broken ring of radius `radius` around (cx, cy): 24 points round the circle, every third
+## left out, so it reads as ripples rather than a solid circle. Drawn over whatever is there.
+static func _ring(img: Image, cx: int, cy: int, radius: int, colour: Color) -> void:
+	for i: int in 24:
+		if i % 3 == 2:
+			continue
+		var angle: float = TAU * float(i) / 24.0
+		_px(img, cx + roundi(cos(angle) * radius), cy + roundi(sin(angle) * radius), colour)
 
 
 static func _ellipse(img: Image, cx: int, cy: int, rx: int, ry: int, colour: Color) -> void:

@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (90 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (102 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -196,9 +196,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: no scene or script references assets/sprites/guy_<seat>.png and the files and their generator code are gone (check)
 - GDD: —
 
-### T50 · The Loch-Brez beast: boundary enforcer and rare deep-water visitor · todo · L · agent
+### T50 · The Loch-Brez beast: boundary enforcer and rare deep-water visitor · done · L · agent
 - Depends on: T10, T9, T22
-- Touches: scripts/systems/beast.gd (new), scripts/hazards/beast.gd (new), scenes/hazards/beast.tscn (new), scripts/lake.gd (spawned once per lake, not planned), scripts/resources/lake_tuning.gd (+beast_edge_margin, +beast_beyond_island, +beast_warning, +beast_speed, +beast_shove, +beast_spit_distance, +beast_random_rate), data/lake_tuning.tres, scripts/autoload/run_state.gd (a guy spat out far back: guy_overboard at a far position), tools/gen_sprites.gd, assets/sprites/beast_*.png (new), tests/test_beast.gd (new)
+- Touches: scripts/systems/beast.gd (new), scripts/hazards/beast.gd (new), scenes/hazards/beast.tscn (new), scripts/lake.gd (spawned once per lake, not planned), scripts/resources/lake_tuning.gd (+beast_edge_margin, +beast_beyond_island, +beast_warning, +beast_speed, +beast_shove, +beast_spit_distance, +beast_random_rate, +beast_ram_distance, +beast_hit_radius, +beast_ram_timeout, +beast_pause, +beast_dive_time), data/lake_tuning.tres, scripts/autoload/run_state.gd (beast_grab(hull, from, spit_distance), signal guy_grabbed), tools/gen_sprites.gd, assets/sprites/beast_*.png (new), tests/test_beast.gd (new)
 - Done when: the beast rises when the boat is within beast_edge_margin of a lake edge or beyond the island's far side by beast_beyond_island, and rarely elsewhere from the attempt's seed at beast_random_rate; it circles for beast_warning, then rams (a shove of beast_shove toward the lake's middle) and grabs the guy on the hull it hit, who is spat out beast_spit_distance back toward the shore as a swimmer (test) · it dives once the boat is back inside, or after one grab on a random visit (test) · the fin, the circling and the grab read at a glance (play)
 - GDD: Systems › Hazards
 
@@ -311,9 +311,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Presentation and Platforms
 
 ### T26 · Audio telegraphs: engine before the wake, jet-ski offscreen, geese hiss, wind rising · todo · M · agent
-- Depends on: T25, T15, T16, T17, T21
-- Touches: assets/audio/hazards/ (new), scenes/hazards/wake.tscn, scenes/hazards/jetski.tscn, scenes/hazards/geese.tscn, scenes/hazards/gust.tscn, scenes/hazards/headwind.tscn
-- Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play) · a guy knocked in during a pee splashes like a jumper (RunState emits a signal for `guy_overboard`) (test)
+- Depends on: T25, T15, T16, T17, T21, T50
+- Touches: assets/audio/hazards/ (new), scenes/hazards/wake.tscn, scenes/hazards/jetski.tscn, scenes/hazards/geese.tscn, scenes/hazards/gust.tscn, scenes/hazards/headwind.tscn, scenes/hazards/beast.tscn
+- Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play) · a guy knocked in during a pee splashes like a jumper (RunState emits a signal for `guy_overboard`) (test) · the beast's circling has a low rumble and the grab a sound, from `guy_grabbed` (play)
 - GDD: Systems › Hazards
 
 ### T29 · Shared curve helper replaces the duplicate ramp() in DrinkTuning and StaminaTuning · done · S · agent
@@ -334,10 +334,10 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: when RunState's phase becomes `WON` (already set by `arrive()`, T6) the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
 - GDD: Win and Loss
 
-### B4 · A hazard push can nudge the stopped boat during the win cutscene · todo · S · agent · low
-- Depends on: T28
-- Touches: scripts/catamaran.gd
-- Repro: win while a gust, wake or jet-ski is active near the island → expected: the boat stays put through the cutscene / actual: take_shove/take_push still move it
+### B4 · Hazards keep acting during the win cutscene · todo · S · agent · low
+- Depends on: T28, T50
+- Touches: scripts/lake.gd (disable the Hazards node's processing while the cutscene runs), scripts/catamaran.gd
+- Repro: win while a gust, wake, jet-ski or geese charge is active near the island → expected: nothing touches the boat or the guys through the cutscene / actual: take_shove/take_push still move the boat and hits still land (the beast alone guards WON)
 - Found in: T28
 - GDD: Win and Loss
 

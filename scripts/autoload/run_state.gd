@@ -20,7 +20,8 @@ extends Node
 ## force_break(), water_aboard() and set_extra_drift(); the boat takes the shove, the push and
 ## the stop with take_shove(), take_push() and take_stop(), the extra drift goes into step()'s
 ## Motion, and a snagged or bailing seat gives no strokes. A guy who falls in some other
-## way than a jump (T13) goes through guy_overboard(). new_attempt() draws lake_seed from the
+## way than a jump (T13) goes through guy_overboard(); the beast's grab (T50, beast_grab) puts
+## the hit hull's guy in the water a long way back toward the shore. new_attempt() draws lake_seed from the
 ## RNG, the seed the lake plans its hazards from (Hazards.plan), and then resets; a shore reset
 ## only resets, so the attempt meets the same lake again. Screens only read. Reads and writes no
 ## player data.
@@ -71,6 +72,8 @@ signal stroke_fumbled(seat: int)
 signal guy_jumped(seat: int)
 signal guy_picked_up(seat: int)
 signal beer_overboard_started(hull: Rescue.Hull)
+## The beast grabbed a guy in beast_grab() (T50; a sound later).
+signal guy_grabbed(seat: int)
 
 var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
@@ -196,6 +199,21 @@ func guy_overboard(seat: int, at_position: Vector2) -> void:
 	guys[seat].aboard = false
 	antics.interrupt(seat)
 	_drop_pending(seat)
+
+
+## The beast rammed `side` with the boat at `from_position` and grabbed that hull's guy (front
+## first, of those aboard): swallowed, dived with, and spat out `spit_distance` back toward the
+## shore (down-screen), where he goes in beerless through guy_overboard() (GDD › Systems ›
+## Hazards, the Loch-Brez beast row). Rescue holds him at the shoreline if that is past it.
+## No beer goes over, so the beer-loss cooldown neither holds this back nor starts. Returns his
+## seat, or Rescue.NOBODY when nobody is aboard that hull.
+func beast_grab(side: Rescue.Hull, from_position: Vector2, spit_distance: float) -> int:
+	var seat: int = _hull_guy(side)
+	if seat == Rescue.NOBODY:
+		return Rescue.NOBODY
+	guy_overboard(seat, from_position + Vector2.DOWN * spit_distance)
+	guy_grabbed.emit(seat)
+	return seat
 
 
 ## The boat reached him: he is aboard again. Returns whether he brought his beer back.
