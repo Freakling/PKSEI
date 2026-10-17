@@ -77,3 +77,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · The sand text also shows the reset key · why: the human's play; the reset wasn't discoverable on the shore · from: conversation
 - 2026-10-17 · The guys are named per attempt from the crew's list of nicknames; the HUD shows names, never the keys · why: the human's call; the names are the friends on the trip · from: conversation
 - 2026-10-17 · The sand text is drawn at twice the scale · why: the human's play; too small at 1× · from: conversation
+- 2026-10-17 · A guy warns in Swedish when the boat approaches the beast's water, once per approach · why: the human's call; the beast's bounds must be readable before they bite (Hard but fair) · from: conversation

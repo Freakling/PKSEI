@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T69 · B6
+**Next IDs:** T70 · B6
 
 ## Milestones
 | Milestone | Status |
@@ -316,6 +316,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/resources/names.gd (new), data/names.tres (new), scripts/autoload/run_state.gd (names per attempt), scripts/ui/hud.gd (labels), scripts/win_cutscene.gd, scenes/win.tscn (names on the title), tests/test_names.gd (new), tests/test_run_state.gd
 - Done when: each new attempt gives the four seats distinct names drawn from data/names.tres with the attempt's RNG (test) · the HUD shows each guy's name instead of the seat and key labels (play) · the list is a Resource the human can edit, with a test that it holds at least four names (test)
 - GDD: Characters and Units
+
+### T69 · A guy warns when the boat approaches the beast's water · in-progress 2026-10-17 · S · agent
+- Depends on: T50, T56
+- Touches: scripts/systems/beast.gd (near_bounds), scripts/hazards/beast.gd, scripts/resources/lake_tuning.gd (+beast_warn_margin), data/lake_tuning.tres, scripts/resources/lines.gd, data/lines.tres (edge lines), tests/test_beast.gd
+- Done when: near_bounds(position) is true within beast_warn_margin of the out-of-bounds line at either edge or beyond the island's far side, and false inside (test) · entering that zone from inside telegraphs `edge` on the hull facing the edge once per approach, re-armed when the boat is back inside (test) · a Swedish line shows over the hull's guy (play)
+- GDD: Systems › Hazards
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
