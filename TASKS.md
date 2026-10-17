@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T62 · B6
+**Next IDs:** T63 · B6
 
 ## Milestones
 | Milestone | Status |
@@ -273,6 +273,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T24
 - Touches: tools/gen_sprites.gd, assets/sprites/hazards/{motorboat,motorboat_spray_0,motorboat_spray_1,jetski_0,jetski_1,dinghy}.png, scenes/hazards/wake.tscn, scripts/hazards/fishing_line.gd
 - Done when: the motorboat and the dinghy are at least the catamaran's size (40×56) and the jet-ski at least 32×18 with its rider, the sprays and the fisherman scaled with them, and the hit radii still match the art (check: sizes quoted) · they read at a glance in play (play)
+- GDD: Presentation and Platforms
+
+### T62 · Reset: R on the keyboard, a hold-to-reset corner button on touch · in-progress 2026-10-17 · S · agent
+- Depends on: T28, T54
+- Touches: project.godot (input action reset R), scripts/lake.gd (restart on reset), scripts/ui/touch_pads.gd or scripts/ui/reset_button.gd (new), scenes/lake.tscn, tools/gen_sprites.gd, assets/sprites/reset.png (new), tests/test_reset_button.gd (new)
+- Done when: pressing R starts a new attempt (RunState.new_attempt and the lake's restart), also during the win cutscene (play) · on a touchscreen a small corner button resets only after being held for reset_hold_time with a ring filling, and a shorter touch does nothing; the hold logic is a pure helper with a test (test) · the button never overlaps the pads (play)
 - GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent

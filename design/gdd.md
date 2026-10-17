@@ -114,6 +114,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 - Camera: top-down, follows the catamaran, biased toward the direction of travel so hazards show early.
 - Art direction: top-down, bright pixel art, a bit retro, lots of comedy. Godot primitives and flat colours until pixel art replaces them. Telegraphs come first: every wind-up and hazard warning gets its pixel animation before any decorative art. Other boats (the motorboat, the jet-ski, the fisherman's dinghy) are drawn at least as large as the catamaran, so they are recognised at a glance.
 - Audio: telegraphs first. Sound announces hazards before they are visible: a motorboat engine before its wake, a jet-ski heard from offscreen, geese hissing, wind rising before a gust or a headwind stretch. Then stroke, splash and guy noises for the comedy. Silent until the audio stage.
+- Reset: R on the keyboard starts a new attempt at once (a fresh lake). On touch, a small corner button that must be held for a moment while a ring fills, so a stray tap can't reset.
 - Player settings: not decided yet; when they come, they are JSON in `user://`.
 
 ## Glossary
