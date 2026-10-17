@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T78 · B7 · R1
+**Next IDs:** T79 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -345,6 +345,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: Q7
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
+- GDD: (none)
+
+### T78 · The devlog's claims hold: title, the framework's example page, what the upgrade really brought · done · XS · agent
+- Depends on: (none)
+- Touches: design/devlog/01-how-pksei-was-made.md
+- Done when: the title says "two days", as the numbers table does · the intro links the PKSEI example page on the Director-Driven Development site · section 9 says the upgrade came from a snapshot of Godot Director's development branch (the open pull request Freakling/Godot-Director#25) on top of the v3.13.0 release, and does not claim the release ships the play log, autoplay or the dev menu (check: the text quoted)
 - GDD: (none)
 
 ### T77 · Touch: the press's height picks forward or reverse, no flick · done · S · agent
