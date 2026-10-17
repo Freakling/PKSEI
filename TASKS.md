@@ -160,9 +160,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: in debug builds (`OS.is_debug_build() or OS.has_feature("dev_tools")`) a translucent strip shows the corridor from `Hazards.corridor_x` so path_width and path_wander can be tuned by eye, toggled with a debug key (check: the gate is quoted) · the strip follows the planned path (play)
 - GDD: —
 
-### T44 · A swimmer without a beer looks different from one drinking · todo · S · agent
+### T44 · A swimmer without a beer looks different from one drinking · done · S · agent
 - Depends on: T13, T22
-- Touches: scripts/lake.gd, tools/gen_sprites.gd, assets/sprites/
+- Touches: scripts/lake.gd
 - Done when: a floating swimmer shows a beer at his mouth only while `has_beer` is true, so the pee-antic victim reads as beerless (play)
 - GDD: Systems › Drunkenness
 

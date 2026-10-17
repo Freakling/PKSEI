@@ -15,7 +15,8 @@ extends Node2D
 ## The rescue (GDD › Systems › Setbacks) shows here: a beer bobbing away while its guy winds up
 ## aboard (T34) gets a beer sprite under Visual/Swimmers, and each guy in the water his seat's
 ## swimming sprite there at Rescue's position for him, with the beer while his is still loose; a
-## floating guy bobs and is tinted. When the boat comes within
+## floating guy bobs and is tinted, and holds his beer beside his head only while he has it (a
+## guy who fell in beerless shows none). When the boat comes within
 ## BoatTuning.pickup_radius of a floating guy the lake calls RunState.pickup(); whenever the boat
 ## touches the shore it calls RunState.shore_touched(), and puts the boat back at its start when
 ## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are fixed where
@@ -49,6 +50,9 @@ const SWIM_TEXTURES: Array[Texture2D] = [
 ]
 ## A floating guy, drinking: a little bluer and wetter than the one on the boat (cosmetic).
 const FLOATING_TINT: Color = Color(0.7, 0.8, 1.0, 1.0)
+## Where a floating guy holds his beer, from his sprite's centre in lake pixels: beside his head,
+## in his right hand, so it bobs with him. Cosmetic: Rescue says only whether he still has it.
+const DRINK_OFFSET: Vector2 = Vector2(4.0, -2.0)
 ## Cosmetic bob of a floating guy: pixels and seconds per cycle.
 const BOB_HEIGHT: float = 1.0
 const BOB_PERIOD: float = 1.2
@@ -239,7 +243,9 @@ func _touching_shore() -> bool:
 	return false
 
 
-## Visual only: one marker per guy in the water, where Rescue says he is.
+## Visual only: one marker per guy in the water, where Rescue says he is. A floating guy holds
+## his beer at DRINK_OFFSET while has_beer and shows none otherwise; a swimmer's loose beer is
+## where Rescue says it is.
 func _show_swimmers(delta: float) -> void:
 	_bob_clock = fmod(_bob_clock + delta, BOB_PERIOD)
 	var seen: Array[int] = []
@@ -254,8 +260,13 @@ func _show_swimmers(delta: float) -> void:
 		var guy: Sprite2D = marker.get_node("Guy") as Sprite2D
 		guy.modulate = FLOATING_TINT if floating else Color.WHITE
 		var beer: Node2D = marker.get_node("Beer") as Node2D
-		beer.visible = not floating
-		beer.global_position = swimmer.beer_position
+		if floating:
+			# Rescue's beer_position is his own spot once he floats, so the can is placed from him.
+			beer.visible = swimmer.has_beer
+			beer.position = DRINK_OFFSET
+		else:
+			beer.visible = true
+			beer.global_position = swimmer.beer_position
 	for seat: int in _markers.keys():
 		if not seen.has(seat):
 			_markers[seat].queue_free()
