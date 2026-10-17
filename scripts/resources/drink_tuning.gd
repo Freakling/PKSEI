@@ -45,3 +45,13 @@ extends Resource
 @export var pee_time: float = 6.0 ## PLACEHOLDER
 ## A shove (lake pixels per second, RunState.shove) of this or more while he pees knocks him in.
 @export var pee_fall_shove: float = 100.0 ## PLACEHOLDER
+## Level a guy's drunkenness drops by when he finishes a pee (not when he is knocked in).
+@export var pee_relief: float = 0.08 ## PLACEHOLDER
+## Level at and above which a guy aboard pukes overboard (the top of the meter): a wind-up, then
+## his seat is out for puke_time, then his level drops by puke_relief. He pukes again only after
+## his level has dipped below this and reached it again.
+@export var puke_level: float = 1.0 ## PLACEHOLDER
+## Seconds a guy leans over the side puking; his seat gives no strokes meanwhile.
+@export var puke_time: float = 3.0 ## PLACEHOLDER
+## Level a guy's drunkenness drops by when his puke ends.
+@export var puke_relief: float = 0.4 ## PLACEHOLDER

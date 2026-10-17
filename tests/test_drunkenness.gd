@@ -3,6 +3,8 @@ extends "res://tools/test_case.gd"
 ## follow the level (GDD › Systems › Drunkenness).
 ## T31 · The timing bar at the top tier: the bar sweeps with bar_period, a release inside
 ## green_width of the centre is a hit, and crossing bar_level is announced with a wind-up.
+## T63 · relieve() lowers a level by an amount, never below 0; dropping below bar_level ends the
+## bar tier (GDD › Systems › Drunkenness: "drunkenness also comes down").
 
 const SEATS: int = 4
 
@@ -217,3 +219,18 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(rules.stroke_delay(1.0) > rules.stroke_delay(0.5), "lag rises with the level")
 	expect_near(rules.miss_chance(0.0), 0.0, 0.001, "sober never misses")
 	expect(rules.miss_chance(1.0) > rules.miss_chance(0.5), "misses rise with the level")
+
+
+## T63: relieve() takes an amount off one guy's level, never below 0, and a drop below bar_level
+## ends the bar tier like any other fall.
+func test_relieve_lowers_the_level_and_clamps_at_zero() -> void:
+	expect_near(drunkenness.relieve(0, 0.05), 0.15, 0.0001, "relieve takes the amount off")
+	expect_near(drunkenness.level_of(0), 0.15, 0.0001, "and stores it")
+	expect_near(drunkenness.level_of(1), 0.2, 0.0001, "other guys keep theirs")
+	expect_near(drunkenness.relieve(0, 1.0), 0.0, 0.0001, "never below 0")
+	expect_near(drunkenness.relieve(1, -0.5), 0.2, 0.0001, "a negative amount relieves nothing")
+	drunkenness.set_level(2, 0.9)
+	expect(drunkenness.bar_winding_up(2), "at bar_level the bar is announced")
+	expect_near(drunkenness.relieve(2, 0.4), 0.5, 0.0001, "a puke's worth comes off")
+	expect_false(drunkenness.bar_winding_up(2), "below bar_level the bar is no longer announced")
+	expect_false(drunkenness.uses_bar(2), "and does not apply")

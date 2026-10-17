@@ -92,9 +92,12 @@ const HAIRS: Array[Color] = [
 const GUYS_DIR: String = "guys"
 const GUY_FRAMES: Array[String] = [
 	"idle", "stroke_0", "stroke_1", "fumble", "warning_0", "warning_1", "break", "windup_0",
-	"windup_1", "stand", "paddle_dropped", "nodded_off", "peeing", "bar_0", "bar_1",
+	"windup_1", "stand", "paddle_dropped", "nodded_off", "peeing", "puke_0", "puke_1", "bar_0",
+	"bar_1",
 ]
 const ZEE: Color = Color8(217, 230, 255)
+## The splash of a guy puking over the side (T63).
+const PUKE: Color = Color8(150, 210, 70)
 
 ## The hazard telegraph frames (T24): PNGs in assets/sprites/hazards/, drawn by the _rock() to
 ## _beast_ripple() functions below; the hazard scenes (scenes/hazards/*.tscn and their scripts in
@@ -235,7 +238,8 @@ func _guy_camp(seat: int) -> Image:
 ##   windup_0/1 (looking left and right, the paddle wobbling) · stand (bigger: closer to the
 ##   camera, paddle raised over his head) · paddle_dropped (no paddle, arms out over the water)
 ##   nodded_off (head on his chest, paddle drooping, a "z") · peeing (turned to the hull's edge)
-##   bar_0/1 (swaying with the paddle, head lolling).
+##   puke_0/1 (leaning out over the hull's edge, paddle laid inboard, a green splash that
+##   alternates; T63) · bar_0/1 (swaying with the paddle, head lolling).
 func _guy_frame(seat: int, frame: String) -> Image:
 	var img: Image = _new(12, 14)
 	var shirt: Color = SHIRTS[seat]
@@ -325,6 +329,19 @@ func _guy_frame(seat: int, frame: String) -> Image:
 			_head_turned(img, 5, 7, hair, -1)
 			dots = [Vector2i(1, 6), Vector2i(0, 7), Vector2i(0, 8)]
 			dot_colour = WATER_LIGHT
+		"puke_0", "puke_1":
+			# Leaning out over the water side: the paddle laid inboard, the torso shifted to the
+			# edge, both hands on the gunwale, the head out past it and heaving on the second frame.
+			var heave: int = 1 if frame == "puke_1" else 0
+			_paddle(img, 10, 2, 8, 9)
+			_torso(img, 2, 6, shirt)
+			_hands(img, Vector2i(1, 7), Vector2i(1, 10))
+			_head_turned(img, 3, 7 + heave, hair, -1)
+			if heave == 0:
+				dots = [Vector2i(0, 9)]
+			else:
+				dots = [Vector2i(0, 10), Vector2i(1, 12), Vector2i(0, 12)]
+			dot_colour = PUKE
 		"bar_0":
 			_paddle(img, 2, 2, 8, 9)
 			_torso(img, 3, 6, shirt)

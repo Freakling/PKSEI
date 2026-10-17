@@ -60,6 +60,15 @@ func set_level(seat: int, level: float) -> void:
 	_track_bar_tier(seat, 0.0)
 
 
+## Lowers one guy's level by `amount` (a finished pee's pee_relief, a puke's puke_relief; T63,
+## GDD › Drunkenness: "drunkenness also comes down"), never below 0, and returns it. Dropping
+## below bar_level ends the bar tier like any other fall.
+func relieve(seat: int, amount: float) -> float:
+	levels[seat] = clampf(levels[seat] - maxf(amount, 0.0), 0.0, 1.0)
+	_track_bar_tier(seat, 0.0)
+	return levels[seat]
+
+
 ## Advances one guy's level by `delta` seconds of paddling, a break or floating, and returns it;
 ## with `drinking` false (a swimmer with no beer) it holds. The bar tier's wind-up counts down
 ## by `delta` whether he drinks or not, but not while he is `in_water`: his square and the

@@ -30,3 +30,7 @@ fish_time = 4.0
 nap_time = 5.0
 pee_time = 6.0
 pee_fall_shove = 100.0
+pee_relief = 0.08
+puke_level = 1.0
+puke_time = 3.0
+puke_relief = 0.4

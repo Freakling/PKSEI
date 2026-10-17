@@ -8,7 +8,12 @@ extends Node
 ## Antics (GDD › Drunkenness, the middle tier) is stepped per guy aboard with his drunkenness
 ## level in step(); a seat busy with one gives no strokes (can_paddle), a standing guy's rock
 ## goes into the Motion's turn, and a shove() of DrinkTuning.pee_fall_shove or more while a guy
-## pees knocks him in through guy_overboard() at the boat's last stepped position. The boat scene calls
+## pees knocks him in through guy_overboard() at the boat's last stepped position. Drunkenness
+## also comes down (T63): a guy aboard and idle whose level reaches DrinkTuning.puke_level is
+## started on the puke antic (Antics.Kind.PUKE, never drawn at a threshold), and once he has
+## puked his level drops by puke_relief (Drunkenness.relieve); a finished pee drops it by
+## pee_relief, a pee cut short by a knock-in not at all (Antics.just_finished). He pukes again
+## only once his level has dipped below puke_level and reached it again (_puke_armed). The boat scene calls
 ## stroke() on each key release and step() once per physics frame with its position (where a guy
 ## whose wind-up ends jumps from, T34), and applies the Motion it gets back; the lake sets
 ## progress from the boat's position, calls arrive() at the island,
@@ -124,6 +129,10 @@ var _snag_left: Array[float] = []
 var _water: Array[float] = []
 ## Where the boat was at the last step(): where a guy knocked in by a shove() goes in.
 var _boat_at: Vector2 = Vector2.ZERO
+## Whether each seat may puke when his level next reaches DrinkTuning.puke_level: armed at the
+## start and whenever his level is below it, spent when his puke starts, so a guy still at the
+## top after the drop waits for the next crossing instead of puking on a loop (T63).
+var _puke_armed: Array[bool] = []
 
 
 func _ready() -> void:
@@ -156,10 +165,12 @@ func reset() -> void:
 	_beer_loss_left = 0.0
 	_snag_left.clear()
 	_water.clear()
+	_puke_armed.clear()
 	guys.clear()
 	for seat: int in GUY_COUNT:
 		guys.append(Guy.new(seat, drunkenness.level_of(seat)))
 		_snag_left.append(0.0)
+		_puke_armed.append(true)
 	for side: int in Rescue.Hull.size():
 		_water.append(0.0)
 	progress = 0.0
@@ -443,6 +454,8 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
 		if guy.aboard:
 			antics.step(seat, delta, drunkenness.level_of(seat), rng)
+			_relieve_after_antic(seat)
+			_puke_if_at_top(seat)
 		guy.stamina = stamina.level_of(seat)
 		guy.drunkenness = drunkenness.level_of(seat)
 	var motion: Paddling.Motion = paddling.step(_land_strokes(delta), delta)
@@ -453,6 +466,28 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	motion.drift_to_shore += _extra_drift * delta
 	_extra_drift = 0.0
 	return motion
+
+
+## A pee or a puke that ran its full course this step lowers his level by pee_relief or
+## puke_relief (T63); a pee cut short by a knock-in never gets here (Antics.just_finished).
+func _relieve_after_antic(seat: int) -> void:
+	if not antics.just_finished(seat):
+		return
+	match antics.kind_of(seat):
+		Antics.Kind.PEE:
+			drunkenness.relieve(seat, drunkenness.tuning.pee_relief)
+		Antics.Kind.PUKE:
+			drunkenness.relieve(seat, drunkenness.tuning.puke_relief)
+
+
+## At DrinkTuning.puke_level an idle guy aboard starts the puke's wind-up, once per crossing:
+## below it he is armed again, so he pukes next when his level has reached the top anew (T63).
+func _puke_if_at_top(seat: int) -> void:
+	if drunkenness.level_of(seat) < drunkenness.tuning.puke_level:
+		_puke_armed[seat] = true
+	elif _puke_armed[seat] and antics.state_of(seat) == Antics.State.IDLE:
+		_puke_armed[seat] = false
+		antics.start(seat, Antics.Kind.PUKE)
 
 
 ## Where the boat is between the shore (0) and the island (1). Leaving the shore starts the

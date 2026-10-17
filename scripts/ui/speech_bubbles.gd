@@ -37,6 +37,7 @@ const ANTIC_KINDS: Dictionary[int, StringName] = {
 	Antics.Kind.DROP_PADDLE: &"antic_paddle",
 	Antics.Kind.NOD_OFF: &"antic_nap",
 	Antics.Kind.PEE: &"antic_pee",
+	Antics.Kind.PUKE: &"antic_puke",
 }
 const STAMINA_KIND: StringName = &"stamina_warning"
 const BAR_KIND: StringName = &"bar_windup"

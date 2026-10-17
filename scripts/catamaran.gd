@@ -57,6 +57,7 @@ const ANIMATIONS: Dictionary[StringName, Array] = {
 	&"paddle_dropped": ["paddle_dropped"],
 	&"nodded_off": ["nodded_off"],
 	&"peeing": ["peeing"],
+	&"puking": ["puke_0", "puke_1"],
 	&"sway": ["bar_0", "bar_1"],
 }
 const LOOP_FPS: float = 4.0
@@ -67,6 +68,7 @@ const ANTIC_ANIMATIONS: Dictionary[int, StringName] = {
 	Antics.State.PADDLE_DROPPED: &"paddle_dropped",
 	Antics.State.NODDED_OFF: &"nodded_off",
 	Antics.State.PEEING: &"peeing",
+	Antics.State.PUKING: &"puking",
 }
 ## The strokes as one-shots (seconds, cosmetic): the reach holds from the key's release until
 ## the stroke lands or fumbles, at most REACH_TIME (a stroke dropped because he went

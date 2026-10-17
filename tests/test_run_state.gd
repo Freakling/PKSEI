@@ -29,6 +29,10 @@ extends "res://tools/test_case.gd"
 ## second; with anyone aboard it is current_speed (GDD › Systems › Setbacks).
 ## T26 · guy_overboard() fires guy_fell_in (a knock-in splashes like a jumper) and beast_grab()
 ## fires guy_grabbed instead (the grab is its own sound) (GDD › Presentation and Platforms, Audio).
+## T63 · A guy aboard whose level reaches puke_level winds up and pukes: no strokes for puke_time,
+## then his level drops by puke_relief; a finished pee drops pee_relief, an interrupted one
+## nothing; no second puke until the level dips below puke_level and reaches it again
+## (GDD › Systems › Drunkenness: "drunkenness also comes down").
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -757,6 +761,10 @@ func antic_state() -> Node:
 	tuning.stand_rock = 60.0
 	tuning.pee_time = 5.0
 	tuning.pee_fall_shove = 100.0
+	tuning.pee_relief = 0.08
+	tuning.puke_level = 1.0
+	tuning.puke_time = 3.0
+	tuning.puke_relief = 0.4
 	var state: Node = sober_state()
 	state.drunkenness = Drunkenness.new(tuning)
 	state.antics = Antics.new(tuning)
@@ -929,4 +937,92 @@ func test_overboard_signals_fell_in_and_grabbed() -> void:
 	expect_eq(grabbed, [seat] as Array[int], "guy_grabbed with the seat the beast took")
 	expect_eq(fell.size(), 1, "a grab is its own sound, not a fall")
 	expect_false(state.guys[seat].aboard, "and he is in the water all the same")
+	state.free()
+
+
+## T63: a guy aboard whose level reaches puke_level winds up (windup_time) and pukes: his seat
+## gives no strokes for puke_time, then his level drops by puke_relief and the guy mirrors it.
+func test_reaching_puke_level_starts_the_wind_up_then_the_puke_and_the_level_drops_by_puke_relief() -> void:
+	var state: Node = antic_state()
+	state.drunkenness.set_level(0, 0.99)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "below puke_level nothing starts")
+	state.drunkenness.set_level(0, 1.0)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.WINDING_UP, "at puke_level the wind-up starts")
+	expect_eq(state.antics.kind_of(0), Antics.Kind.PUKE, "for the puke")
+	expect_near(state.antics.time_left(0), 1.0, 0.0001, "of windup_time")
+	expect(state.can_paddle(0), "he paddles through the wind-up")
+	expect_eq(state.antics.state_of(1), Antics.State.IDLE, "the others are untouched")
+	state.step(1.0, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.PUKING, "then he pukes")
+	expect_near(state.antics.time_left(0), 3.0, 0.0001, "for puke_time")
+	expect_false(state.can_paddle(0), "his seat gives no strokes meanwhile")
+	state.stroke(0, 1.0)
+	expect_near(state.guys[0].stamina, 1.0, 0.0001, "his key does nothing")
+	state.step(2.5, BOAT)
+	expect_near(state.guys[0].drunkenness, 1.0, 0.0001, "the level holds until the puke ends")
+	state.step(0.5, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.RECOVERING, "after puke_time he sits back")
+	expect_near(state.drunkenness.level_of(0), 0.6, 0.0001, "and his level dropped by puke_relief")
+	expect_near(state.guys[0].drunkenness, 0.6, 0.0001, "mirrored into the guy")
+	expect(state.can_paddle(0), "his seat strokes again")
+	state.step(Antics.RECOVER_TIME, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "then he is idle")
+	state.step(1.0, BOAT)
+	expect_near(state.guys[0].drunkenness, 0.6, 0.0001, "the drop happens once")
+	expect_near(state.guys[1].drunkenness, 0.0, 0.0001, "nobody else's level moved")
+	state.free()
+
+
+## T63: a guy still at puke_level after the drop (puke_relief 0 here) does not puke again until
+## his level has dipped below it and reached it again.
+func test_no_second_puke_until_the_level_dips_below_puke_level_and_rises_again() -> void:
+	var state: Node = antic_state()
+	state.drunkenness.tuning.puke_relief = 0.0
+	state.drunkenness.set_level(0, 1.0)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.WINDING_UP, "the first crossing starts the puke")
+	state.step(1.0, BOAT)
+	state.step(3.0, BOAT)
+	state.step(Antics.RECOVER_TIME, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "the puke ran its course")
+	expect_near(state.guys[0].drunkenness, 1.0, 0.0001, "and left him at the top")
+	for i: int in 100:
+		state.step(0.1, BOAT)
+		expect_eq(state.antics.state_of(0), Antics.State.IDLE, "still at the top he does not puke again (%d)" % i)
+	state.drunkenness.set_level(0, 0.99)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "dipping below starts nothing")
+	state.drunkenness.set_level(0, 1.0)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.WINDING_UP, "reaching it again does")
+	expect_eq(state.antics.kind_of(0), Antics.Kind.PUKE, "the puke")
+	state.free()
+
+
+## T63: a pee that runs its course lowers his level by pee_relief; one cut short by a knock-in
+## (pee_fall_shove) does not.
+func test_a_finished_pee_lowers_the_level_by_pee_relief_and_an_interrupted_one_does_not() -> void:
+	var state: Node = antic_state()
+	state.drunkenness.set_level(0, 0.5)
+	state.drunkenness.set_level(1, 0.5)
+	state.antics.start(1, Antics.Kind.PEE)
+	state.step(1.0, BOAT)
+	state.step(2.0, BOAT)
+	expect_eq(state.antics.state_of(1), Antics.State.PEEING, "peeing")
+	state.shove(Vector2(0.0, 100.0))
+	expect_false(state.guys[1].aboard, "knocked in mid-pee")
+	state.step(1.0, BOAT)
+	expect_near(state.guys[1].drunkenness, 0.5, 0.0001, "a pee cut short gives no relief")
+	state.antics.start(0, Antics.Kind.PEE)
+	state.step(1.0, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.PEEING, "the other guy pees")
+	state.step(4.9, BOAT)
+	expect_near(state.guys[0].drunkenness, 0.5, 0.0001, "nothing comes off until it ends")
+	state.step(0.1, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.RECOVERING, "after pee_time he is done")
+	expect_near(state.guys[0].drunkenness, 0.42, 0.0001, "a finished pee drops pee_relief")
+	state.step(1.0, BOAT)
+	expect_near(state.guys[0].drunkenness, 0.42, 0.0001, "once")
 	state.free()

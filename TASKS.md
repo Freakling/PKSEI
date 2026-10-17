@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (108 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (112 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -281,9 +281,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: pressing R starts a new attempt (RunState.new_attempt and the lake's restart), also during the win cutscene (play) · on a touchscreen a small corner button resets only after being held for reset_hold_time with a ring filling, and a shorter touch does nothing; the hold logic is a pure helper with a test (test) · the button never overlaps the pads (play)
 - GDD: Presentation and Platforms
 
-### T63 · Drunkenness comes down: puking at the top, a little relief from peeing · in-progress 2026-10-17 · M · agent
+### T63 · Drunkenness comes down: puking at the top, a little relief from peeing · done · M · agent
 - Depends on: T13, T23, T56
-- Touches: scripts/systems/antics.gd (PUKING), scripts/systems/drunkenness.gd (relieve), scripts/resources/drink_tuning.gd (+puke_time, +puke_relief, +pee_relief), data/drink_tuning.tres, scripts/autoload/run_state.gd, scripts/catamaran.gd, tools/gen_sprites.gd, assets/sprites/guys/ (puke frames), data/lines.tres (puke lines), scripts/resources/lines.gd, tests/test_antics.gd, tests/test_drunkenness.gd, tests/test_run_state.gd
+- Touches: scripts/systems/antics.gd (PUKING, just_finished), scripts/systems/drunkenness.gd (relieve), scripts/resources/drink_tuning.gd (+puke_level, +puke_time, +puke_relief, +pee_relief), data/drink_tuning.tres, scripts/autoload/run_state.gd, scripts/catamaran.gd, scripts/ui/speech_bubbles.gd, tools/gen_sprites.gd, assets/sprites/guys/ (puke frames), data/lines.tres (puke lines), scripts/resources/lines.gd, tests/test_antics.gd, tests/test_drunkenness.gd, tests/test_run_state.gd
 - Done when: a guy whose level reaches 1.0 winds up and pukes overboard: his seat gives no strokes for puke_time, then his level drops by puke_relief (test) · finishing a pee lowers his level by pee_relief (test) · the puke has its own frames and a Swedish line, and the meter visibly falls (play)
 - GDD: Systems › Drunkenness
 

@@ -2,6 +2,9 @@ extends "res://tools/test_case.gd"
 ## T13 · Antics: crossing a drunkenness threshold starts a wind-up of windup_time, then one of
 ## four antics fires, each with its own effect and recovery; one antic per threshold crossing;
 ## a shove of pee_fall_shove or more during a pee knocks the guy in (GDD › Systems › Drunkenness).
+## T63 · The puke (Kind.PUKE) is never drawn at a threshold; started by the caller it is a wind-up
+## then PUKING for puke_time with no strokes; an antic that runs its course is reported by
+## just_finished() for that step, one cut short by interrupt() is not.
 
 const SEATS: int = 4
 
@@ -20,6 +23,7 @@ func before_each() -> void:
 	tuning.nap_time = 5.0
 	tuning.pee_time = 6.0
 	tuning.pee_fall_shove = 100.0
+	tuning.puke_time = 3.0
 	antics = Antics.new(tuning)
 	rng = RandomNumberGenerator.new()
 	rng.seed = 7
@@ -70,7 +74,8 @@ func test_the_antic_is_drawn_from_the_seeded_rng() -> void:
 		twin_kinds.append(twin.kind_of(0))
 		seen[antics.kind_of(0)] = true
 	expect_eq(kinds, twin_kinds, "the same seed draws the same antics")
-	expect_eq(seen.size(), Antics.Kind.size(), "every antic comes up over 40 draws")
+	expect_eq(seen.size(), Antics.DRAWN_KINDS.size(), "every drawable antic comes up over 40 draws")
+	expect_false(seen.has(Antics.Kind.PUKE), "the puke is never among them (T63)")
 
 
 func test_standing_up_rocks_the_boat_side_to_side_for_stand_time_then_he_recovers() -> void:
@@ -227,3 +232,64 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(data.nap_time > 0.0, "a nap lasts")
 	expect(data.pee_time > 0.0, "a pee lasts")
 	expect(data.pee_fall_shove > 0.0, "it takes a real shove to knock him in")
+	expect(data.puke_level >= data.bar_level, "the puke sits at the top of the meter, in the bar's tier (T63)")
+	expect(data.puke_level <= 1.0, "and within the meter")
+	expect(data.puke_time > 0.0, "a puke lasts")
+	expect(data.puke_relief > 0.0, "and brings the level down")
+	expect(data.pee_relief > 0.0 and data.pee_relief < data.puke_relief, "a pee relieves a little, a puke a good chunk")
+
+
+## T63: the puke, started by the caller, is a wind-up then PUKING for puke_time with no strokes,
+## then the recovery; just_finished() reports it for the step it ended in and no other.
+func test_the_puke_disables_the_seat_for_puke_time_and_is_reported_finished_for_one_step() -> void:
+	antics.start(0, Antics.Kind.PUKE)
+	expect_eq(antics.state_of(0), Antics.State.WINDING_UP, "start() begins the wind-up")
+	expect_eq(antics.kind_of(0), Antics.Kind.PUKE, "for the puke")
+	expect(antics.can_stroke(0), "he paddles through the wind-up")
+	expect_false(antics.just_finished(0), "nothing has finished yet")
+	expect_eq(antics.step(0, 1.5, 1.0, rng), Antics.State.PUKING, "after windup_time he pukes")
+	expect_near(antics.time_left(0), 3.0, 0.0001, "for puke_time")
+	expect_near(antics.antic_time(Antics.Kind.PUKE), 3.0, 0.0001, "antic_time knows it")
+	expect_false(antics.can_stroke(0), "his seat gives no strokes meanwhile")
+	expect(antics.busy(0), "busy with it")
+	expect_near(antics.rock(0), 0.0, 0.0001, "and he rocks nothing")
+	expect_false(antics.knocked_in(0, 500.0), "a shove does not knock a puking guy in")
+	antics.step(0, 2.5, 1.0, rng)
+	expect_false(antics.just_finished(0), "not finished at 2.5 s")
+	expect_eq(antics.step(0, 0.5, 1.0, rng), Antics.State.RECOVERING, "after puke_time he sits back")
+	expect(antics.just_finished(0), "the puke is reported finished in that step")
+	expect_eq(antics.kind_of(0), Antics.Kind.PUKE, "and kind_of says which")
+	expect(antics.can_stroke(0), "his seat strokes again")
+	antics.step(0, 0.25, 1.0, rng)
+	expect_false(antics.just_finished(0), "reported for that one step only")
+	expect_eq(antics.step(0, Antics.RECOVER_TIME - 0.25, 1.0, rng), Antics.State.IDLE, "then he is idle")
+
+
+## T63: a pee that runs its course is reported finished; one cut short by interrupt() is not.
+func test_a_finished_pee_is_reported_but_an_interrupted_one_is_not() -> void:
+	antics.start(1, Antics.Kind.PEE)
+	antics.step(1, 1.5, 0.5, rng)
+	antics.step(1, 6.0, 0.5, rng)
+	expect_eq(antics.state_of(1), Antics.State.RECOVERING, "the pee ran its course")
+	expect(antics.just_finished(1), "and is reported finished")
+	expect_eq(antics.kind_of(1), Antics.Kind.PEE, "as a pee")
+	antics.start(2, Antics.Kind.PEE)
+	antics.step(2, 1.5, 0.5, rng)
+	antics.step(2, 5.9, 0.5, rng)
+	antics.interrupt(2)
+	expect_false(antics.just_finished(2), "one cut short by interrupt is not")
+	expect_eq(antics.state_of(2), Antics.State.IDLE, "he is idle (in the water, RunState's rule)")
+	antics.reset()
+	expect_false(antics.just_finished(1), "the reset forgets it")
+
+
+## T63: a threshold crossing draws from DRAWN_KINDS, never the puke.
+func test_the_random_pick_never_draws_the_puke() -> void:
+	for i: int in 500:
+		expect_ne(Antics.pick(rng), Antics.Kind.PUKE, "pick %d is not the puke" % i)
+	expect_false(Antics.DRAWN_KINDS.has(Antics.Kind.PUKE), "the drawn kinds leave the puke out")
+	expect_eq(Antics.DRAWN_KINDS.size(), Antics.Kind.size() - 1, "and hold every other kind")
+	tuning.antic_thresholds = [0.1]
+	for seat: int in SEATS:
+		expect_eq(antics.step(seat, 0.1, 1.0, rng), Antics.State.WINDING_UP, "seat %d crosses the threshold at the top" % seat)
+		expect_ne(antics.kind_of(seat), Antics.Kind.PUKE, "and winds up for something other than the puke")

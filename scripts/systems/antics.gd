@@ -15,18 +15,26 @@ extends RefCounted
 ##   PEEING:         pee_time seconds at the hull's edge with no strokes; a shove of
 ##                   pee_fall_shove or more lands him in the water (knocked_in(); the caller puts
 ##                   him in and calls interrupt());
+##   PUKING:         puke_time seconds leaning over the side with no strokes (the top of the
+##                   meter, T63): never drawn at a threshold, only started by the caller
+##                   (RunState, at puke_level) with start(seat, Kind.PUKE);
 ##   RECOVERING:     RECOVER_TIME seconds settling back into his seat; he paddles again.
 ## Each threshold in antic_thresholds fires one antic per attempt, the first time the level
 ## reaches it (rising only; reset() forgets them). Which antic it is comes from the caller's
 ## RandomNumberGenerator, so tests seed it, and start() lets a caller pick one. A crossing
 ## while he is busy with an antic waits and fires when he is idle again, so no crossing is
-## lost and none fires twice.
+## lost and none fires twice. An antic that runs its full course (not one cut short by
+## interrupt()) is reported by just_finished() for the step it ended in, so the caller can apply
+## what it does to the level (the relief of a pee or a puke) without this class touching it.
 
 ## What a seat is doing.
-enum State { IDLE, WINDING_UP, STANDING, PADDLE_DROPPED, NODDED_OFF, PEEING, RECOVERING }
+enum State { IDLE, WINDING_UP, STANDING, PADDLE_DROPPED, NODDED_OFF, PEEING, PUKING, RECOVERING }
 ## The antic a wind-up leads to.
-enum Kind { STAND, DROP_PADDLE, NOD_OFF, PEE }
+enum Kind { STAND, DROP_PADDLE, NOD_OFF, PEE, PUKE }
 
+## The antics a threshold crossing draws from (pick()): everything but the puke, which the
+## level's top starts on its own.
+const DRAWN_KINDS: Array[Kind] = [Kind.STAND, Kind.DROP_PADDLE, Kind.NOD_OFF, Kind.PEE]
 ## Seconds a guy takes to settle back into his seat after an antic. Cosmetic timing, not a
 ## tunable: he paddles again from its start.
 const RECOVER_TIME: float = 0.5
@@ -42,6 +50,8 @@ var times_left: Array[float] = []
 var _crossed: Array[int] = []
 ## How many antics each seat has started; a crossing not yet fired waits for IDLE.
 var _fired: Array[int] = []
+## Whether each seat's antic ran its full course in its last step() (see just_finished).
+var _finished: Array[bool] = []
 
 
 func _init(drink_tuning: DrinkTuning) -> void:
@@ -56,12 +66,14 @@ func reset() -> void:
 	times_left.clear()
 	_crossed.clear()
 	_fired.clear()
+	_finished.clear()
 	for seat: int in Paddling.Seat.size():
 		states.append(State.IDLE)
 		kinds.append(Kind.STAND)
 		times_left.append(0.0)
 		_crossed.append(0)
 		_fired.append(0)
+		_finished.append(false)
 
 
 func state_of(seat: int) -> State:
@@ -77,15 +89,21 @@ func time_left(seat: int) -> float:
 	return times_left[seat]
 
 
-## Whether this seat gives strokes: not while his paddle is gone, he naps or he pees.
+## Whether this seat gives strokes: not while his paddle is gone, he naps, he pees or he pukes.
 func can_stroke(seat: int) -> bool:
 	return states[seat] != State.PADDLE_DROPPED and states[seat] != State.NODDED_OFF \
-			and states[seat] != State.PEEING
+			and states[seat] != State.PEEING and states[seat] != State.PUKING
 
 
 ## Whether this guy has just crossed a threshold and his antic is still being announced.
 func winding_up(seat: int) -> bool:
 	return states[seat] == State.WINDING_UP
+
+
+## Whether this guy's antic ran its full course in his last step() (he is RECOVERING from it;
+## kind_of() says which). False for one cut short by interrupt(), and again from the next step.
+func just_finished(seat: int) -> bool:
+	return _finished[seat]
 
 
 ## Whether he is in the middle of an antic (after the wind-up, before the recovery).
@@ -115,6 +133,7 @@ func knocked_in(seat: int, shove_magnitude: float) -> bool:
 ## idle (its antic drawn from `rng`), and the timers run the machine.
 func step(seat: int, delta: float, level: float, rng: RandomNumberGenerator) -> State:
 	_note_crossings(seat, level)
+	_finished[seat] = false
 	match states[seat]:
 		State.IDLE:
 			if _fired[seat] < _crossed[seat]:
@@ -123,8 +142,9 @@ func step(seat: int, delta: float, level: float, rng: RandomNumberGenerator) -> 
 		State.WINDING_UP:
 			if _tick(seat, delta):
 				_begin_antic(seat)
-		State.STANDING, State.PADDLE_DROPPED, State.NODDED_OFF, State.PEEING:
+		State.STANDING, State.PADDLE_DROPPED, State.NODDED_OFF, State.PEEING, State.PUKING:
 			if _tick(seat, delta):
+				_finished[seat] = true
 				_enter(seat, State.RECOVERING, RECOVER_TIME)
 		State.RECOVERING:
 			if _tick(seat, delta):
@@ -143,14 +163,15 @@ func start(seat: int, kind: Kind) -> void:
 
 
 ## Ends whatever this guy is doing at once (he went in the water): back to IDLE. A wind-up cut
-## short is spent; it does not fire later.
+## short is spent; it does not fire later, and an antic cut short never counts as finished.
 func interrupt(seat: int) -> void:
+	_finished[seat] = false
 	_enter(seat, State.IDLE, 0.0)
 
 
-## Draws which antic fires next from `rng`: each Kind equally likely.
+## Draws which antic fires next from `rng`: each of DRAWN_KINDS equally likely, never the puke.
 static func pick(rng: RandomNumberGenerator) -> Kind:
-	return rng.randi_range(0, Kind.size() - 1) as Kind
+	return DRAWN_KINDS[rng.randi_range(0, DRAWN_KINDS.size() - 1)]
 
 
 ## Seconds the antic of `kind` lasts, per the tuning.
@@ -162,6 +183,8 @@ func antic_time(kind: Kind) -> float:
 			return tuning.fish_time
 		Kind.NOD_OFF:
 			return tuning.nap_time
+		Kind.PUKE:
+			return tuning.puke_time
 	return tuning.pee_time
 
 
@@ -185,6 +208,8 @@ func _begin_antic(seat: int) -> void:
 			state = State.NODDED_OFF
 		Kind.PEE:
 			state = State.PEEING
+		Kind.PUKE:
+			state = State.PUKING
 	_enter(seat, state, antic_time(kind))
 
 
