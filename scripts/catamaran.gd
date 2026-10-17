@@ -27,11 +27,11 @@ extends CharacterBody2D
 ## are taken and dropped (B4). In debug builds F5/F6 knock a beer over on the left/right without
 ## a hazard. No rules live here.
 
-## The forward-stroke action per seat, in Paddling.Seat order (Q, W, I, O).
+## The forward-stroke action per seat, in Paddling.Seat order (W, Q, I, O).
 const ACTIONS: Array[StringName] = [
 	&"stroke_left_front", &"stroke_left_back", &"stroke_right_front", &"stroke_right_back",
 ]
-## The reverse-stroke action per seat, in Paddling.Seat order (A, S, K, L).
+## The reverse-stroke action per seat, in Paddling.Seat order (S, A, K, L).
 const REVERSE_ACTIONS: Array[StringName] = [
 	&"reverse_left_front", &"reverse_left_back", &"reverse_right_front", &"reverse_right_back",
 ]

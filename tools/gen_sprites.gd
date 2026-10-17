@@ -461,7 +461,7 @@ func _sand_text() -> Image:
 	# The keys beside each seat, the forward one above its thwart and the reverse one below:
 	# left keys left of the left hull, right keys right of the right hull.
 	var seat_keys: Dictionary[Vector2i, String] = {
-		Vector2i(left_x - 12, front_row): "QA", Vector2i(left_x - 12, back_row): "WS",
+		Vector2i(left_x - 12, front_row): "WS", Vector2i(left_x - 12, back_row): "QA",
 		Vector2i(right_x + 6, front_row): "IK", Vector2i(right_x + 6, back_row): "OL",
 	}
 	for at: Vector2i in seat_keys:

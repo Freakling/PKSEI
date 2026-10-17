@@ -32,12 +32,12 @@ Think *Getting Over It*, but on water, with three friends who are no help at all
 
 **Controls (keyboard):** each guy has two keys, hold to wind up, release to stroke.
 
-- Left hull: **Q / A** front seat (forward / reverse), **W / S** back seat
+- Left hull: **W / S** front seat (forward / reverse), **Q / A** back seat
 - Right hull: **I / K** front seat, **O / L** back seat
 
 Front seats are the engine, back seats the rudder. A stroke on the left turns you right, like an outboard. Paddle too hard and a guy needs a break; let him get too drunk and he does something stupid. Beer overboard means someone jumps in after it, and you'll have to go back for him.
 
-Touch controls for phones are on the way.
+Touch controls: on a phone, each half of the screen is a hull; touch high for the front seat, low for the back, release to stroke, flick down to reverse.
 
 ### The tech demo
 

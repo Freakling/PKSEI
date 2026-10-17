@@ -238,9 +238,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: at each wind-up (stamina warning, antic wind-up, timing-bar wind-up, jump wind-up) a small bubble over the guy shows a Swedish line for that telegraph, drawn from a per-telegraph list in data (e.g. pee: "Jag måste pissa", break: "Fyfan va trött jag är!"), and goes away at the effect (play) · the lines live in a Resource the human can edit, with a test that every telegraph has at least one line (test)
 - GDD: World and Narrative · Systems › Drunkenness · Systems › Stamina
 
-### T57 · Key columns: outer keys are the back seats, inner keys the front · in-progress 2026-10-17 · S · agent
+### T57 · Key columns: outer keys are the back seats, inner keys the front · done · S · agent
 - Depends on: T53
-- Touches: project.godot (input actions), scripts/ui/hud.gd (labels), tools/gen_sprites.gd, assets/sprites/sand_text.png
+- Touches: project.godot (input actions), scripts/ui/hud.gd (labels), scripts/catamaran.gd (comments), tools/gen_sprites.gd, assets/sprites/sand_text.png
 - Done when: Q/A drive the left back seat, W/S the left front, I/K the right front, O/L the right back (check: the input map quoted) · the HUD labels and the sand text show it (play)
 - GDD: Presentation and Platforms
 

@@ -10,7 +10,7 @@ const GRID_SEATS: Array[int] = [
 	Paddling.Seat.LEFT_BACK, Paddling.Seat.RIGHT_BACK,
 ]
 ## Seat and keys (forward/reverse) per Paddling.Seat (GDD › Presentation and Platforms).
-const SEAT_LABELS: Array[String] = ["LF  Q/A", "LB  W/S", "RF  I/K", "RB  O/L"]
+const SEAT_LABELS: Array[String] = ["LF  W/S", "LB  Q/A", "RF  I/K", "RB  O/L"]
 const DRUNK_COLOUR: Color = Color(0.9, 0.45, 0.2, 1.0)
 const STAMINA_COLOUR: Color = Color(0.3, 0.8, 0.35, 1.0)
 const BAR_SIZE: Vector2 = Vector2(72, 5)
