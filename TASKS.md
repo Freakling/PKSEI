@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T58 · B5
+**Next IDs:** T59 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -242,6 +242,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T53
 - Touches: project.godot (input actions), scripts/ui/hud.gd (labels), scripts/catamaran.gd (comments), tools/gen_sprites.gd, assets/sprites/sand_text.png
 - Done when: Q/A drive the left back seat, W/S the left front, I/K the right front, O/L the right back (check: the input map quoted) · the HUD labels and the sand text show it (play)
+- GDD: Presentation and Platforms
+
+### T58 · Touch pads split sideways like the keys: outer back, inner front · in-progress 2026-10-17 · S · agent
+- Depends on: T54, T57
+- Touches: scripts/ui/touch_pads.gd, tests/test_touch_pads.gd, scenes/lake.tscn
+- Done when: within a screen half, the outer part maps to the back seat and the inner part to the front seat, the whole height of the half counting (test) · the four pads sit outer/inner in each half with the same up/down hints (play)
 - GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent
