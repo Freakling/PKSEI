@@ -64,3 +64,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · Mobile web (phones and tablets through itch.io) joins the platforms; touch is built next, before the function check · why: the human's call · from: conversation
 - 2026-10-17 · The name: Paddla Kanot Som En Idiot; the game is also a tech demo for Godot Director, and its setting is the author's annual canoe-camping trip with friends · why: the human's background for the page · from: conversation
 - 2026-10-17 · The guys speak Swedish; later each telegraph gets a speech bubble in which the guy announces what he is about to do · why: the human's call; the warning doubles as the joke · from: conversation
+- 2026-10-17 · Key columns: Q/A left back, W/S left front, I/K right front, O/L right back (replaces the Q/A-front layout): outer keys are the back seats, inner keys the front · why: the human's call; the hands mirror each other · from: conversation
