@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T56 · B5
+**Next IDs:** T57 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -231,6 +231,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: project.godot (stretch settings if needed), export_presets.cfg
 - Done when: the game launches from the itch.io page on an Android phone and an iPhone in landscape, the canvas is neither cropped nor blurred, and the pads are reachable with thumbs (play)
 - GDD: Presentation and Platforms
+
+### T56 · Swedish speech bubbles: each guy says what he is about to do · todo · M · agent
+- Depends on: T23, T13, T14
+- Touches: scripts/ui/speech_bubbles.gd (new), data/lines.tres (new, Swedish lines per telegraph), scripts/resources/lines.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd
+- Done when: at each wind-up (stamina warning, antic wind-up, timing-bar wind-up, jump wind-up) a small bubble over the guy shows a Swedish line for that telegraph, drawn from a per-telegraph list in data (e.g. pee: "Jag måste pissa", break: "Fyfan va trött jag är!"), and goes away at the effect (play) · the lines live in a Resource the human can edit, with a test that every telegraph has at least one line (test)
+- GDD: World and Narrative · Systems › Drunkenness · Systems › Stamina
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10

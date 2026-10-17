@@ -12,6 +12,8 @@
 -->
 
 ## Pitch
+PKSEI is *Paddla Kanot Som En Idiot*, Swedish for "paddle a canoe like an idiot". It is a rage game and a tech demo for Godot Director (page copy: `design/itch-page.md`).
+
 Four drunk guys have lashed two aluminium canoes into a catamaran and need to reach an island in the middle of the lake. You control all four at once. The lake throws random hazards at them, and they keep drinking, so the boat gets harder to control the longer the crossing takes. Nobody dies: a bad stretch drifts the boat back into water already crossed. A top-down, bright pixel-art rage game in the spirit of Getting Over It and A Difficult Game About Climbing, played for the comedy of watching four idiots fail together.
 
 Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout. Reference research: `design/research/rage-games.md`.
@@ -93,7 +95,9 @@ Four guys. They are the comedy: the bodies the player drives and the thing that 
 None planned for the first version. The crossing is the whole game.
 
 ## World and Narrative
-A lake, four drunk guys, a catamaran made of two canoes, a crate of beer, and an island they have decided to reach. No further story.
+A lake, four drunk guys, a catamaran made of two canoes, a crate of beer, and an island they have decided to reach. No further story. The setting is the author's annual camping trip with friends: canoes, a lake, an island, too much beer.
+
+The guys speak Swedish. Later, every telegraph gets a speech bubble in which the guy says what he is about to do ("Jag måste pissa", "Fyfan va trött jag är!"), so the warning is also the joke.
 
 ## Difficulty and Scaling
 Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, from stamina breaks that get likelier the harder the player pushes, from the rescue cascade (each swimmer makes the next rescue harder), and from the hazards getting denser toward the island. Numbers for all of these are tunables.
