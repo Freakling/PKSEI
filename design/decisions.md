@@ -57,3 +57,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · Once the geese hiss the charge always comes (replaces the builder's calming rule) · why: the human's call · from: conversation
 - 2026-10-17 · The jet-ski crosses on a diagonal from the lake edge, not a horizontal line · why: the human's call · from: conversation
 - 2026-10-17 · Confirmed as built: a stroke's turn scales with its power; the sand text reappears whenever the boat is back at the launch shore · why: the human kept the builders' readings · from: conversation
+- 2026-10-17 · Eight keys, two per seat, forward and reverse: Q/A and W/S on the left hull, I/K and O/L on the right (replaces the four-key Q A I K layout); a reverse stroke pushes less than a forward one but turns and burns the same · why: the human's call; reverse paddling makes steering and backing off hazards possible · from: conversation

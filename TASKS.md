@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T53 · B5
+**Next IDs:** T54 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -213,6 +213,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/systems/jetski.gd, tests/test_jetski.gd
 - Done when: the course runs from the lake edge at the trigger's y through the point jetski_lead ahead of the boat and on past the far edge, at jetski_speed (test)
 - GDD: Systems › Hazards
+
+### T53 · Reverse strokes: eight keys, two per seat · in-progress 2026-10-17 · M · agent
+- Depends on: T6, T48
+- Touches: project.godot (input actions), scripts/catamaran.gd, scripts/autoload/run_state.gd (stroke(seat, hold_time, backwards)), scripts/systems/paddling.gd, scripts/resources/boat_tuning.gd (+reverse_thrust_fraction), data/boat_tuning.tres, scripts/ui/hud.gd (key labels), tools/gen_sprites.gd, assets/sprites/sand_text.png, tests/test_paddling.gd, tests/test_run_state.gd
+- Done when: Q/A, W/S, I/K, O/L map to forward/reverse strokes of the left front, left back, right front and right back seats (check: the input map quoted) · a reverse stroke's thrust is the forward thrust times reverse_thrust_fraction, negated, with the same turn magnitude negated and the same stamina burn (test) · the HUD labels and the sand text show the new keys (play)
+- GDD: Core Loop › Moment to moment · Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
