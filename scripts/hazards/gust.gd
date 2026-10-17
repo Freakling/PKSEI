@@ -7,10 +7,8 @@ extends Node2D
 ## and lean over while the gust blows. The WindGust rule decides everything; this script steps
 ## it each physics frame with the boat's position and hands the push it returns to
 ## RunState.push(), which the boat moves by. No rules and no randomness here; the tunables are
-## the gust_* fields on LakeTuning, loaded when the node enters the tree (a preload would be a
-## cycle: the tuning lists the gust spec, whose scene has this script).
+## the gust_* fields on LakeTuning, which the lake sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The ripples (cosmetic): how many streaks, their size and colour, how fast they race in
 ## pixels per second, how far they lean while the gust blows (radians), and the stride in
 ## pixels between one streak's starting place and the next's, so the pattern scatters.
@@ -26,6 +24,9 @@ const FIELD_SCALE: float = 1.5
 
 @onready var _ripples: Node2D = $Visual/Ripples
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _gust: WindGust
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
@@ -37,7 +38,10 @@ var _travel: float = 0.0
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("Gust: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_gust = WindGust.new(tuning, global_position)
 	_boat = _find_boat()
 	_half_field = tuning.gust_trigger_radius * FIELD_SCALE

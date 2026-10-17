@@ -7,10 +7,8 @@ extends Node2D
 ## pecks through RunState.beer_overboard() on the hull it names, and shows the state at a glance:
 ## hissing = wings up (the Wings marker) and a bob, charging = the geese fly at the boat tinted
 ## angry, returning = they fly back. No rules and no randomness here; the tunables are the geese_*
-## fields on LakeTuning, loaded when the nest enters the tree (a preload would be a cycle: the
-## tuning lists the geese spec, whose scene has this script).
+## fields on LakeTuning, which the lake sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## How fast and how far the geese bob while hissing (cosmetic).
 const HISS_BOB_RATE: float = 30.0
 const HISS_BOB_PIXELS: float = 1.0
@@ -20,6 +18,9 @@ const ANGRY_TINT: Color = Color(1.0, 0.7, 0.6, 1.0)
 @onready var _geese: Node2D = $Visual/Geese
 @onready var _wings: Node2D = $Visual/Geese/Wings
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _flock: GeeseFlock
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
@@ -27,7 +28,10 @@ var _bob_time: float = 0.0
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("Geese: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_flock = GeeseFlock.new(tuning, global_position)
 	_boat = _find_boat()
 	_wings.visible = false

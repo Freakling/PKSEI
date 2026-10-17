@@ -6,11 +6,9 @@ extends Node2D
 ## different blue and Visual/Arrows (small arrow dashes on a fixed grid, pointing the way the
 ## water runs) covers it, visible from spawn. Each physics frame the boat is inside, the rule's
 ## push goes to RunState.push(), which the boat moves by, the same sustained push as a gust. No
-## rules and no randomness here; the tunables are the stripe_* fields on LakeTuning, loaded when
-## the node enters the tree (a preload would be a cycle: the tuning lists the cross-current spec,
-## whose scene has this script).
+## rules and no randomness here; the tunables are the stripe_* fields on LakeTuning, which the lake
+## sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The arrows (cosmetic): the grid's spacing across and along the stripe in pixels, an arrow's
 ## length, shaft thickness, head length and head half-width, and their colours.
 const ARROW_SPACING_X: float = 200.0
@@ -25,13 +23,19 @@ const ARROW_COLOUR: Color = Color(0.75, 0.9, 1.0, 0.8)
 @onready var _band: Polygon2D = $Visual/Band
 @onready var _arrows: Polygon2D = $Visual/Arrows
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _stripe: CrossCurrent
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("CrossCurrent: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_stripe = CrossCurrent.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = _stripe.half_width()

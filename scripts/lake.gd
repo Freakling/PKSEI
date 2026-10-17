@@ -14,7 +14,8 @@ extends Node2D
 ## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are objects, fixed
 ## where Hazards.plan() put them for RunState.lake_seed: they are placed under the Hazards node on
 ## start and again after each shore reset (the seed stays, so the same lake comes back), each scene
-## handed its HazardSpec, and none moves or comes back once it is placed. No rules and no
+## handed its HazardSpec and the lake's LakeTuning, and none moves or comes back once it is placed.
+## No rules and no
 ## randomness live here: the plan is Hazards'.
 ##
 ## Debug builds only (the gate is _debug_tools): PathOverlay under Visual draws the corridor the
@@ -130,7 +131,10 @@ func _spawn_hazards() -> void:
 			continue
 		var hazard: Node2D = spec.scene.instantiate() as Node2D
 		hazard.position = placement.position
+		# Both before add_child, so the hazard's _ready sees them. A hazard that doesn't declare
+		# a field ignores the set (Object.set on an unknown property does nothing).
 		hazard.set(&"spec", spec)
+		hazard.set(&"tuning", TUNING)
 		_hazards.add_child(hazard)
 
 

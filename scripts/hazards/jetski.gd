@@ -8,11 +8,9 @@ extends Node2D
 ## trail) crosses at the JetSki rule's position. The rule decides everything; this script steps
 ## it each physics frame with the boat's position and heading, and applies its one hit through
 ## RunState: shove() along the jet-ski's travel and beer_overboard() on the hull it came from.
-## No rules and no randomness here; the tunables are the jetski_* fields on LakeTuning, loaded
-## when the node enters the tree (a preload would be a cycle: the tuning lists the jet-ski spec,
-## whose scene has this script).
+## No rules and no randomness here; the tunables are the jetski_* fields on LakeTuning, which the lake
+## sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The warning marker (cosmetic): pixels in from the screen's edge, and its flash period in
 ## seconds (on for the first half).
 const MARKER_INSET: float = 12.0
@@ -21,6 +19,9 @@ const FLASH_PERIOD: float = 0.3
 @onready var _jetski: Node2D = $Visual/JetSki
 @onready var _marker: Polygon2D = $Visual/Warning/Marker
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _rule: JetSki
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
@@ -29,7 +30,10 @@ var _flash: float = 0.0
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("JetSki: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_rule = JetSki.new(tuning, global_position)
 	_boat = _find_boat()
 	_jetski.visible = false

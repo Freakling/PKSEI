@@ -8,10 +8,8 @@ extends Node2D
 ## hull's guy for snag_time seconds (the Snag a paddle effect). One crossing is one hit: the spec's
 ## hit_cooldown passes before it can hit again. No rules and no randomness here: the lake places it
 ## from Hazards.plan() and sets `spec`; the tunables are the line_length and snag_time fields on
-## LakeTuning, loaded when the node enters the tree (a preload would be a cycle: the tuning lists the
-## fishing line spec, whose scene has this script).
+## LakeTuning, which the lake sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The hit area's thickness across the line, in pixels: thin, so the line itself is what is crossed.
 const HIT_THICKNESS: float = 4.0
 
@@ -21,7 +19,8 @@ const HIT_THICKNESS: float = 4.0
 
 ## The spec the lake placed this line from: its strengths. Set by the lake before it is added.
 var spec: HazardSpec
-## The lake's tunables, loaded when the line enters the tree.
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the line stays off.
 var tuning: LakeTuning
 var _cooldown: float = 0.0
 ## Which way the line runs from the dinghy: away from the lake's middle line, -1 left, +1 right.
@@ -29,7 +28,9 @@ var _direction: float = 1.0
 
 
 func _ready() -> void:
-	tuning = load(TUNING_PATH) as LakeTuning
+	if spec == null or tuning == null:
+		push_error("FishingLine: the lake must set spec and tuning before adding the hazard")
+		return
 	_direction = -1.0 if global_position.x < 0.0 else 1.0
 	var reach: float = tuning.line_length
 	_line.points = PackedVector2Array([Vector2.ZERO, Vector2(_direction * reach, 0.0)])
@@ -46,7 +47,7 @@ func _physics_process(delta: float) -> void:
 ## The boat crossed the line (only the boat is a CharacterBody2D on the lake). The hull hit is the side
 ## of the boat the dinghy is on, in the boat's own frame, as rock.gd does with its position.
 func _on_body_entered(body: Node2D) -> void:
-	if not body is CharacterBody2D or _cooldown > 0.0 or spec == null:
+	if not body is CharacterBody2D or _cooldown > 0.0 or spec == null or tuning == null:
 		return
 	_cooldown = spec.hit_cooldown
 	var on_left: bool = body.to_local(global_position).x < 0.0

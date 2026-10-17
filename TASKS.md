@@ -166,9 +166,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a flock hisses when the boat enters geese_radius, charges and pecks for geese_attack_time, each peck a beer overboard, then returns (test) · the warning and the attack read at a glance (play)
 - GDD: Systems › Hazards
 
-### T40 · The lake hands each hazard its tuning, so hazard scripts don't load lake_tuning.tres · todo · S · agent
+### T40 · The lake hands each hazard its tuning, so hazard scripts don't load lake_tuning.tres · done · S · agent
 - Depends on: T15
-- Touches: scripts/lake.gd, scripts/hazards/geese.gd, scripts/hazards/log.gd
+- Touches: scripts/lake.gd, scripts/hazards/*.gd (all nine)
 - Done when: lake.gd sets `tuning` (and `spec`) on each spawned hazard that declares it, and no hazard script loads data/lake_tuning.tres itself (check)
 - GDD: —
 
@@ -192,8 +192,8 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 
 ### T42 · Shared base for hazard scene scripts (find the boat, the rect, the tuning) · todo · S · agent
 - Depends on: T17, T40
-- Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/wake.gd, scripts/hazards/gust.gd, scripts/hazards/headwind.gd, scripts/hazards/geese.gd, scripts/hazards/log.gd
-- Done when: one base script holds `_find_boat()`, `_rect()` and the tuning/spec fields, and every hazard scene script extends it with no duplicate helper left (check)
+- Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/*.gd (all nine)
+- Done when: one base script holds `_find_boat()`, `_rect()`, the `tuning`/`spec` fields and their null guards, and every hazard scene script extends it with no duplicate helper left (check)
 - GDD: —
 
 ### T18 · Cross-current stripe · done · S · agent

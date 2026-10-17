@@ -6,11 +6,9 @@ extends Node2D
 ## Visual/Whitecaps (one Polygon2D of small white dashes on a fixed grid) covers it, so the
 ## stretch is seen long before the boat reaches it. Each physics frame the boat is inside, the
 ## rule's extra drift goes to RunState.set_extra_drift(), so the current pulls harder for that
-## step. No rules and no randomness here; the tunables are the headwind_* fields on LakeTuning,
-## loaded when the node enters the tree (a preload would be a cycle: the tuning lists the
-## headwind spec, whose scene has this script).
+## step. No rules and no randomness here; the tunables are the headwind_* fields on LakeTuning, which the lake
+## sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The whitecaps (cosmetic): the grid's spacing in pixels, every other row shifted by half of
 ## it, and a dash's size.
 const WHITECAP_SPACING: float = 40.0
@@ -20,13 +18,19 @@ const WHITECAP_THICKNESS: float = 2.0
 @onready var _band: Polygon2D = $Visual/Band
 @onready var _whitecaps: Polygon2D = $Visual/Whitecaps
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _wind: Headwind
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("Headwind: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_wind = Headwind.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = _wind.half_width()

@@ -12,6 +12,11 @@ var spec: HazardSpec
 var _cooldown: float = 0.0
 
 
+func _ready() -> void:
+	if spec == null:
+		push_error("Log: the lake must set spec before adding the hazard")
+
+
 func _physics_process(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
 

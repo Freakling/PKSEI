@@ -8,10 +8,8 @@ extends Node2D
 ## decides everything; this script steps it each physics frame with the boat's position and
 ## heading, and applies its one hit through RunState: beer_overboard() on the high hull, shove()
 ## and water_aboard() on that hull. No rules and no randomness here; the tunables are the wake_*
-## fields on LakeTuning, loaded when the node enters the tree (a preload would be a cycle: the
-## tuning lists the wake spec, whose scene has this script).
+## fields on LakeTuning, which the lake sets as `tuning` before the node enters the tree.
 
-const TUNING_PATH: String = "res://data/lake_tuning.tres"
 ## The front's thickness in pixels (cosmetic).
 const FRONT_THICKNESS: float = 6.0
 
@@ -19,13 +17,19 @@ const FRONT_THICKNESS: float = 6.0
 @onready var _front: Node2D = $Visual/Front
 @onready var _crest: Polygon2D = $Visual/Front/Crest
 
+## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
+## reports that and the node stays still.
+var tuning: LakeTuning
 var _wake: MotorboatWake
 ## The boat: the only CharacterBody2D on the lake, found among the lake's children.
 var _boat: CharacterBody2D
 
 
 func _ready() -> void:
-	var tuning: LakeTuning = load(TUNING_PATH) as LakeTuning
+	if tuning == null:
+		push_error("Wake: no LakeTuning; lake.gd sets it before adding the hazard")
+		set_physics_process(false)
+		return
 	_wake = MotorboatWake.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = tuning.lake_width * 0.5
