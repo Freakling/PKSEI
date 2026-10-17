@@ -71,3 +71,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · The beast's random visit is super rare, less than once per crossing; the guaranteed path must never enter its edge zone · why: the human's play found it appearing far too often · from: conversation
 - 2026-10-17 · Other boats on the lake are drawn at least as large as the catamaran · why: the human's play: the motorboat and jet-ski were too small to recognise · from: conversation
 - 2026-10-17 · A reset: R starts a new attempt; on touch a hold-to-reset corner button that can't be hit by accident · why: the human's call; testing needs it and a stuck attempt needs a way out · from: conversation
+- 2026-10-17 · Drunkenness comes down: at the top of the meter a guy pukes overboard (telegraphed, seat out for a moment, a big drop); peeing gives a small drop · why: the human's call after play; the meter needs a way down so a crossing can recover · from: conversation

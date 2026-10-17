@@ -48,6 +48,8 @@ Each guy has his own drunkenness level. It rises with time, as the guys drink fr
 - **Lag and misses.** A drunker guy's stroke lands later after the release, and sometimes not at all; the fumble shows in his animation. Delay and miss chance rise with the level.
 - **Antics.** At drunkenness thresholds a guy does something stupid, always with a visible wind-up and a recovery: he stands up and rocks the boat, drops his paddle and has to fish for it, nods off as dead weight, or needs to pee. While he pees at the edge his seat gives no strokes, and if a hazard rocks the boat hard enough he loses his balance and falls in: a swimmer to rescue like any other, but with no beer in hand, so he doesn't drink while he floats.
 - **Timing bar.** Only at the top tier, a guy's stroke becomes a timing minigame: while his key is held, a bar sweeps back and forth next to him; releasing inside a thin green zone gives the stroke he meant, releasing anywhere else flips it: a forward key paddles in reverse (the weaker reverse stroke), a reverse key paddles forward. Announced with a wind-up, shown next to him, and steady until he sobers up or the boat is set back. The player can see it and adapt, so the pillar "Hard but fair" holds. A missed stroke, from lag or a fumble, still burns stamina: he swung.
+Drunkenness also comes down. A guy who reaches the top of the meter pukes overboard: a wind-up, then his seat is out for a moment while he leans over the side, and his level drops by a good chunk. Peeing lowers it a little too. So the meter is a cycle, not a ramp: the worst guy sorts himself out, loudly.
+
 Input is always honoured instantly in the animation; what the drunk body then does with it is the comedy.
 
 ### Stamina
