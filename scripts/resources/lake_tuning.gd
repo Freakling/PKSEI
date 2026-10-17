@@ -123,7 +123,7 @@ extends Resource
 ## Pixels per second the ram shoves the boat back toward the lake's middle: hard.
 @export var beast_shove: float = 260.0 ## PLACEHOLDER
 ## Pixels back toward the shore (down-screen) from the boat the grabbed guy is spat out at.
-@export var beast_spit_distance: float = 900.0 ## PLACEHOLDER
+@export var beast_spit_distance: float = 450.0 ## PLACEHOLDER
 ## Seconds under water between rams while the boat stays out of bounds.
 @export var beast_pause: float = 1.5 ## PLACEHOLDER
 ## Seconds under water after the random visit's grab, after a ram that gave up, or after the boat
