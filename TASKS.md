@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T42 · B4
+**Next IDs:** T43 · B4
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (60 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (66 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -184,11 +184,17 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a HazardSpec marked `is_event` is placed inside the corridor (on the path the boat must take) and objects outside it, so every event can fire (test) · in debug builds a small marker shows each trigger point with the F7 overlay (play)
 - GDD: Systems › Hazards
 
-### T17 · Wind: gusts and harsh-wind stretches · todo · M · agent
+### T17 · Wind: gusts and harsh-wind stretches · done · M · agent
 - Depends on: T10, T14
-- Touches: scripts/hazards/gust.gd (new), scripts/hazards/headwind.gd (new), scenes/hazards/gust.tscn (new), scenes/hazards/headwind.tscn (new), data/lake_tuning.tres (+gust_shove, +gust_time, +headwind_force)
+- Touches: scripts/systems/gust.gd (new), scripts/systems/headwind.gd (new), scripts/hazards/gust.gd (new), scripts/hazards/headwind.gd (new), scenes/hazards/gust.tscn (new), scenes/hazards/headwind.tscn (new), data/hazards/gust.tres (new), data/hazards/headwind.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+gust_trigger_radius, +gust_warning, +gust_shove, +gust_time, +headwind_force, +headwind_length), scripts/autoload/run_state.gd (push/take_push, set_extra_drift), scripts/catamaran.gd, tests/test_gust.gd (new), tests/test_headwind.gd (new)
 - Done when: ripples precede a gust by about a second, then the boat is shoved sideways by gust_shove for gust_time (test) · inside a headwind stretch the current is stronger by headwind_force, so only strong strokes gain water (test) · whitecaps mark the stretch before the boat reaches it (play)
 - GDD: Systems › Hazards
+
+### T42 · Shared base for hazard scene scripts (find the boat, the rect, the tuning) · todo · S · agent
+- Depends on: T17, T40
+- Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/wake.gd, scripts/hazards/gust.gd, scripts/hazards/headwind.gd, scripts/hazards/geese.gd, scripts/hazards/log.gd
+- Done when: one base script holds `_find_boat()`, `_rect()` and the tuning/spec fields, and every hazard scene script extends it with no duplicate helper left (check)
+- GDD: —
 
 ### T18 · Cross-current stripe · todo · S · agent
 - Depends on: T10

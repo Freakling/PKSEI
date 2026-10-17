@@ -1,9 +1,11 @@
-[gd_resource type="Resource" script_class="LakeTuning" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
 [ext_resource type="Resource" path="res://data/hazards/log.tres" id="2_log"]
 [ext_resource type="Resource" path="res://data/hazards/geese.tres" id="3_geese"]
 [ext_resource type="Resource" path="res://data/hazards/wake.tres" id="4_wake"]
+[ext_resource type="Resource" path="res://data/hazards/gust.tres" id="5_gust"]
+[ext_resource type="Resource" path="res://data/hazards/headwind.tres" id="6_headwind"]
 
 [sub_resource type="Curve" id="Curve_density"]
 max_value = 3.0
@@ -34,4 +36,10 @@ wake_speed = 60.0
 wake_head_on_angle = 30.0
 wake_shove = 120.0
 wake_water = 3.0
-hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake")]
+gust_trigger_radius = 200.0
+gust_warning = 1.0
+gust_shove = 60.0
+gust_time = 3.0
+headwind_force = 25.0
+headwind_length = 400.0
+hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind")]

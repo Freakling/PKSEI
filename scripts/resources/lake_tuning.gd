@@ -58,5 +58,21 @@ extends Resource
 @export var wake_shove: float = 120.0 ## PLACEHOLDER
 ## Water a broadside hit puts aboard the high hull, bailed at BoatTuning.bail_rate per second.
 @export var wake_water: float = 3.0 ## PLACEHOLDER
+## Wind gust (the Wind gust row; read by WindGust, scripts/systems/gust.gd).
+## Pixels from a gust trigger within which the boat sets the gust off.
+@export var gust_trigger_radius: float = 200.0 ## PLACEHOLDER
+## Seconds of ripples racing across the water before the push: the warning.
+@export var gust_warning: float = 1.0 ## PLACEHOLDER
+## Pixels per second the gust pushes the boat sideways across the lake while it blows.
+@export var gust_shove: float = 60.0 ## PLACEHOLDER
+## Seconds the push lasts.
+@export var gust_time: float = 3.0 ## PLACEHOLDER
+## Harsh wind (the Harsh wind row; read by Headwind, scripts/systems/headwind.gd).
+## Pixels per second added to the current's pull toward the shore while the boat is inside a
+## headwind stretch; a stroke has to outpace BoatTuning.current_speed plus this to gain water.
+@export var headwind_force: float = 25.0 ## PLACEHOLDER
+## Pixels of crossing a headwind stretch covers, from its trigger toward the island, across the
+## whole lake_width; the whitecaps cover it.
+@export var headwind_length: float = 400.0 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []

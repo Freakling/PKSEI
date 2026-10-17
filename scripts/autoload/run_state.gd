@@ -12,9 +12,10 @@ extends Node
 ## the shore; RunState decides whether that is a shore reset. While the boat still rests at the
 ## launch shore (LAUNCH) a guy washed up at the shoreline climbs back aboard on his own in step()
 ## (B2); under way he waits there for the boat or the shore reset. Hazard scenes call the effects
-## palette (GDD › Systems › Hazards, Effects): beer_overboard(), shove(), snag(), stop(),
-## force_break() and water_aboard(); the boat takes the shove and the stop with take_shove() and
-## take_stop(), and a snagged or bailing seat gives no strokes. A guy who falls in some other
+## palette (GDD › Systems › Hazards, Effects): beer_overboard(), shove(), push(), snag(), stop(),
+## force_break(), water_aboard() and set_extra_drift(); the boat takes the shove, the push and
+## the stop with take_shove(), take_push() and take_stop(), the extra drift goes into step()'s
+## Motion, and a snagged or bailing seat gives no strokes. A guy who falls in some other
 ## way than a jump (T13) goes through guy_overboard(). new_attempt() draws lake_seed from the
 ## RNG, the seed the lake plans its hazards from (Hazards.plan), and then resets; a shore reset
 ## only resets, so the attempt meets the same lake again. Screens only read. Reads and writes no
@@ -78,9 +79,14 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var lake_seed: int = 0
 
 var _pending: Array[PendingStroke] = []
-## Hazard effects waiting for the boat: a push it adds to its speed, and a stop that zeroes it.
+## Hazard effects waiting for the boat: a shove it adds to its speed, a sustained push it moves
+## at this frame, and a stop that zeroes its speed.
 var _shove: Vector2 = Vector2.ZERO
+var _push: Vector2 = Vector2.ZERO
 var _stop: bool = false
+## Pixels per second a headwind adds to the current's pull this step; set each step the boat
+## is in a stretch, consumed by step().
+var _extra_drift: float = 0.0
 ## Seconds each seat's paddle is still snagged; 0 when free.
 var _snag_left: Array[float] = []
 ## Water aboard per hull (Rescue.Hull order); the hull's guy bails it at BoatTuning.bail_rate.
@@ -110,7 +116,9 @@ func reset() -> void:
 	rescue.reset()
 	_pending.clear()
 	_shove = Vector2.ZERO
+	_push = Vector2.ZERO
 	_stop = false
+	_extra_drift = 0.0
 	_snag_left.clear()
 	_water.clear()
 	guys.clear()
@@ -177,6 +185,29 @@ func take_shove() -> Vector2:
 	var impulse: Vector2 = _shove
 	_shove = Vector2.ZERO
 	return impulse
+
+
+## A hazard's wind pushes the boat for as long as it blows (Shove, sustained): `velocity` in lake
+## pixels per second, which the boat moves at this frame on top of its strokes and the current,
+## undamped, so a gust reads as the boat carried sideways while it lasts. The hazard calls it
+## every frame it blows; pushes in the same frame add up.
+func push(velocity: Vector2) -> void:
+	_push += velocity
+
+
+## The push waiting for the boat this frame, once: cleared when taken.
+func take_push() -> Vector2:
+	var velocity: Vector2 = _push
+	_push = Vector2.ZERO
+	return velocity
+
+
+## A headwind makes the current stronger this step (the Harsh wind row): `per_second` pixels
+## per second more of drift toward the shore, added to the next step()'s Motion.drift_to_shore
+## and then forgotten, so a stretch sets it every step the boat is inside. Overlapping
+## stretches don't stack: the strongest wins.
+func set_extra_drift(per_second: float) -> void:
+	_extra_drift = maxf(_extra_drift, per_second)
 
 
 ## A hard hit stops the boat (Stop the boat): its speed goes to zero next frame.
@@ -280,8 +311,9 @@ func stroke(seat: int, hold_time: float) -> void:
 ## recovers or breaks (a guy in the water keeps his stamina, state and time left until he is
 ## picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, the snags count
 ## down and the bailers bail, elapsed advances, and the strokes that land this frame become the
-## boat's Motion. With nobody aboard the Motion is only the current's drift. Nothing moves once
-## the attempt is won.
+## boat's Motion, its drift the current's plus any headwind set for this step
+## (set_extra_drift). With nobody aboard the Motion is only the drift. Nothing moves once the
+## attempt is won.
 func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	if phase == Phase.WON:
 		return Paddling.Motion.new()
@@ -311,7 +343,10 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
 		guy.stamina = stamina.level_of(seat)
 		guy.drunkenness = drunkenness.level_of(seat)
-	return paddling.step(_land_strokes(delta), delta)
+	var motion: Paddling.Motion = paddling.step(_land_strokes(delta), delta)
+	motion.drift_to_shore += _extra_drift * delta
+	_extra_drift = 0.0
+	return motion
 
 
 ## Where the boat is between the shore (0) and the island (1). Leaving the shore starts the

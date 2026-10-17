@@ -12,8 +12,9 @@ extends CharacterBody2D
 ## the marker sweeping over the green band); a guy winding up to jump after a beer (Rescue's
 ## winding_up, T34) rocks in his seat; a guy in the water has no square here (the lake draws
 ## him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
-## and yaw, take_shove() is added to its speed. In debug builds F5/F6 knock a beer over on the
-## left/right without a hazard. No rules live here.
+## and yaw, take_shove() is added to its speed, and take_push() (a gust's sustained wind) is a
+## velocity the boat moves at this frame like the drift, undamped and stopped by the shore. In
+## debug builds F5/F6 knock a beer over on the left/right without a hazard. No rules live here.
 
 ## One input action per seat, in Paddling.Seat order (Q, A, I, K).
 const ACTIONS: Array[StringName] = [
@@ -79,8 +80,8 @@ func _physics_process(delta: float) -> void:
 	_stroke_velocity *= exp(-tuning.linear_damping * delta)
 	_yaw_rate *= exp(-tuning.angular_damping * delta)
 	rotation += _yaw_rate * delta
-	# The drift goes through velocity so the shore collision stops it.
-	velocity = _stroke_velocity + Vector2.DOWN * motion.drift_to_shore / delta
+	# The drift and the wind's push go through velocity so the shore collision stops them.
+	velocity = _stroke_velocity + RunState.take_push() + Vector2.DOWN * motion.drift_to_shore / delta
 	move_and_slide()
 	_show_telegraphs(delta)
 
