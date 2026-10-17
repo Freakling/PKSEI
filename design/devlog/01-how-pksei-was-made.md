@@ -1,6 +1,18 @@
-# Devlog 1 · How PKSEI was made in two evenings (a recipe)
+# Devlog 1 · How PKSEI was made in two days (a recipe)
 
-PKSEI (*Paddla Kanot Som En Idiot*) is a rage game about four drunk guys paddling a canoe catamaran across a lake. It is also a tech demo for [Godot Director](https://github.com/Freakling/Godot-Director), which is [Director-Driven Development](https://freakling.github.io/Director-Driven-Development/) for Godot: the human directs, AI agents build, and one automatic check decides when a task is done. This post is the log of how the game got from an empty folder to a playable build on itch.io, written as a recipe you can follow for your own game. The numbers: two evenings, about 65 commits, 56 task items, 213 tests, one web build pushed after every stage.
+PKSEI (*Paddla Kanot Som En Idiot*) is a rage game about four drunk guys paddling a canoe catamaran across a lake while they drink, talk and fall in. It is also a tech demo for [Godot Director](https://github.com/Freakling/Godot-Director), which is [Director-Driven Development](https://freakling.github.io/Director-Driven-Development/) for Godot: the human directs, AI agents build, and one automatic check decides when a task is done. This post is the log of how the game got from an empty folder to the build on [itch.io](https://freakling.itch.io/pksei), written as a recipe you can follow for your own game.
+
+The numbers, as of the build this post describes:
+
+| | |
+|---|---|
+| Time | two days (an evening, then a long day) |
+| Commits | 104, one item each |
+| Task items | 77, plus 6 bugs |
+| Decisions recorded | 89 lines, each with its reason |
+| Tests | 285 in 46 files |
+| Tunables still marked placeholder | 116 |
+| Builds shipped to itch.io | after every stage, about twenty |
 
 The loop the whole time was the same four words: **Decide, Build, Prove, Commit.**
 
@@ -8,7 +20,7 @@ The loop the whole time was the same four words: **Decide, Build, Prove, Commit.
 
 Empty folder, `git init`, then the Godot Director install. It writes the files the agents read: `AGENTS.md` (instructions and architecture), `design/gdd.md` (the design document), `design/decisions.md` (why each decision was made), `TASKS.md` (the work), `tools/check.sh` (the project check) and a pre-commit hook that runs the check.
 
-The install ends with a design interview. I was asked, as multiple-choice questions with a recommendation each: the pitch, the genre and feeling, three to five design pillars, the core loop at three scales, the platforms, input, canvas and camera, and who owns what (I own design, balance and priorities; the agent owns code, tests, placeholder art and the records; here I let it make pixel art and sound too). Every answer went into the GDD as the current design and into `decisions.md` as one line with its reason. Anything undecided became a numbered open question, Q1 to Q5.
+The install ends with a design interview. I was asked, as multiple-choice questions with a recommendation each: the pitch, the genre and feeling, three to five design pillars, the core loop at three scales, the platforms, input, canvas and camera, and who owns what (I own design, balance and priorities; the agent owns code, tests, placeholder art and the records; here I let it make pixel art, sound and the player-facing text too). Every answer went into the GDD as the current design and into `decisions.md` as one line with its reason. Anything undecided became a numbered open question.
 
 **Recipe:** answer the interview honestly and briefly. Pillars matter most; everything later gets checked against them. Mine were *Hard but fair*, *Four bodies, one brain*, *Drunker is funnier* and *No death, only setbacks*.
 
@@ -16,7 +28,7 @@ The install ends with a design interview. I was asked, as multiple-choice questi
 
 Second task, not last: a web export preset and a `tools/ship.sh` that exports headless and pushes to itch.io with butler. The first push was a flat blue screen with a label. From then on, "ship it" was one command and every stage of the game went to the page.
 
-**Recipe:** get the pipeline working while the project is trivial. Export templates, butler login and the page settings are the only steps the human has to do by hand.
+**Recipe:** get the pipeline working while the project is trivial. Export templates, butler login and the page settings are the only steps the human has to do by hand. Never paste an API key into the chat; the agent will refuse it, and rightly.
 
 ## 3. Research, then decide (30 minutes)
 
@@ -28,7 +40,7 @@ Every answer was recorded the same way: the GDD section rewritten, a decision li
 
 ## 4. Build the foundation with `/next-task` (one hour)
 
-"Do the next task until blocked." Each item in `TASKS.md` has a size, the files it touches, and outcomes tagged *(test)*, *(check)* or *(play)*. A builder agent gets one item in a fresh context, builds it, runs the check, and returns a report of about twenty lines. The orchestrating session reads only that report, updates the records, and commits one item per commit. Small items went to a cheaper model.
+"Do the next task until blocked." Each item in `TASKS.md` has a size, the files it touches, and outcomes tagged *(test)*, *(check)* or *(play)*. A builder agent gets one item in a fresh context, builds it, runs the check, and returns a report of about twenty lines. The orchestrating session reads only that report, updates the records, and commits one item per commit. Small items went to a cheaper model, medium ones to a mid-tier one, and the session's own model was kept for design.
 
 Order: folder layout, the `RunState` autoload (the current attempt), then three pure rule classes with tests before any scene existed: paddling (charge-and-release strokes against the current, seats steering 80/20 back to front), drunkenness (lag, misses, the timing-bar tier) and stamina (strokes burn it, breaks are telegraphed). Only then the grey-box lake: a boat of rectangles, four coloured squares, a HUD, the island.
 
@@ -50,11 +62,31 @@ Nine hazards, each a pure rule class stepped by a small scene script: the log, t
 
 ## 7. Art and sound, generated (two hours)
 
-No imaging library on the machine, so the sprites are drawn pixel by pixel by a Godot script (`tools/gen_sprites.gd`) and the sounds synthesised by another (`tools/gen_audio.gd`). Both are committed, so the art is reproducible and editable in code. Telegraphs came first: every warning the rules emit got its own animation frames and its own sound before any decoration. The win cutscene, the antics (stand up, drop the paddle, nod off, pee), off-screen arrows for swimmers, the controls scratched into the sand at the launch shore, reverse strokes on eight keys, and the beast followed, each as one item, one commit.
+No imaging library on the machine, so the sprites are drawn pixel by pixel by a Godot script (`tools/gen_sprites.gd`) and the sounds synthesised by another (`tools/gen_audio.gd`). Both are committed, so the art is reproducible and editable in code. Telegraphs came first: every warning the rules emit got its own animation frames and its own sound before any decoration. The win cutscene, the antics (stand up, drop the paddle, nod off, pee, and later puke at the top of the meter), off-screen arrows for swimmers, the controls scratched into the sand at the launch shore, reverse strokes on eight keys, and the beast followed, each as one item, one commit. The itch.io cover is generated the same way, from the game's own sprites with four speech bubbles over them, at three resolutions.
 
-## 8. What the check caught
+## 8. The second day: play, say, fix, ship (most of a day)
 
-Across the two evenings the pre-commit check ran about seventy times and the reviews found, among others: a design call the builder had made silently about the shore reset, a swimmer who could drift past the shoreline out of reach, a wind-up that could expire unseen while a guy was in the water, a hit that could land during the win cutscene, and a gameplay constant hiding as a cosmetic one. None of these were bugs I would have filed from playing. All became either a fix in the same item or a new item in the queue.
+Day two was played on a laptop and a phone, and each round of play became a short list of changes. The pattern was always the same: I said what was wrong in a sentence, the agent turned it into an item or a data change, built it, and shipped. Some of what came out of it:
+
+- **The guys talk.** Every telegraph became a Swedish speech bubble ("Jag måste pissa", "Nu jävlar blåser det!"), one guy calls out each hazard, and a guy in the water keeps talking: fetching his beer, drinking it ("Ska bara dricka sen kommer jag"), then nagging to be fetched ("Kom och hämta mig dåååå!"). The lines live in one data file I can edit.
+- **Names, not keys.** The guys draw nicknames from the real crew's list each attempt, and the HUD shows the names. The control scheme stays in the sand.
+- **Touch controls, twice.** First version: four pads laid out like the keys, flick down for reverse. On a real phone the flick was slow and unreliable, so the second version reads the press position: on or above a line low on the pad is forward, below it reverse, and the pads moved down to where thumbs rest.
+- **The beast, tuned three times.** It appeared too often (random visits cut to less than one per crossing), the guaranteed path was found to lead into its warning band (a bug with a regression test), and it spat guys out too far (halved).
+- **Mercy rules.** Swimmers start swimming back after five seconds, slightly slower than the drift; drunkenness comes down by puking at the top and a little by peeing; reversed controls last ten to fifteen seconds, not forever; an emptied boat drifts home at five times speed so nobody waits for the reset.
+- **Obstacles where you go.** Logs and rocks were spread across a 1600 px lake while the player sees 640; now objects land within 300 px of the corridor and the obstacle weights tripled. The builder noticed the fishing line's footprint needed 260 px of clearance and would never spawn at the 240 I had specified, and reported it with three options instead of guessing.
+- **The phone showed a third of the screen.** Integer scaling could only show the 640×360 canvas at whole multiples, so an iPhone in landscape got 1×. One setting, verified in a browser emulator at three sizes before shipping.
+
+**Recipe:** play on the real device early. One sentence of feedback is enough for the agent when the records are in order; the item it writes back tells you whether it understood.
+
+## 9. Upgrading the workflow mid-project (30 minutes)
+
+Godot Director moved from 3.0 to 3.13 while the game was being built, so the game was upgraded in place: a play log, autoplay (the game playing itself headless through its own input), an in-game dev menu on F12 in debug builds, a screen capture tool and a release procedure. The installer kept the game's own files, flagged the one conflict (the Claude settings, which the agent may not edit itself) and read me the changelog as questions: how deep to go, where the dev menu lives, whether to replace the ship script. The wiring of the play log, autoplay and dev menu went into the queue as three items rather than being done silently in the upgrade commit.
+
+**Recipe:** upgrade the workflow like any other change: one commit, the decisions recorded, the follow-ups as items.
+
+## 10. What the check and the reviews caught
+
+Across the two days the pre-commit check ran well over a hundred times and the reviews and builders' reports found, among others: a design call the builder had made silently about the shore reset, a swimmer who could drift past the shoreline out of reach, a wind-up that could expire unseen while a guy was in the water, a hit that could land during the win cutscene, a gameplay constant hiding as a cosmetic one, the guaranteed path leading into the beast's water, a spawn window too narrow for the widest hazard, and a floating-point edge on the touch pads' forward/reverse line that made a press exactly on the line reverse. None of these were bugs I would have filed from playing. All became either a fix in the same item or a new item in the queue.
 
 ## The recipe, short
 
@@ -62,9 +94,10 @@ Across the two evenings the pre-commit check ran about seventy times and the rev
 2. Get the ship pipeline working on an empty scene.
 3. Research the references; decide the open questions as options; record every decision with its reason.
 4. Build rules with tests before scenes; one item, one commit; review the large ones.
-5. Play, then record what changed as decisions.
+5. Play, on the real device, then record what changed as decisions.
 6. Keep every follow-up as an item, never as silent work.
-7. Generate placeholder art and sound from scripts; telegraphs first.
+7. Generate placeholder art, sound and even the cover from scripts; telegraphs first.
 8. Ship after every stage.
+9. Upgrade the workflow like any other change.
 
-Next: touch controls for phones, and the guys will start talking, in Swedish.
+Next: wire the play log and autoplay so the game can playtest itself, local co-op (one guy per player), and balancing the 116 placeholders by playing.
