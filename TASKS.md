@@ -256,9 +256,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the `Visual` nodes show sprites drawn for the 640×360 canvas, nearest-filtered, in place of the primitives (play) · the human signs off the look (play)
 - GDD: Presentation and Platforms
 
-### T23 · Guy animations: stroke, fumble, break warning, antic wind-ups, timing-bar tell · todo · M · agent
+### T23 · Guy animations: stroke, fumble, break warning, antic wind-ups, timing-bar tell · done · M · agent
 - Depends on: T22, T13, T14
-- Touches: assets/sprites/guys/ (new), scenes/catamaran.tscn, scripts/catamaran.gd
+- Touches: tools/gen_sprites.gd, assets/sprites/guys/ (new, 60 frames), scenes/catamaran.tscn, scripts/catamaran.gd
 - Done when: every telegraph in GDD › Drunkenness and GDD › Stamina has its own animation that starts at the warning and ends at the effect (play) · a late or missed stroke is visible as a fumble (play)
 - GDD: Systems › Drunkenness · Systems › Stamina
 

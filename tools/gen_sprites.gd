@@ -61,6 +61,16 @@ const HAIRS: Array[Color] = [
 	Color8(40, 36, 48), Color(0, 0, 0, 0), Color8(204, 82, 40), Color8(244, 214, 112),
 ]
 
+## The animation frames per guy (T23): one 12×14 PNG per frame in assets/sprites/guys/, named
+## guy_<seat>_<frame>.png, drawn by _guy_frame(); catamaran.gd builds its SpriteFrames from
+## them, so the names are its contract.
+const GUYS_DIR: String = "guys"
+const GUY_FRAMES: Array[String] = [
+	"idle", "stroke_0", "stroke_1", "fumble", "warning_0", "warning_1", "break", "windup_0",
+	"windup_1", "stand", "paddle_dropped", "nodded_off", "peeing", "bar_0", "bar_1",
+]
+const ZEE: Color = Color8(217, 230, 255)
+
 var _preview_dir: String = ""
 
 
@@ -70,11 +80,14 @@ func _init() -> void:
 		if args[i] == "--preview" and i + 1 < args.size():
 			_preview_dir = args[i + 1]
 	DirAccess.make_dir_recursive_absolute(OUT_DIR)
+	DirAccess.make_dir_recursive_absolute(OUT_DIR.path_join(GUYS_DIR))
 	_save(_catamaran(), "catamaran")
 	for seat: int in SHIRTS.size():
 		_save(_guy(seat), "guy_%d" % seat)
 		_save(_guy_swim(seat), "guy_swim_%d" % seat)
 		_save(_guy_camp(seat), "guy_camp_%d" % seat)
+		for frame: String in GUY_FRAMES:
+			_save(_guy_frame(seat, frame), "guy_%d_%s" % [seat, frame], GUYS_DIR)
 	_save(_beer(), "beer")
 	_save(_tent(), "tent")
 	for frame: int in 2:
@@ -179,6 +192,130 @@ func _guy_camp(seat: int) -> Image:
 	_px(img, 7, 3, SKIN)
 	_head(img, 4, 4, HAIRS[seat])
 	_outline(img, OUTLINE)
+	return img
+
+
+## 12×14 one animation frame of the guy on his seat (one of GUY_FRAMES; catamaran.gd plays
+## them): the body of _guy() with a row above and below for the paddle's reach, the head going
+## back and the glyphs. Drawn for the left seats (the water to the left) and mirrored for the
+## right ones; the body is centred on x 7 with the head at (7, 6), so the scene's 1-px offset
+## still applies. Each frame is one pose:
+##   idle · stroke_0 (the reach: blade planted ahead) · stroke_1 (the pull: blade back, splash)
+##   fumble (paddle slipping outboard, splash) · warning_0 (wiping his brow, sweating) ·
+##   warning_1 (slumping) · break (paddle laid down, head back, a beer at his mouth) ·
+##   windup_0/1 (looking left and right, the paddle wobbling) · stand (bigger: closer to the
+##   camera, paddle raised over his head) · paddle_dropped (no paddle, arms out over the water)
+##   nodded_off (head on his chest, paddle drooping, a "z") · peeing (turned to the hull's edge)
+##   bar_0/1 (swaying with the paddle, head lolling).
+func _guy_frame(seat: int, frame: String) -> Image:
+	var img: Image = _new(12, 14)
+	var shirt: Color = SHIRTS[seat]
+	var hair: Color = HAIRS[seat]
+	var dots: Array[Vector2i] = []
+	var dot_colour: Color = SPLASH
+	match frame:
+		"idle":
+			_paddle(img, 2, 2, 8, 9)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 6), Vector2i(3, 8))
+			_head(img, 7, 6, hair)
+		"stroke_0":
+			_paddle(img, 2, 3, 8, 1)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 5), Vector2i(3, 7))
+			_head(img, 7, 6, hair)
+		"stroke_1":
+			_paddle(img, 2, 3, 8, 10)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 7), Vector2i(3, 9))
+			_head(img, 7, 6, hair)
+			dots = [Vector2i(0, 9), Vector2i(5, 13)]
+		"fumble":
+			_paddle(img, 1, 4, 7, 10)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 5), Vector2i(3, 7))
+			_head(img, 6, 6, hair)
+			dots = [Vector2i(0, 3), Vector2i(0, 13), Vector2i(2, 13)]
+		"warning_0":
+			_paddle(img, 2, 2, 8, 9)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(4, 5), Vector2i(3, 8))
+			_px(img, 5, 4, SKIN)
+			_head(img, 7, 6, hair)
+			dots = [Vector2i(10, 4), Vector2i(11, 7)]
+			dot_colour = WATER_LIGHT
+		"warning_1":
+			_paddle(img, 2, 3, 8, 10)
+			_torso(img, 4, 7, shirt)
+			_hands(img, Vector2i(3, 7), Vector2i(3, 9))
+			_head(img, 7, 7, hair)
+			dots = [Vector2i(10, 5)]
+			dot_colour = WATER_LIGHT
+		"break":
+			_paddle(img, 2, 2, 8, 9)
+			_torso(img, 4, 6, shirt)
+			_head_back(img, 7, 7, hair)
+			_px(img, 10, 3, BEER_LID)
+			_rect(img, 10, 4, 1, 2, BEER_CAN)
+			_px(img, 10, 6, SKIN)
+		"windup_0":
+			_paddle(img, 2, 2, 8, 9)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 6), Vector2i(3, 8))
+			_head_turned(img, 6, 6, hair, -1)
+		"windup_1":
+			_paddle(img, 2, 3, 8, 10)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 7), Vector2i(3, 9))
+			_head_turned(img, 8, 6, hair, 1)
+		"stand":
+			_rect(img, 1, 1, 3, 3, WOOD_LIGHT)
+			_rect(img, 3, 2, 8, 1, WOOD)
+			_rect(img, 3, 5, 8, 8, shirt)
+			_rect(img, 3, 12, 8, 1, shirt.darkened(0.25))
+			for corner: Vector2i in [Vector2i(3, 5), Vector2i(10, 5), Vector2i(3, 12), Vector2i(10, 12)]:
+				_clear(img, corner.x, corner.y)
+			_hands(img, Vector2i(5, 3), Vector2i(9, 3))
+			_big_head(img, 7, 7, hair)
+		"paddle_dropped":
+			_torso(img, 3, 6, shirt)
+			_rect(img, 1, 7, 2, 1, SKIN)
+			_rect(img, 1, 9, 2, 1, SKIN)
+			_head(img, 6, 6, hair)
+		"nodded_off":
+			_paddle(img, 2, 4, 7, 10)
+			_torso(img, 4, 6, shirt)
+			_px(img, 3, 8, SKIN)
+			_head(img, 7, 8, hair)
+		"peeing":
+			_rect(img, 6, 4, 5, 8, shirt)
+			_rect(img, 10, 4, 1, 8, shirt.darkened(0.25))
+			for corner: Vector2i in [Vector2i(6, 4), Vector2i(10, 4), Vector2i(6, 11), Vector2i(10, 11)]:
+				_clear(img, corner.x, corner.y)
+			_hands(img, Vector2i(4, 4), Vector2i(4, 10))
+			_head_turned(img, 5, 7, hair, -1)
+			dots = [Vector2i(1, 6), Vector2i(0, 7), Vector2i(0, 8)]
+			dot_colour = WATER_LIGHT
+		"bar_0":
+			_paddle(img, 2, 2, 8, 9)
+			_torso(img, 3, 6, shirt)
+			_hands(img, Vector2i(3, 6), Vector2i(3, 8))
+			_head(img, 5, 6, hair)
+		"bar_1":
+			_paddle(img, 3, 2, 8, 9)
+			_torso(img, 4, 6, shirt)
+			_hands(img, Vector2i(3, 6), Vector2i(3, 8))
+			_head(img, 8, 6, hair)
+		_:
+			push_error("unknown guy frame %s" % frame)
+	_outline(img, OUTLINE)
+	for dot: Vector2i in dots:
+		_px(img, dot.x, dot.y, dot_colour)
+	var mirrored: bool = seat == Paddling.Seat.RIGHT_FRONT or seat == Paddling.Seat.RIGHT_BACK
+	if mirrored:
+		img.flip_x()
+	if frame == "nodded_off":
+		_zee(img, 0 if mirrored else 9, 1)
 	return img
 
 
@@ -335,6 +472,73 @@ func _head(img: Image, cx: int, cy: int, hair: Color) -> void:
 		_px(img, cx - 1, cy - 1, SKIN_LIGHT)
 
 
+## A paddle held along the hull: a 1-px shaft of shaft_len from (x, shaft_y) and a 3×3 blade
+## whose top row is at blade_y, ahead of the shaft when blade_y < shaft_y.
+func _paddle(img: Image, x: int, shaft_y: int, shaft_len: int, blade_y: int) -> void:
+	_rect(img, x - 1, blade_y, 3, 3, WOOD_LIGHT)
+	_rect(img, x, shaft_y, 1, shaft_len, WOOD)
+
+
+## 7×6 shoulders seen from above with the top-left corner at (x, y): a darker back row and
+## rounded corners.
+func _torso(img: Image, x: int, y: int, shirt: Color) -> void:
+	_rect(img, x, y, 7, 6, shirt)
+	_rect(img, x, y + 5, 7, 1, shirt.darkened(0.25))
+	for corner: Vector2i in [Vector2i(x, y), Vector2i(x + 6, y), Vector2i(x, y + 5), Vector2i(x + 6, y + 5)]:
+		_clear(img, corner.x, corner.y)
+
+
+func _hands(img: Image, a: Vector2i, b: Vector2i) -> void:
+	_px(img, a.x, a.y, SKIN)
+	_px(img, b.x, b.y, SKIN)
+
+
+## A head tilted back (drinking): the face shows, the hair only along its back edge.
+func _head_back(img: Image, cx: int, cy: int, hair: Color) -> void:
+	_disc(img, cx, cy, 2, SKIN)
+	if hair.a > 0.0:
+		_rect(img, cx - 1, cy + 2, 3, 1, hair)
+		_px(img, cx - 2, cy + 1, hair)
+		_px(img, cx + 2, cy + 1, hair)
+	else:
+		_px(img, cx, cy - 1, SKIN_LIGHT)
+
+
+## A head turned to look sideways: `side` -1 looks left (the hair over the right half), +1
+## right.
+func _head_turned(img: Image, cx: int, cy: int, hair: Color, side: int) -> void:
+	_disc(img, cx, cy, 2, SKIN)
+	var back: int = -side
+	if hair.a > 0.0:
+		for i: int in 3:
+			var half: int = 2 if i < 2 else 1
+			_rect(img, cx + back * i, cy - half, 1, 2 * half + 1, hair)
+		_px(img, cx - back, cy - 2, hair)
+		_px(img, cx - back, cy + 2, hair)
+	else:
+		_px(img, cx + side, cy - 1, SKIN_LIGHT)
+
+
+## A head one size up, for a guy standing closer to the camera: a radius-3 disc.
+func _big_head(img: Image, cx: int, cy: int, hair: Color) -> void:
+	_disc(img, cx, cy, 3, SKIN)
+	if hair.a > 0.0:
+		for dy: int in range(0, 4):
+			var half: int = 3 if dy < 2 else (2 if dy == 2 else 1)
+			_rect(img, cx - half, cy + dy, 2 * half + 1, 1, hair)
+		_px(img, cx - 3, cy - 1, hair)
+		_px(img, cx + 3, cy - 1, hair)
+	else:
+		_px(img, cx - 1, cy - 2, SKIN_LIGHT)
+
+
+## A 3×3 "z" with its top-left corner at (x, y), drawn over everything (no outline).
+func _zee(img: Image, x: int, y: int) -> void:
+	_rect(img, x, y, 3, 1, ZEE)
+	_px(img, x + 1, y + 1, ZEE)
+	_rect(img, x, y + 2, 3, 1, ZEE)
+
+
 ## A pine seen from above: a dark crown with lighter branch spokes and the trunk's tip.
 func _pine(img: Image, cx: int, cy: int) -> void:
 	_disc(img, cx + 2, cy + 2, 10, GRASS_DARK)
@@ -403,8 +607,9 @@ static func _solid(img: Image, x: int, y: int) -> bool:
 	return img.get_pixel(x, y).a > 0.0
 
 
-func _save(img: Image, sprite_name: String) -> void:
-	var path: String = OUT_DIR.path_join(sprite_name + ".png")
+## Writes the sprite to OUT_DIR (or its `sub_dir`) and, with --preview, an 8× copy.
+func _save(img: Image, sprite_name: String, sub_dir: String = "") -> void:
+	var path: String = OUT_DIR.path_join(sub_dir).path_join(sprite_name + ".png")
 	var err: Error = img.save_png(path)
 	print("%s %s (%d×%d)" % ["wrote" if err == OK else "FAILED", path, img.get_width(), img.get_height()])
 	if not _preview_dir.is_empty():
