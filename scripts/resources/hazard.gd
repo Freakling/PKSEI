@@ -13,6 +13,12 @@ extends Resource
 @export var weight: float = 1.0 ## PLACEHOLDER
 ## The first band (0 is the shore band) that may draw it; bands before it never do.
 @export var first_band: int = 0 ## PLACEHOLDER
+## Pixels either side of an object's placed point that must stay clear of the corridor: its
+## footprint's half-width. Hazards.place() keeps the point at least path_width / 2 + half_width from
+## the corridor's centre, so the whole footprint stays out of the path whichever way it extends. A
+## fishing line runs its line_length sideways in either direction, so its half_width is line_length
+## (keep it equal to LakeTuning.line_length). Events ignore it: their triggers sit in the corridor.
+@export var half_width: float = 0.0 ## PLACEHOLDER
 ## Pixels per second a hit pushes the boat away from the hazard (the shove effect).
 @export var shove_strength: float = 80.0 ## PLACEHOLDER
 ## Seconds after a hit before the same hazard can hit again, so one bump is one hit.

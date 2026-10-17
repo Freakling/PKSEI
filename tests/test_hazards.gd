@@ -12,6 +12,9 @@ extends "res://tools/test_case.gd"
 ## continuously from the launch (x = 0) to the island (x = 0), the same for the same seed.
 ## T41: a HazardSpec marked is_event is placed inside the corridor, on the path the boat must
 ## take, so every event can fire; objects stay outside it, and the density covers both kinds.
+## T43: an object's footprint (HazardSpec.half_width) stays clear of the corridor on both sides, so a
+## fishing line's full length never crosses the path whichever way it runs; a spec too wide for the
+## band is skipped.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
@@ -260,6 +263,70 @@ func test_objects_land_on_both_sides_of_the_corridor_and_right_up_to_it() -> voi
 				right += 1
 	expect(left > 300 and right > 300, "objects fall on either side of the path (%d left, %d right)" % [left, right])
 	expect(closest < PATH_WIDTH * 0.5 + 5.0, "and some sit right at its edge (closest %.1f)" % closest)
+
+
+func test_an_object_keeps_its_half_width_clear_of_the_corridor_on_both_sides() -> void:
+	for half_width: float in [24.0, 60.0]:
+		var wide: HazardSpec = spec(1.0, 0)
+		wide.half_width = half_width
+		tuning.hazards = [wide]
+		var clear: float = PATH_WIDTH * 0.5 + half_width
+		var left: int = 0
+		var right: int = 0
+		var closest: float = WIDTH
+		for lake_seed: int in 100:
+			var placements: Array[Hazards.Placement] = Hazards.plan(tuning, lake_seed)
+			expect_eq(placements.size(), 11, "hw %.0f seed %d: every band still draws its density" % [half_width, lake_seed])
+			for placement: Hazards.Placement in placements:
+				var offset: float = placement.position.x - Hazards.corridor_x(tuning, lake_seed, placement.position.y)
+				expect(absf(offset) >= clear - 0.0001, "hw %.0f seed %d: the footprint clears the corridor (centre %.1f from it, need %.1f)" % [half_width, lake_seed, absf(offset), clear])
+				expect(absf(placement.position.x) <= WIDTH * 0.5, "hw %.0f seed %d: still within the lake's width" % [half_width, lake_seed])
+				closest = minf(closest, absf(offset))
+				if offset < 0.0:
+					left += 1
+				else:
+					right += 1
+		expect(left > 300 and right > 300, "hw %.0f: objects fall on both sides (%d left, %d right)" % [half_width, left, right])
+		expect(closest < clear + 5.0, "hw %.0f: and some sit right at the footprint's edge (closest %.1f, edge %.1f)" % [half_width, closest, clear])
+
+
+func test_a_fishing_line_never_crosses_the_path_whichever_way_it_runs() -> void:
+	var line: HazardSpec = (load("res://data/hazards/fishing_line.tres") as HazardSpec).duplicate() as HazardSpec
+	line.first_band = 0
+	var line_length: float = (load("res://data/lake_tuning.tres") as LakeTuning).line_length
+	expect(line.half_width >= line_length, "the line's footprint covers its full length (half_width %.0f, line_length %.0f)" % [line.half_width, line_length])
+	tuning.hazards = [line]
+	var clear: float = PATH_WIDTH * 0.5
+	var lines: int = 0
+	for lake_seed: int in 200:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			var centre: float = Hazards.corridor_x(tuning, lake_seed, placement.position.y)
+			for direction: float in [-1.0, 1.0]:
+				var at_dinghy: float = placement.position.x - centre
+				var at_end: float = at_dinghy + direction * line_length
+				var crosses: bool = minf(at_dinghy, at_end) < clear and maxf(at_dinghy, at_end) > -clear
+				expect(not crosses, "seed %d: a line from x %.1f running %s stays off the path" % [lake_seed, placement.position.x, "left" if direction < 0.0 else "right"])
+			lines += 1
+	expect(lines > 300, "the lake has fishing lines to check (%d)" % lines)
+
+
+func test_a_spec_too_wide_for_the_band_is_skipped() -> void:
+	var wide: HazardSpec = spec(1.0, 0)
+	wide.half_width = WIDTH
+	tuning.hazards = [wide]
+	expect_eq(Hazards.plan(tuning, 42).size(), 0, "a footprint as wide as the lake leaves no room, so nothing is placed")
+	expect_eq(Hazards.plan_band(tuning, 42, 1, 0).size(), 0, "in any band")
+	var narrow: HazardSpec = spec(1.0, 0)
+	narrow.half_width = 60.0
+	tuning.hazards = [narrow]
+	expect_eq(Hazards.plan(tuning, 42).size(), 11, "a narrower footprint fits, so every band draws its density")
+	tuning.hazards = [wide, narrow]
+	var placed: int = 0
+	for lake_seed: int in 20:
+		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
+			expect_eq(placement.spec, 1, "seed %d: only the spec that fits is placed" % lake_seed)
+			placed += 1
+	expect(placed > 0, "and the fitting one is still placed (%d)" % placed)
 
 
 func test_a_band_the_corridor_fills_places_nothing() -> void:

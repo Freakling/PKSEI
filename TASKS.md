@@ -10,10 +10,10 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Design: pitch, pillars and core loop decided | ✅ done (Q5, co-op timing, still open) |
 | Foundation: project settings, first system with a test, check passing | ✅ done |
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
-| Hazards complete: T10, T15–T21 | ✅ done (placement follow-ups T41, T43 open) |
+| Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (76 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (77 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -214,7 +214,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: crossing the line snags the paddle on the side that crossed it for snag_time (test) · the dinghy and the line are visible before the boat reaches them (play)
 - GDD: Systems › Hazards
 
-### T43 · Objects with an extent keep their whole footprint out of the corridor · todo · S · agent
+### T43 · Objects with an extent keep their whole footprint out of the corridor · done · S · agent
 - Depends on: T37, T20
 - Touches: scripts/resources/hazard.gd (+half_width), scripts/systems/hazards.gd, data/hazards/fishing_line.tres, data/hazards/log.tres, data/hazards/rock.tres, data/hazards/geese.tres, tests/test_hazards.gd
 - Done when: placement keeps a spec's half_width clear of the corridor on both sides, so a fishing line's full length never crosses the path (test)
@@ -298,4 +298,5 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - T15–T21 are independent of each other once T10 is done; T17 also needs T14 (stamina). Objects (T15 flock, T18 stripe, T19 rock, T20 line) are fixed; events (T15 charge, T16, T17, T21) happen as the boat passes.
 - Stages, as the human wants them: functionality (through T21), then pixel art and animation with telegraphs first (T22–T24), then audio with telegraphs first (T25–T26).
 - Player settings have no item yet; the human will decide what they should do later.
+- data/hazards/fishing_line.tres `half_width` must stay equal to LakeTuning.line_length by hand.
 - T3, T4, T5 and T14 don't share files and can be built in any order after T2.

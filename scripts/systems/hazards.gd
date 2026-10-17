@@ -14,7 +14,7 @@ extends RefCounted
 ## fire.
 ##
 ## The path (GDD: "a guaranteed path winds through every band") is a corridor path_width wide
-## that no object is placed in. Its centre is a random walk across the lake, one step per band:
+## that no object is placed in, nor any object's footprint (HazardSpec.half_width) reach into. Its centre is a random walk across the lake, one step per band:
 ## path_center(tuning, seed, band) is the centre's x at the band's near edge, 0 at the launch
 ## (band 0) and 0 again at the island's near edge (band band_count, the far edge of the last
 ## band), each step in between drawn from an RNG seeded with band_seed(seed, band,
@@ -23,9 +23,10 @@ extends RefCounted
 ## of 0, so the remaining steps can always bring it back to the island. Between two centres the
 ## corridor's x is the straight line from one to the next (corridor_x(tuning, seed, y)), so the
 ## corridor is continuous across band edges; off the shore it sits at 0 (the launch) and so does
-## the island. An object's x is drawn from the water outside the corridor at its y, an event's
-## from the corridor's middle (within EVENT_SPREAD of its half-width either side of the centre);
-## a band that is all corridor (path_width at or above lake_width) places events only.
+## the island. An object's x is drawn from the water at its y that its footprint leaves clear of
+## the corridor on either side, and an object with no such water is not placed; an event's x is
+## drawn from the corridor's middle (within EVENT_SPREAD of its half-width either side of the
+## centre). A band that is all corridor (path_width at or above lake_width) places events only.
 ##
 ## The attempt's seed is the one truth. Each band is planned on its own
 ## (plan_band(tuning, seed, band, generation)) from a RandomNumberGenerator seeded with
@@ -42,6 +43,8 @@ extends RefCounted
 ## The generation the path's draws are hashed with: objects use 0 and up, so the path never
 ## shares a band's RNG with them.
 const PATH_GENERATION: int = -1
+## What place() returns when the water at its y has no room for the object's footprint.
+const NOWHERE: Vector2 = Vector2.INF
 ## How far across the corridor an event's trigger may sit, as a fraction of the corridor's
 ## half-width either side of its centre: 0 is dead centre, 1 anywhere in the corridor. Kept
 ## inside so a boat holding the path's middle still passes over it.
@@ -122,9 +125,10 @@ static func plan(tuning: LakeTuning, lake_seed: int) -> Array[Placement]:
 
 
 ## One band's hazards at one generation: its density's worth of weighted draws, each placed
-## inside the band, an object outside the path and an event inside it, from an RNG seeded with
-## band_seed(). Either kind takes the same two draws (y, then x), so a lake of objects alone plans
-## as it did before events. Nothing for a band outside the planned water or one no spec may be
+## inside the band, an object clear of the path (its footprint too) and an event inside it, from an
+## RNG seeded with band_seed(). Either kind takes the same two draws (y, then x), so a lake of
+## objects alone plans as it did before events. An object whose footprint has no room at its y is
+## skipped, so the band may plan fewer than its density. Nothing for a band outside the planned water or one no spec may be
 ## drawn in; in a lake the corridor fills only the events are drawn, objects having no water.
 static func plan_band(tuning: LakeTuning, lake_seed: int, band: int, generation: int) -> Array[Placement]:
 	var placements: Array[Placement] = []
@@ -144,7 +148,9 @@ static func plan_band(tuning: LakeTuning, lake_seed: int, band: int, generation:
 		if tuning.hazards[spec].is_event:
 			at = place_event(tuning, centers, band, rng)
 		else:
-			at = place(tuning, centers, band, rng)
+			at = place(tuning, centers, band, tuning.hazards[spec].half_width, rng)
+		if at == NOWHERE:
+			continue
 		placements.append(Placement.new(spec, band, at))
 	return placements
 
@@ -162,22 +168,32 @@ static func draw(tuning: LakeTuning, specs: Array[int], rng: RandomNumberGenerat
 	return specs[specs.size() - 1]
 
 
-## A position inside the band and outside the path: between the band's near and far edges (the
-## first band starting at the launch margin and the island band ending at the island's near
-## edge), then anywhere across the water left once the corridor at that y is taken out: an x is
-## drawn over the open width from the lake's left edge and moved past the corridor when it lands
-## at or beyond the corridor's left edge, so every point outside the corridor is as likely as any
-## other. `centers` is path_centers() for the lake.
-static func place(tuning: LakeTuning, centers: PackedFloat64Array, band: int, rng: RandomNumberGenerator) -> Vector2:
+## An object's position inside the band and clear of the path: between the band's near and far
+## edges (the first band starting at the launch margin and the island band ending at the island's
+## near edge), at an x whose footprint stays out of the corridor. The centre must be at least
+## path_width / 2 + half_width from the corridor's centre at its y, so the water it may take is the
+## lake less that clear zone: one piece left of it and one right of it, each cut short where the
+## zone runs past a lake edge. An x is drawn uniformly over that water, so every point it allows is
+## as likely as any other (the open width less 2 × half_width when the corridor is central). Returns
+## NOWHERE when there is no water left for the footprint at this y. `centers` is path_centers().
+static func place(tuning: LakeTuning, centers: PackedFloat64Array, band: int, half_width: float, rng: RandomNumberGenerator) -> Vector2:
 	var half: float = tuning.lake_width * 0.5
 	var near: float = near_edge(tuning, band)
 	var far: float = minf(near + tuning.band_length, far_edge(tuning))
 	var y: float = -rng.randf_range(near, far)
-	var x: float = rng.randf_range(-half, -half + open_width(tuning))
-	var left_of_path: float = corridor_at(tuning, centers, y) - tuning.path_width * 0.5
-	if x >= left_of_path:
-		x += tuning.path_width
-	return Vector2(x, y)
+	var clear: float = tuning.path_width * 0.5 + maxf(half_width, 0.0)
+	var centre: float = corridor_at(tuning, centers, y)
+	var left_end: float = clampf(centre - clear, -half, half)
+	var right_start: float = clampf(centre + clear, -half, half)
+	var left_width: float = left_end + half
+	var right_width: float = half - right_start
+	var room: float = left_width + right_width
+	if room <= 0.0:
+		return NOWHERE
+	var u: float = rng.randf_range(0.0, room)
+	if u < left_width:
+		return Vector2(-half + u, y)
+	return Vector2(right_start + (u - left_width), y)
 
 
 ## An event's trigger: inside the band like an object (the same y draw), then on the path, at
