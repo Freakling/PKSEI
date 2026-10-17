@@ -6,7 +6,7 @@ Instructions for AI assistants working on this game. The workflow is Godot Direc
 
 ## Project facts
 - Godot 4.7 · GDScript · 2D, top-down · Web (HTML5, itch.io); desktop builds for development
-- Rendering and window: GL Compatibility · 640×360 viewport, `canvas_items` stretch, aspect `keep`, integer scaling · nearest texture filter, 2D transforms snapped to pixels
+- Rendering and window: GL Compatibility · 640×360 viewport, `canvas_items` stretch, aspect `keep`, fractional scaling (integer scaling left phones with a 1× canvas: B6) · nearest texture filter, 2D transforms snapped to pixels
 
 ## Layout
 <!-- The real folders of this project. T2 creates them; keep this current when folders move. -->

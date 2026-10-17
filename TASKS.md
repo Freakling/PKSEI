@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T77 · B6 · R1
+**Next IDs:** T77 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -346,6 +346,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
+
+### B6 · On a phone the game shows at 1× with huge black bands · done · S · agent · high
+- Depends on: T54
+- Touches: project.godot (window/stretch/scale_mode), AGENTS.md (Project facts)
+- Done when: the stretch scale mode is fractional, so the 640×360 canvas fills the shorter side of any window instead of stopping at the largest whole multiple (an iPhone in landscape got 1×, a third of the screen); nearest filtering and pixel snapping stay (check) · the web build at 844×390 and 390×844 fills the height or the width with the letterbox only from the aspect (check: screenshots) · the itch.io page has "Mobile friendly" on so the embed fills the phone's screen (human)
+- GDD: Presentation and Platforms
 
 ### T76 · Logs and rocks crowd the path: objects land within object_spread of the corridor; more of them · done · S · agent
 - Depends on: T10, T20, T21
