@@ -10,10 +10,10 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Design: pitch, pillars and core loop decided | ✅ done (Q5, co-op timing, still open) |
 | Foundation: project settings, first system with a test, check passing | ✅ done |
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
-| Hazards complete: T10, T15–T21 | ⬜ |
+| Hazards complete: T10, T15–T21 | ✅ done (placement follow-ups T41, T43 open) |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (70 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (76 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -220,9 +220,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: placement keeps a spec's half_width clear of the corridor on both sides, so a fishing line's full length never crosses the path (test)
 - GDD: Systems › Hazards
 
-### T21 · Jet-ski idiot · todo · M · agent
+### T21 · Jet-ski idiot · done · M · agent
 - Depends on: T10
-- Touches: scripts/hazards/jetski.gd (new), scenes/hazards/jetski.tscn (new), data/lake_tuning.tres (+jetski_speed, +jetski_warning, +jetski_shove)
+- Touches: scripts/systems/jetski.gd (new), scripts/hazards/jetski.gd (new), scenes/hazards/jetski.tscn (new), data/hazards/jetski.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+jetski_trigger_radius, +jetski_warning, +jetski_speed, +jetski_lead, +jetski_hit_radius, +jetski_shove), tests/test_jetski.gd (new)
 - Done when: a warning of jetski_warning sounds from offscreen, then the jet-ski crosses on a straight line at jetski_speed; a hit shoves the boat hard and knocks a beer overboard (test) · the warning is loud enough to react to (play)
 - GDD: Systems › Hazards
 

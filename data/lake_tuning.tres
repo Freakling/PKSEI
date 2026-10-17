@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LakeTuning" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
 [ext_resource type="Resource" path="res://data/hazards/log.tres" id="2_log"]
@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://data/hazards/headwind.tres" id="6_headwind"]
 [ext_resource type="Resource" path="res://data/hazards/cross_current.tres" id="7_cross_current"]
 [ext_resource type="Resource" path="res://data/hazards/fishing_line.tres" id="9_fishing_line"]
+[ext_resource type="Resource" path="res://data/hazards/jetski.tres" id="10_jetski"]
 
 [sub_resource type="Curve" id="Curve_density"]
 max_value = 3.0
@@ -47,6 +48,12 @@ headwind_force = 25.0
 headwind_length = 400.0
 stripe_force = 40.0
 stripe_length = 300.0
+jetski_trigger_radius = 240.0
+jetski_warning = 1.5
+jetski_speed = 480.0
+jetski_lead = 120.0
+jetski_hit_radius = 28.0
+jetski_shove = 240.0
 line_length = 200.0
 snag_time = 3.0
-hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock"), ExtResource("9_fishing_line")]
+hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock"), ExtResource("9_fishing_line"), ExtResource("10_jetski")]

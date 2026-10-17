@@ -80,6 +80,20 @@ extends Resource
 ## Pixels of crossing a cross-current stripe covers, from its trigger toward the island, across the
 ## whole lake_width; the faster water covers it.
 @export var stripe_length: float = 300.0 ## PLACEHOLDER
+## Jet-ski idiot (the Jet-ski idiot row; read by JetSki, scripts/systems/jetski.gd).
+## Pixels from a jet-ski trigger within which the boat sets the event off.
+@export var jetski_trigger_radius: float = 240.0 ## PLACEHOLDER
+## Seconds of noise from offscreen before the jet-ski appears: the warning.
+@export var jetski_warning: float = 1.5 ## PLACEHOLDER
+## Pixels per second the jet-ski crosses the lake at, from off-screen on one side to the other.
+@export var jetski_speed: float = 480.0 ## PLACEHOLDER
+## Pixels ahead of the boat (toward the island), as it was when the crossing started, the
+## jet-ski's straight line runs through.
+@export var jetski_lead: float = 120.0 ## PLACEHOLDER
+## Pixels from the boat's centre within which the jet-ski's path counts as a hit.
+@export var jetski_hit_radius: float = 28.0 ## PLACEHOLDER
+## Pixels per second a hit shoves the boat along the jet-ski's travel: hard.
+@export var jetski_shove: float = 240.0 ## PLACEHOLDER
 ## Fishing line (the Fishing line row; read by scripts/hazards/fishing_line.gd).
 ## Pixels the line runs sideways from its dinghy, across the water.
 @export var line_length: float = 200.0 ## PLACEHOLDER
