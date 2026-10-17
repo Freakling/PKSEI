@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ⬜ |
 | Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
 | Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (66 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (68 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -196,9 +196,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: one base script holds `_find_boat()`, `_rect()` and the tuning/spec fields, and every hazard scene script extends it with no duplicate helper left (check)
 - GDD: —
 
-### T18 · Cross-current stripe · todo · S · agent
+### T18 · Cross-current stripe · done · S · agent
 - Depends on: T10
-- Touches: scripts/hazards/cross_current.gd (new), scenes/hazards/cross_current.tscn (new), data/lake_tuning.tres (+stripe_force)
+- Touches: scripts/systems/cross_current.gd (new), scripts/hazards/cross_current.gd (new), scenes/hazards/cross_current.tscn (new), data/hazards/cross_current.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+stripe_force, +stripe_length), tests/test_cross_current.gd (new)
 - Done when: while the boat is inside the stripe it is pushed by stripe_force in the stripe's direction (test) · the stripe is visible as a band of faster water (play)
 - GDD: Systems › Hazards
 

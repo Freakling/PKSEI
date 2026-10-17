@@ -74,5 +74,11 @@ extends Resource
 ## Pixels of crossing a headwind stretch covers, from its trigger toward the island, across the
 ## whole lake_width; the whitecaps cover it.
 @export var headwind_length: float = 400.0 ## PLACEHOLDER
+## Cross-current stripe (the Cross-current stripe row; read by CrossCurrent, scripts/systems/cross_current.gd).
+## Pixels per second the stripe pushes the boat sideways, in the stripe's direction, while the boat is inside it.
+@export var stripe_force: float = 40.0 ## PLACEHOLDER
+## Pixels of crossing a cross-current stripe covers, from its trigger toward the island, across the
+## whole lake_width; the faster water covers it.
+@export var stripe_length: float = 300.0 ## PLACEHOLDER
 ## The hazards a band draws from, each with its weight and first band (data/hazards/*.tres).
 @export var hazards: Array[HazardSpec] = []
