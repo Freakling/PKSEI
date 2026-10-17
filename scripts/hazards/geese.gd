@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Geese · a flock of angry geese guarding its goslings (GDD › Systems › Hazards, the Angry
 ## geese row). The nest is an object: it is fixed on the map where the lake placed it, and the
 ## goslings (Visual/Nest) stay there. The charge is the event: the geese (Visual/Geese) follow
@@ -18,20 +18,14 @@ const ANGRY_TINT: Color = Color(1.0, 0.7, 0.6, 1.0)
 @onready var _geese: Node2D = $Visual/Geese
 @onready var _wings: Node2D = $Visual/Geese/Wings
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _flock: GeeseFlock
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 var _bob_time: float = 0.0
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("Geese: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_flock = GeeseFlock.new(tuning, global_position)
 	_boat = _find_boat()
 	_wings.visible = false
@@ -54,14 +48,3 @@ func _show_state(delta: float) -> void:
 	_geese.position = to_local(_flock.position) + bob
 	_wings.visible = hissing
 	_geese.modulate = ANGRY_TINT if _flock.state == GeeseFlock.State.CHARGING else CALM_TINT
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null

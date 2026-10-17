@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Wake · a motorboat crosses ahead and its wake rolls back at the boat (GDD › Systems › Hazards,
 ## the Motorboat wake row). An event: the lake places this node where the plan put it, but the
 ## placement is only the trigger and nothing shows there. When the boat comes near, the motorboat
@@ -17,19 +17,13 @@ const FRONT_THICKNESS: float = 6.0
 @onready var _front: Node2D = $Visual/Front
 @onready var _crest: Polygon2D = $Visual/Front/Crest
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _wake: MotorboatWake
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("Wake: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_wake = MotorboatWake.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = tuning.lake_width * 0.5
@@ -59,14 +53,3 @@ func _show_state() -> void:
 	_motorboat.scale.x = _wake.direction
 	_front.visible = _wake.state == MotorboatWake.State.ROLLING
 	_front.position = to_local(Vector2(0.0, _wake.front_y))
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null

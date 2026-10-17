@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## FishingLine · a fisherman in a dinghy and his line across the water (GDD › Systems › Hazards,
 ## the Fishing line row). An object: the dinghy (Visual/Dinghy and the fisherman, Visual/Fisherman)
 ## sits where the lake placed it and never moves, and the line (Visual/Line) runs sideways from it,
@@ -17,20 +17,18 @@ const HIT_THICKNESS: float = 4.0
 @onready var _snag: Area2D = $Snag
 @onready var _shape: CollisionShape2D = $Snag/CollisionShape2D
 
-## The spec the lake placed this line from: its strengths. Set by the lake before it is added.
-var spec: HazardSpec
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the line stays off.
-var tuning: LakeTuning
 var _cooldown: float = 0.0
 ## Which way the line runs from the dinghy: away from the lake's middle line, -1 left, +1 right.
 var _direction: float = 1.0
 
 
-func _ready() -> void:
-	if spec == null or tuning == null:
-		push_error("FishingLine: the lake must set spec and tuning before adding the hazard")
-		return
+## The line is placed from a HazardSpec, so the base's guard checks for `spec` too.
+func _needs_spec() -> bool:
+	return true
+
+
+## Runs once HazardBase has checked the lake's fields.
+func _setup() -> void:
 	_direction = -1.0 if global_position.x < 0.0 else 1.0
 	var reach: float = tuning.line_length
 	_line.points = PackedVector2Array([Vector2.ZERO, Vector2(_direction * reach, 0.0)])

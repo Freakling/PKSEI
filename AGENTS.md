@@ -17,7 +17,7 @@ Instructions for AI assistants working on this game. The workflow is Godot Direc
 | `scripts/resources/` | Resource schemas for tunable data |
 | `scripts/ui/` | screen scripts (display only; checked by tools/check.cfg) |
 | `scripts/` (root) | scene scripts: `catamaran.gd` (input, motion, telegraphs, debug beer keys F5/F6), `lake.gd` (island arrival, progress, swimmers, pickup, shore reset, hazard spawning from the plan, debug path overlay on F7; lake values in `LakeTuning`, `scripts/resources/lake_tuning.gd`, `data/lake_tuning.tres`), `lake_camera.gd` (follow with look-ahead by `BoatTuning.camera_lead`) |
-| `scripts/hazards/` | hazard scene scripts (one per hazard; rules in `scripts/systems/hazards.gd`); their specs are `data/hazards/*.tres` (`HazardSpec`) |
+| `scripts/hazards/` | hazard scene scripts (one per hazard, most extending `hazard_base.gd`: `tuning`/`spec` guards, `_find_boat()`); rules in `scripts/systems/`; their specs are `data/hazards/*.tres` (`HazardSpec`) |
 | `scenes/` | scenes: `main.tscn` → `lake.tscn` (water, shore, island, camera, HUD) → `catamaran.tscn` (boat, guys); `scenes/hazards/` one scene per hazard |
 | `data/` | `.tres` content: the values the human tunes |
 | `tests/` | rule tests (`test_*.gd`) |

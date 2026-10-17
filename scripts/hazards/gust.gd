@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Gust · ripples race across the water a second ahead, then the wind shoves the boat sideways
 ## for a few seconds (GDD › Systems › Hazards, the Wind gust row). An event: the lake places this
 ## node where the plan put it, but the placement is only the trigger and nothing shows there.
@@ -24,11 +24,8 @@ const FIELD_SCALE: float = 1.5
 
 @onready var _ripples: Node2D = $Visual/Ripples
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _gust: WindGust
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 var _streaks: Array[Polygon2D] = []
 ## Half the field's size in pixels.
@@ -37,11 +34,8 @@ var _half_field: float = 0.0
 var _travel: float = 0.0
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("Gust: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_gust = WindGust.new(tuning, global_position)
 	_boat = _find_boat()
 	_half_field = tuning.gust_trigger_radius * FIELD_SCALE
@@ -78,28 +72,3 @@ func _show_state(delta: float) -> void:
 		var row: float = (index + 0.5) / RIPPLE_COUNT * width - _half_field
 		_streaks[index].position = Vector2(across * _gust.direction, row)
 		_streaks[index].rotation = lean
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null
-
-
-## A flat rectangle centred on its origin.
-static func _rect(rect_name: String, width: float, height: float, colour: Color) -> Polygon2D:
-	var rect: Polygon2D = Polygon2D.new()
-	rect.name = rect_name
-	rect.color = colour
-	var half_width: float = width * 0.5
-	var half_height: float = height * 0.5
-	rect.polygon = PackedVector2Array([
-		Vector2(-half_width, -half_height), Vector2(half_width, -half_height),
-		Vector2(half_width, half_height), Vector2(-half_width, half_height),
-	])
-	return rect

@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Jet-ski · loud from offscreen, then a jet-ski crosses the boat's path on a straight line at
 ## speed (GDD › Systems › Hazards, the Jet-ski idiot row). An event: the lake places this node
 ## where the plan put it, but the placement is only the trigger and nothing shows there. When
@@ -19,21 +19,15 @@ const FLASH_PERIOD: float = 0.3
 @onready var _jetski: Node2D = $Visual/JetSki
 @onready var _marker: Polygon2D = $Visual/Warning/Marker
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _rule: JetSki
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 ## Seconds the warning has shown, for the flash.
 var _flash: float = 0.0
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("JetSki: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_rule = JetSki.new(tuning, global_position)
 	_boat = _find_boat()
 	_jetski.visible = false
@@ -66,14 +60,3 @@ func _show_state(delta: float) -> void:
 	_jetski.visible = _rule.state == JetSki.State.CROSSING
 	_jetski.position = to_local(_rule.jetski)
 	_jetski.scale.x = _rule.direction
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null

@@ -190,9 +190,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: ripples precede a gust by about a second, then the boat is shoved sideways by gust_shove for gust_time (test) · inside a headwind stretch the current is stronger by headwind_force, so only strong strokes gain water (test) · whitecaps mark the stretch before the boat reaches it (play)
 - GDD: Systems › Hazards
 
-### T42 · Shared base for hazard scene scripts (find the boat, the rect, the tuning) · todo · S · agent
+### T42 · Shared base for hazard scene scripts (find the boat, the rect, the tuning) · done · S · agent
 - Depends on: T17, T40
-- Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/*.gd (all nine)
+- Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/*.gd (seven; log and rock keep their Area2D root)
 - Done when: one base script holds `_find_boat()`, `_rect()`, the `tuning`/`spec` fields and their null guards, and every hazard scene script extends it with no duplicate helper left (check)
 - GDD: —
 

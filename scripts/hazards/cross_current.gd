@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Cross-current stripe · a band of faster water that pushes the boat sideways while the boat is
 ## in it (GDD › Systems › Hazards, the Cross-current stripe row). An object placed like one: the
 ## lake puts this node where the plan put it, and the stripe is the CrossCurrent rule's rectangle
@@ -23,19 +23,13 @@ const ARROW_COLOUR: Color = Color(0.75, 0.9, 1.0, 0.8)
 @onready var _band: Polygon2D = $Visual/Band
 @onready var _arrows: Polygon2D = $Visual/Arrows
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _stripe: CrossCurrent
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("CrossCurrent: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_stripe = CrossCurrent.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = _stripe.half_width()
@@ -86,14 +80,3 @@ func _build_arrows(half: float, top: float, facing: float) -> void:
 	_arrows.color = ARROW_COLOUR
 	_arrows.polygon = vertices
 	_arrows.polygons = shapes
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null

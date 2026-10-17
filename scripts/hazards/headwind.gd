@@ -1,4 +1,4 @@
-extends Node2D
+extends HazardBase
 ## Headwind · a stretch of whitecaps where a sustained headwind strengthens the current, so only
 ## strong strokes gain water (GDD › Systems › Hazards, the Harsh wind row). An event placed like
 ## an object: the lake puts this node where the plan put it, and the stretch is the Headwind
@@ -18,19 +18,13 @@ const WHITECAP_THICKNESS: float = 2.0
 @onready var _band: Polygon2D = $Visual/Band
 @onready var _whitecaps: Polygon2D = $Visual/Whitecaps
 
-## The lake's tunables, set by the lake before the node enters the tree. If it is null, _ready
-## reports that and the node stays still.
-var tuning: LakeTuning
 var _wind: Headwind
-## The boat: the only CharacterBody2D on the lake, found among the lake's children.
+## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
 
 
-func _ready() -> void:
-	if tuning == null:
-		push_error("Headwind: no LakeTuning; lake.gd sets it before adding the hazard")
-		set_physics_process(false)
-		return
+## Runs once HazardBase has checked the lake's tunables.
+func _setup() -> void:
 	_wind = Headwind.new(tuning, global_position)
 	_boat = _find_boat()
 	var half: float = _wind.half_width()
@@ -74,14 +68,3 @@ func _build_whitecaps(half: float, top: float) -> void:
 			dashes.append(PackedInt32Array([first, first + 1, first + 2, first + 3]))
 	_whitecaps.polygon = vertices
 	_whitecaps.polygons = dashes
-
-
-## The boat is the lake's CharacterBody2D; the hazards sit under the lake's Hazards node.
-func _find_boat() -> CharacterBody2D:
-	var hazards: Node = get_parent()
-	if hazards == null or hazards.get_parent() == null:
-		return null
-	for child: Node in hazards.get_parent().get_children():
-		if child is CharacterBody2D:
-			return child as CharacterBody2D
-	return null
