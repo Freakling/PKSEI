@@ -59,6 +59,14 @@ signal run_reset()
 ## Emitted after a shore reset: the boat under way touched the shore, and the attempt is back
 ## at its starting conditions (after run_reset). The lake puts the boat back at its start.
 signal shore_reset_done()
+## The things that make a noise (T25, the Audio autoload listens): a stroke landing in step(),
+## a stroke missed in stroke(), a guy jumping in step(), a guy back aboard in pickup(), and a
+## beer actually going over in beer_overboard() (with a guy free to go after it).
+signal stroke_landed(seat: int)
+signal stroke_fumbled(seat: int)
+signal guy_jumped(seat: int)
+signal guy_picked_up(seat: int)
+signal beer_overboard_started(hull: Rescue.Hull)
 
 var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
@@ -152,7 +160,10 @@ func shore_touched() -> void:
 func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	var toss: float = paddling.tuning.beer_toss
 	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
-	return rescue.beer_overboard(side, _seats_aboard(), beer_at, paddling.tuning.jump_delay)
+	var seat: int = rescue.beer_overboard(side, _seats_aboard(), beer_at, paddling.tuning.jump_delay)
+	if seat != Rescue.NOBODY:
+		beer_overboard_started.emit(side)
+	return seat
 
 
 ## A guy fell in some other way than a jump (GDD › Drunkenness: the pee antic, T13): he is off
@@ -171,6 +182,7 @@ func guy_overboard(seat: int, at_position: Vector2) -> void:
 func pickup(seat: int) -> bool:
 	var had_beer: bool = rescue.pickup(seat)
 	guys[seat].aboard = true
+	guy_picked_up.emit(seat)
 	return had_beer
 
 
@@ -296,6 +308,7 @@ func stroke(seat: int, hold_time: float) -> void:
 	stamina.burn(seat, paddling.stroke_force(hold_time))
 	guys[seat].stamina = stamina.level_of(seat)
 	if drunkenness.misses(level, rng):
+		stroke_fumbled.emit(seat)
 		return
 	var backwards: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
 	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards)
@@ -328,6 +341,7 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	for seat: int in rescue.step(delta, loose_drift, paddling.tuning, boat_at):
 		guys[seat].aboard = false
 		_drop_pending(seat)
+		guy_jumped.emit(seat)
 	if phase == Phase.LAUNCH:
 		# The boat rests at the shore, so the launch shore never traps the player (B2).
 		for seat: int in rescue.washed_up():
@@ -406,6 +420,7 @@ func _land_strokes(delta: float) -> Array[Paddling.Stroke]:
 		pending.time_left -= delta
 		if pending.time_left <= 0.0:
 			landed.append(pending.stroke)
+			stroke_landed.emit(pending.stroke.seat)
 		else:
 			waiting.append(pending)
 	_pending = waiting

@@ -12,8 +12,8 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
-| Audio, telegraphs first: T25–T26 | ⬜ |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (77 placeholders) |
+| Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (78 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -244,9 +244,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each telegraph in the GDD › Hazards table is an animation that plays before the effect (play)
 - GDD: Systems › Hazards
 
-### T25 · Audio framework: buses, stroke, splash and guy noises · todo · M · agent
+### T25 · Audio framework: buses, stroke, splash and guy noises · done · M · agent
 - Depends on: T6
-- Touches: assets/audio/ (new), scripts/autoload/audio.gd (new), project.godot (autoload, audio buses)
+- Touches: tools/gen_audio.gd (new, the generator), assets/audio/*.wav (+.import), assets/audio/default_bus_layout.tres (new), scripts/autoload/audio.gd (new), project.godot (autoload, audio buses), scripts/autoload/run_state.gd (signals only), tests/test_run_state.gd
 - Done when: the check runs the autoload without errors (check) · strokes, splashes, jumps and pick-ups have sounds, and the master volume follows the player setting (play)
 - GDD: Presentation and Platforms
 

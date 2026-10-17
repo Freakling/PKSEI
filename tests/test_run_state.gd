@@ -17,6 +17,9 @@ extends "res://tools/test_case.gd"
 ## takes him off the boat when he jumps, and drops his strokes still waiting then.
 ## T35 · Beers and swimmers drift at BoatTuning.loose_drift_speed while the boat drifts at
 ## current_speed (GDD › Systems › Catamaran and paddling).
+## T25 · RunState tells the Audio autoload what happened: stroke_landed, stroke_fumbled,
+## guy_jumped, guy_picked_up and beer_overboard_started fire where those things happen
+## (GDD › Presentation and Platforms, Audio).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -632,4 +635,53 @@ func test_falling_in_during_the_wind_up_is_an_early_jump_and_the_reset_drops_it(
 	expect_false(state.rescue.winding_up(other), "the shore reset drops the wind-up")
 	expect_eq(state.rescue.loose_beers().size(), 0, "no beer loose")
 	expect(state.all_aboard(), "everyone aboard")
+	state.free()
+
+
+## T25: a sober stroke fires stroke_landed with its seat when it lands, not when it is released;
+## a guaranteed miss fires stroke_fumbled at the release and never lands.
+func test_stroke_signals_landed_and_fumbled() -> void:
+	var state: Node = sober_state()
+	var landed: Array[int] = []
+	var fumbled: Array[int] = []
+	state.stroke_landed.connect(func(seat: int) -> void: landed.append(seat))
+	state.stroke_fumbled.connect(func(seat: int) -> void: fumbled.append(seat))
+	state.stroke(Paddling.Seat.RIGHT_BACK, 10.0)
+	expect_eq(landed.size(), 0, "released, not landed yet")
+	state.step(TICK, BOAT)
+	expect_eq(landed, [Paddling.Seat.RIGHT_BACK] as Array[int], "stroke_landed once, with the seat")
+	expect_eq(fumbled.size(), 0, "a sober stroke never fumbles")
+	state.free()
+	var drunk: Node = drunk_state(0.0, 1.0, 0.5)
+	drunk.stroke_landed.connect(func(seat: int) -> void: landed.append(seat))
+	drunk.stroke_fumbled.connect(func(seat: int) -> void: fumbled.append(seat))
+	drunk.stroke(Paddling.Seat.LEFT_FRONT, 10.0)
+	expect_eq(fumbled, [Paddling.Seat.LEFT_FRONT] as Array[int], "stroke_fumbled at the release, with the seat")
+	drunk.step(TICK, BOAT)
+	expect_eq(landed.size(), 1, "the miss never lands")
+	drunk.free()
+
+
+## T25: a beer over fires beer_overboard_started with its hull, the jump at the end of the
+## wind-up fires guy_jumped with the seat, and the pickup fires guy_picked_up; a beer over with
+## nobody free to jump is no beer over.
+func test_rescue_signals_beer_jump_and_pickup() -> void:
+	var state: Node = sober_state()
+	var beers: Array[int] = []
+	var jumped: Array[int] = []
+	var picked: Array[int] = []
+	state.beer_overboard_started.connect(func(hull: Rescue.Hull) -> void: beers.append(hull))
+	state.guy_jumped.connect(func(seat: int) -> void: jumped.append(seat))
+	state.guy_picked_up.connect(func(seat: int) -> void: picked.append(seat))
+	var seat: int = state.beer_overboard(Rescue.Hull.RIGHT, BOAT)
+	expect_eq(beers, [Rescue.Hull.RIGHT] as Array[int], "beer_overboard_started with the hull")
+	expect_eq(jumped.size(), 0, "winding up: not jumped yet")
+	state.step(DELAY, BOAT)
+	expect_eq(jumped, [seat] as Array[int], "guy_jumped once the wind-up ends, with the seat")
+	state.pickup(seat)
+	expect_eq(picked, [seat] as Array[int], "guy_picked_up with the seat")
+	for other: int in state.guys.size():
+		state.guys[other].aboard = false
+	state.beer_overboard(Rescue.Hull.LEFT, BOAT)
+	expect_eq(beers.size(), 1, "nobody aboard to jump: no beer went over, no signal")
 	state.free()
