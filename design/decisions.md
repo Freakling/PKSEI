@@ -48,3 +48,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · A clean crossing takes five minutes or more; the lake is huge · why: the human wants an epic crossing · from: conversation
 - 2026-10-17 · A beer overboard bobs away for two or three seconds while the guy visibly winds up before jumping · why: telegraphs the setback; the player can see it coming · from: conversation
 - 2026-10-17 · A guy who falls in some other way while winding up for a beer swims for that beer anyway · why: the human's call; the beer is still his · from: conversation
+- 2026-10-17 · An on-screen arrow points to every guy in the water who is off-screen, so the player can find him · why: the human's call; a rescue you can't locate isn't fair · from: conversation

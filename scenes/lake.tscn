@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
 [ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/water.png" id="5_water"]
 [ext_resource type="Texture2D" path="res://assets/sprites/sand.png" id="6_sand"]
 [ext_resource type="Texture2D" path="res://assets/sprites/island.png" id="7_island"]
+[ext_resource type="Script" path="res://scripts/ui/offscreen_arrows.gd" id="8_arrows"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
 size = Vector2(6000, 400)
@@ -91,5 +92,8 @@ show_percentage = false
 unique_name_in_owner = true
 layout_mode = 2
 columns = 2
+
+[node name="OffscreenArrows" type="Node2D" parent="HUD"]
+script = ExtResource("8_arrows")
 
 [connection signal="body_entered" from="Island" to="." method="_on_island_body_entered"]

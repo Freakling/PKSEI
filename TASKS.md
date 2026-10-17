@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T45 · B5
+**Next IDs:** T46 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -165,6 +165,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/lake.gd
 - Done when: a floating swimmer shows a beer at his mouth only while `has_beer` is true, so the pee-antic victim reads as beerless (play)
 - GDD: Systems › Drunkenness
+
+### T45 · Off-screen arrows point at guys in the water · done · M · agent
+- Depends on: T9, T22
+- Touches: scripts/ui/offscreen_arrows.gd (new), scenes/lake.tscn (HUD), tools/gen_sprites.gd, assets/sprites/arrow.png (new), tests/test_offscreen_arrows.gd (new)
+- Done when: for every swimmer outside the camera's view an arrow sits at the edge of the screen pointing at him, in his seat colour, and disappears when he is on screen or picked up (play) · the arrow's screen position is the clamped projection of his lake position, computed in a helper with a test (test)
+- GDD: Systems › Setbacks
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10

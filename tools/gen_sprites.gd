@@ -83,6 +83,7 @@ func _init() -> void:
 	_save(_sand(), "sand")
 	_save(_island(), "island")
 	_save(_log(), "log")
+	_save(_arrow(), "arrow")
 	quit()
 
 
@@ -303,6 +304,18 @@ func _log() -> Image:
 	_rect(img, 3, 5, 1, 2, WOOD)
 	# Branch stub.
 	_rect(img, 22, 1, 2, 1, WOOD)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 11×11 arrow pointing up, white so a scene can tint it (the off-screen swimmer arrows in
+## scripts/ui/offscreen_arrows.gd modulate it per seat): a 7-wide head over a 3-wide shaft,
+## outlined, with a 1-px clear border so the outline fits.
+func _arrow() -> Image:
+	var img: Image = _new(11, 11)
+	for row: int in 4:
+		_rect(img, 5 - row, 1 + row, 2 * row + 1, 1, SPLASH)
+	_rect(img, 4, 5, 3, 5, SPLASH)
 	_outline(img, OUTLINE)
 	return img
 
