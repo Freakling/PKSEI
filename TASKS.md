@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T70 · B6
+**Next IDs:** T76 · B6 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -20,19 +20,19 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 ## Queue
 
 ### T1 · The check passes on a clean clone · done · S · agent
-- Depends on: —
+- Depends on: (none)
 - Touches: project.godot, tools/check.cfg
 - Done when: `bash tools/check.sh` exits 0 after deleting `.godot/` (check)
-- GDD: —
+- GDD: (none)
 
 ### T2 · Create the folder layout · done · S · agent
-- Depends on: —
+- Depends on: (none)
 - Touches: scripts/autoload/.gitkeep (new), scripts/systems/.gitkeep (new), scripts/resources/.gitkeep (new), scripts/ui/.gitkeep (new), scenes/.gitkeep (new), data/.gitkeep (new), tests/.gitkeep (new)
 - Done when: every folder in AGENTS.md › Layout exists in git (check) · the check still passes (check)
-- GDD: —
+- GDD: (none)
 
 ### T7 · Research: what makes a good rage game · done · S · agent
-- Depends on: —
+- Depends on: (none)
 - Touches: design/research/rage-games.md (new)
 - Done when: a note compares Getting Over It, A Difficult Game About Climbing, Jump King, Pogostuck and QWOP on setbacks, control, fairness and comedy, and ends with 5–8 principles plus a proposal for Q1, Q2 and Q4 for the human to decide in a design session (check)
 - GDD: Design Pillars
@@ -158,7 +158,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T37
 - Touches: scripts/lake.gd, scenes/lake.tscn, project.godot (debug_toggle_path F7)
 - Done when: in debug builds (`OS.is_debug_build() or OS.has_feature("dev_tools")`) a translucent strip shows the corridor from `Hazards.corridor_x` so path_width and path_wander can be tuned by eye, toggled with a debug key (check: the gate is quoted) · the strip follows the planned path (play)
-- GDD: —
+- GDD: (none)
 
 ### T44 · A swimmer without a beer looks different from one drinking · done · S · agent
 - Depends on: T13, T22
@@ -194,7 +194,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T23
 - Touches: tools/gen_sprites.gd, assets/sprites/guy_0..3.png (+.import, deleted)
 - Done when: no scene or script references assets/sprites/guy_<seat>.png and the files and their generator code are gone (check)
-- GDD: —
+- GDD: (none)
 
 ### T50 · The Loch-Brez beast: boundary enforcer and rare deep-water visitor · done · L · agent
 - Depends on: T10, T9, T22
@@ -226,7 +226,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a pure helper maps a touch's position and its release motion to (seat, backwards): left/right half → hull, upper/lower part → front/back, a downward flick of at least flick_distance before release → reverse (test) · each finger charges from touch to release and strokes through RunState.stroke(seat, hold_time, backwards), several fingers at once (play) · the pads show only on a touchscreen and the keyboard still works (play)
 - GDD: Presentation and Platforms
 
-### T55 · Mobile web layout check on real phones and tablets · todo · — · human
+### T55 · Mobile web layout check on real phones and tablets · todo · (none) · human
 - Depends on: T54
 - Touches: project.godot (stretch settings if needed), export_presets.cfg
 - Done when: the game launches from the itch.io page on an Android phone and an iPhone in landscape, the canvas is neither cropped nor blurred, and the pads are reachable with thumbs (play)
@@ -323,6 +323,42 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: near_bounds(position) is true within beast_warn_margin of the out-of-bounds line at either edge or beyond the island's far side, and false inside (test) · entering that zone from inside telegraphs `edge` on the hull facing the edge once per approach, re-armed when the boat is back inside (test) · a Swedish line shows over the hull's guy (play)
 - GDD: Systems › Hazards
 
+### T70 · Wire the play log · todo · M · agent
+- Depends on: (none)
+- Touches: tools/play_log.gd (the seed's hooks), scripts/autoload/run_state.gd (begin_run at new_attempt, log each stroke, jump, pickup, hazard effect, antic, win and shore reset with stable event ids, log_snapshot where the player acts), scripts/lake.gd (view_changed for the lake and the win screen), tests/test_play_log.gd (new)
+- Done when: a new attempt begins a run whose log holds a line with a stable event id for every player action, hazard effect, antic, rescue step, shore reset and win, asserted through `PlayLog.start_capture()` (test) · `_build_snapshot()` and `progress_block_reason()` are filled from RunState (test) · the log of a played session reads as what happened (play)
+- GDD: (none)
+
+### T71 · Wire autoplay · todo · M · agent
+- Depends on: T70
+- Touches: tools/autoplay_adapter.gd (start_run with the seed, list_actions with the eight strokes and reset as `ui` actions, state, is_run_over), tools/autoplay_scenarios.gd (smoke plus a scripted crossing), tools/autoplay_invariants.gd (progress never below 0, four guys accounted for), tools/check.cfg ([autoplay] on)
+- Done when: `bash tools/autoplay.sh --all` exits 0 and `bash tools/log_review.sh --latest` writes a review (check) · the check plays smoke with `check_in_check=true` and `enforce=["smoke"]` (check)
+- GDD: (none)
+
+### T72 · Wire the dev menu: register the systems with their debug hooks · todo · S · agent
+- Depends on: (none)
+- Touches: tools/dev_menu.gd (register_system for RunState, Rescue, Beast, Antics, Stamina, Drunkenness), scripts/autoload/run_state.gd (debug_* actions: beer overboard per hull, force an antic, set a level; debug_inspect())
+- Done when: F12 in a debug build opens tabs for the systems with their actions and inspectors and a Log tab, and the menu is absent in a release build (play) · `inspect_text("Run")` lists progress, phase and the four guys (test)
+- GDD: (none)
+
+### T73 · Set up release · todo · M · agent
+- Depends on: Q7
+- Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
+- Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
+- GDD: (none)
+
+### T75 · Apply the upgraded Claude Code settings · todo · (none) · human
+- Depends on: (none)
+- Touches: .claude/settings.json
+- Done when: the merged settings the 3.13.0 upgrade proposed (kept at `.godot/godot-director/settings.json.upgrade-3.13.0` on the dev machine: adds the `guard-protected.sh` hooks for Edit/Write, `bash tools/autoplay.sh*`, `bash tools/log_review.sh*`, WebSearch and WebFetch to the allow list) replace `.claude/settings.json`, keeping `Bash(git commit *)` in allow; the agent cannot edit that file (play)
+- GDD: (none)
+
+### T74 · The guys talk while in the water: fetching, drinking, then nagging to be fetched · done · M · agent
+- Depends on: T56, T59
+- Touches: scripts/ui/speech_bubbles.gd (bubbles over swimmers; swim_kind), scripts/resources/lines.gd (+swim_fetch, +swim_drink, +swim_fell, +swim_back in KINDS), data/lines.tres (the Swedish lines), scripts/resources/boat_tuning.gd (+swim_talk_interval), data/boat_tuning.tres, tests/test_speech_bubbles.gd, tests/test_lines.gd
+- Done when: swim_kind(state, has_beer, adrift, swim_back_delay, washed_up) is `swim_fetch` while he swims for his beer, `swim_drink` while he floats with it before swim_back_delay, `swim_fell` while he floats without a beer before it, `swim_back` once he is swimming back, and empty when washed up (test) · a swimmer's bubble sits over his lake position and shows a freshly drawn line of his kind at once when the kind changes and again every swim_talk_interval seconds, each for call_out_time (test on the pure cadence helper) · each kind has at least three Swedish lines, among them "Ska bara dricka sen kommer jag" (swim_drink) and "Kom och hämta mig dåååå!" (swim_back) (test) · the lines read over the swimmers in play and go away at the pickup (play)
+- GDD: Systems › Setbacks and Rescue · World and Narrative
+
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
 - Touches: scripts/systems/geese.gd (new), scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/hazards/geese.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+geese_radius, +geese_warning, +geese_attack_time, +geese_speed, +geese_peck_interval, +geese_peck_range, +geese_cooldown), tests/test_geese.gd (new)
@@ -333,7 +369,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T15
 - Touches: scripts/lake.gd, scripts/hazards/*.gd (all nine)
 - Done when: lake.gd sets `tuning` (and `spec`) on each spawned hazard that declares it, and no hazard script loads data/lake_tuning.tres itself (check)
-- GDD: —
+- GDD: (none)
 
 ### T16 · Motorboat wake · done · M · agent
 - Depends on: T10
@@ -357,7 +393,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T17, T40
 - Touches: scripts/hazards/hazard_base.gd (new), scripts/hazards/*.gd (seven; log and rock keep their Area2D root)
 - Done when: one base script holds `_find_boat()`, `_rect()`, the `tuning`/`spec` fields and their null guards, and every hazard scene script extends it with no duplicate helper left (check)
-- GDD: —
+- GDD: (none)
 
 ### T18 · Cross-current stripe · done · S · agent
 - Depends on: T10
@@ -423,13 +459,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T14
 - Touches: scripts/resources/curves.gd (new), scripts/resources/drink_tuning.gd, scripts/resources/stamina_tuning.gd, scripts/resources/lake_tuning.gd, tests/test_drunkenness.gd, tests/test_stamina.gd, tests/test_hazards.gd, tests/test_run_state.gd
 - Done when: one `ramp()` helper exists and both tunings use it, with the existing tests still passing (check)
-- GDD: —
+- GDD: (none)
 
 ### T30 · BoatTuning.current_speed doc says progress units; the boat applies pixels · done · S · agent
 - Depends on: T6
 - Touches: scripts/resources/boat_tuning.gd
 - Done when: the field's doc comment says pixels per second, matching how catamaran.gd applies drift (check)
-- GDD: —
+- GDD: (none)
 
 ### T28 · Win cutscene: the boys land, make camp and drink · done · M · agent
 - Depends on: T6
@@ -451,14 +487,14 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - GDD: Systems › Drunkenness
 
 ### T12 · Placeholder main scene so the web export has something to ship · done · S · agent
-- Depends on: —
+- Depends on: (none)
 - Touches: scenes/main.tscn (new), project.godot (main scene)
 - Done when: `bash tools/ship.sh --export-only` writes build/web/index.html (check) · the check loads the scene (check)
-- GDD: —
+- GDD: (none)
 - Note: a flat-colour screen with a label; T6 replaces it with the grey-box lake.
 
-### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · done · — · human
-- Depends on: —
+### T11 · Ship to itch.io on demand (freakling.itch.io/pksei) · done · (none) · human
+- Depends on: (none)
 - Touches: export_presets.cfg, tools/ship.sh
 - Done when: Godot 4.7.2 web export templates are installed (Editor › Manage Export Templates) and `bash tools/ship.sh --export-only` produces build/web/index.html (check) · butler is installed and `butler login` done, `bash tools/ship.sh` pushes the html5 channel and the game runs at the itch.io page, with "This file will be played in the browser" set on that upload (play)
 - GDD: Presentation and Platforms
@@ -468,5 +504,6 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - T15–T21 are independent of each other once T10 is done; T17 also needs T14 (stamina). Objects (T15 flock, T18 stripe, T19 rock, T20 line) are fixed; events (T15 charge, T16, T17, T21) happen as the boat passes.
 - Stages, as the human wants them: functionality (through T21), then pixel art and animation with telegraphs first (T22–T24), then audio with telegraphs first (T25–T26).
 - Player settings have no item yet; the human will decide what they should do later.
+- Godot Director 3.13.0 upgrade (2026-10-17): T70 (play log) comes before T71 (autoplay); the check's `[autoplay]` stays off until T71. `tools/ship.sh` stays the release path until Q7 is answered.
 - data/hazards/fishing_line.tres `half_width` must stay equal to LakeTuning.line_length by hand.
 - T3, T4, T5 and T14 don't share files and can be built in any order after T2.

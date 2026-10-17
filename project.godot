@@ -20,12 +20,15 @@ buses/default_bus_layout="res://assets/audio/default_bus_layout.tres"
 
 [autoload]
 
+PlayLog="*res://tools/play_log.gd"
 RunState="*res://scripts/autoload/run_state.gd"
 Audio="*res://scripts/autoload/audio.gd"
+DevMenu="*res://tools/dev_menu.gd"
 
 [debug]
 
 gdscript/warnings/untyped_declaration=2
+settings/gdscript/always_track_call_stacks=true
 
 [display]
 

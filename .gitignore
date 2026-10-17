@@ -11,3 +11,7 @@
 /butler.exe
 /7z.dll
 /c7zip.dll
+# Godot Director
+/builds/
+/design/ui/captures/
+/playtesting/autoplay/
