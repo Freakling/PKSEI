@@ -114,15 +114,21 @@ func test_pecks_only_while_in_range() -> void:
 	expect_eq(flock.position, Vector2(ATTACK_TICKS, 0.0), "they flew for the whole charge")
 
 
-func test_a_boat_leaving_during_the_hiss_calms_them() -> void:
+func test_a_boat_leaving_during_the_hiss_still_brings_the_charge() -> void:
 	run(10, NEAR)
 	expect_eq(flock.state, GeeseFlock.State.HISSING, "hissing")
 	run(1, FAR)
-	expect_eq(flock.state, GeeseFlock.State.NESTING, "calm once the boat backs off")
-	expect_eq(flock.time_left, 0.0, "no cooldown for a charge that never came")
-	run(1, NEAR)
-	expect_eq(flock.state, GeeseFlock.State.HISSING, "hissing again at once when it comes back")
-	expect_eq(flock.time_left, WARNING, "a full warning again")
+	expect_eq(flock.state, GeeseFlock.State.HISSING, "still hissing once the boat backs off")
+	expect_eq(flock.time_left, WARNING - 10.0 * TICK, "the warning runs on")
+	run(WARNING_TICKS - 10, FAR)
+	expect_eq(flock.state, GeeseFlock.State.CHARGING, "the charge comes when the warning is over, the boat outside the radius")
+	expect_eq(flock.time_left, ATTACK, "the charge timer starts")
+	var pecked: Array[int] = run(1, FAR)
+	expect_eq(flock.position, Vector2(1.0, 0.0), "the geese fly at the boat from the nest")
+	expect_eq(pecked.size(), 0, "no pecks out of range")
+	pecked = run(ATTACK_TICKS - 1, FAR)
+	expect_eq(pecked.size(), 0, "no pecks while they fly the whole charge")
+	expect_eq(flock.state, GeeseFlock.State.RETURNING, "they give up after geese_attack_time")
 
 
 func test_peck_lands_on_the_hull_nearest_the_flock() -> void:

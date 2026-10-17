@@ -12,17 +12,18 @@ extends RefCounted
 ##   WARNING:  jetski_warning seconds of noise from offscreen (the telegraph: the audio comes
 ##             with T26; the scene shows a stand-in marker on the side it will come from), the
 ##             jet-ski not yet on the water and nothing moving;
-##   CROSSING: the jet-ski sets off from off-screen on the trigger's side of the lake, EDGE_MARGIN
-##             beyond the lake's edge, and crosses on a straight line at jetski_speed: the line
-##             across the lake through the aim point, jetski_lead ahead (toward the island) of
-##             where the boat was the moment the crossing started, so a boat that keeps paddling
-##             meets it and one that holds back lets it pass. Its position is `jetski`. The step
+##   CROSSING: the jet-ski sets off from the lake's edge on the trigger's side, EDGE_MARGIN beyond
+##             it and level with the trigger, and crosses on a straight line at jetski_speed: the
+##             line from that start through the aim point, jetski_lead ahead (toward the island)
+##             of where the boat was the moment the crossing started, so a boat that keeps
+##             paddling meets it and one that holds back lets it pass. The line is a diagonal
+##             unless the boat was level with the trigger. Its position is `jetski`. The step
 ##             on which its path comes within jetski_hit_radius of the boat is the hit, at most
 ##             once per event: a shove of jetski_shove in its travel direction and a beer
-##             overboard on the hull it came from, in the boat's frame. It carries on to the far
-##             edge, hit or not;
+##             overboard on the hull it came from, in the boat's frame. It carries on past the
+##             far edge, hit or not;
 ##   SPENT:    over, once it has left by the far edge. One event per trigger.
-## The direction is fixed per event by the trigger's side of the lake, the same rule as the
+## The side is fixed per event by the trigger's side of the lake, the same rule as the
 ## motorboat's crossing (MotorboatWake): a trigger left of the lake's middle (x < 0) crosses
 ## rightward (+x) from the left edge, any other leftward (-x) from the right edge. No randomness:
 ## the same inputs give the same hit. The trigger and the jet-ski are in the same frame as the
@@ -48,7 +49,7 @@ var tuning: LakeTuning
 ## The placed point: the boat passing it sets the event off. Fixed.
 var trigger: Vector2 = Vector2.ZERO
 var state: State = State.WAITING
-## Which way it crosses: +1 rightward (from the left edge), -1 leftward. Fixed per event.
+## Which side it crosses from: +1 from the left edge (rightward), -1 from the right. Fixed per event.
 var direction: float = 1.0
 ## Seconds left of the warning (WARNING); 0 otherwise.
 var time_left: float = 0.0
@@ -56,6 +57,9 @@ var time_left: float = 0.0
 var jetski: Vector2 = Vector2.ZERO
 ## The point it aims through: jetski_lead ahead of the boat when the crossing started.
 var aim: Vector2 = Vector2.ZERO
+## Unit direction of the course: from its start at the lake's edge through the aim. Before the
+## crossing, the straight-across direction of the side.
+var course: Vector2 = Vector2.RIGHT
 ## Whether this event's one hit has been given.
 var hit_given: bool = false
 
@@ -74,6 +78,7 @@ func reset() -> void:
 	time_left = 0.0
 	jetski = trigger
 	aim = trigger
+	course = Vector2(direction, 0.0)
 	hit_given = false
 
 
@@ -92,9 +97,9 @@ func end_x() -> float:
 	return (tuning.lake_width * 0.5 + EDGE_MARGIN) * direction
 
 
-## Its travel direction: straight across the lake.
+## Its unit travel direction: along the course.
 func travel() -> Vector2:
-	return Vector2(direction, 0.0)
+	return course
 
 
 ## The hull the jet-ski comes from, in the boat's own frame.
@@ -133,12 +138,14 @@ func step(delta: float, boat_position: Vector2, boat_rotation: float = 0.0) -> H
 				state = State.CROSSING
 				time_left = 0.0
 				aim = boat_position + Vector2(0.0, -tuning.jetski_lead)
-				jetski = Vector2(start_x(), aim.y)
+				jetski = Vector2(start_x(), trigger.y)
+				course = (aim - jetski).normalized()
 		State.CROSSING:
 			var from: Vector2 = jetski
-			jetski.x += direction * tuning.jetski_speed * delta
+			jetski += course * tuning.jetski_speed * delta
 			if (jetski.x - end_x()) * direction >= 0.0:
-				jetski.x = end_x()
+				# Stop on the course at the far edge, not short of it or past it.
+				jetski = from + course * ((end_x() - from.x) / course.x)
 				state = State.SPENT
 			if not hit_given and passes_boat(from, jetski, boat_position):
 				hit_given = true

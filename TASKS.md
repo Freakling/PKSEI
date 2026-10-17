@@ -202,13 +202,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the beast rises when the boat is within beast_edge_margin of a lake edge or beyond the island's far side by beast_beyond_island, and rarely elsewhere from the attempt's seed at beast_random_rate; it circles for beast_warning, then rams (a shove of beast_shove toward the lake's middle) and grabs the guy on the hull it hit, who is spat out beast_spit_distance back toward the shore as a swimmer (test) · it dives once the boat is back inside, or after one grab on a random visit (test) · the fin, the circling and the grab read at a glance (play)
 - GDD: Systems › Hazards
 
-### T51 · Once the geese hiss, the charge always comes · todo · S · agent
+### T51 · Once the geese hiss, the charge always comes · done · S · agent
 - Depends on: T15
 - Touches: scripts/systems/geese.gd, tests/test_geese.gd
 - Done when: leaving geese_radius during the hiss no longer calms the flock; the charge follows the warning regardless (test)
 - GDD: Systems › Hazards
 
-### T52 · The jet-ski crosses on a diagonal from the lake edge · todo · S · agent
+### T52 · The jet-ski crosses on a diagonal from the lake edge · done · S · agent
 - Depends on: T21
 - Touches: scripts/systems/jetski.gd, tests/test_jetski.gd
 - Done when: the course runs from the lake edge at the trigger's y through the point jetski_lead ahead of the boat and on past the far edge, at jetski_speed (test)
@@ -295,7 +295,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 ### T24 · Hazard telegraph animations · todo · M · agent
 - Depends on: T22, T15, T16, T17, T18, T19, T20, T21
 - Touches: assets/sprites/hazards/ (new), scenes/hazards/*.tscn
-- Done when: each telegraph in the GDD › Hazards table is an animation that plays before the effect (play)
+- Done when: each telegraph in the GDD › Hazards table is an animation that plays before the effect (play) · the jet-ski sprite faces along its diagonal course (play)
 - GDD: Systems › Hazards
 
 ### T25 · Audio framework: buses, stroke, splash and guy noises · done · M · agent

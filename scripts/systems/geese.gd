@@ -9,9 +9,8 @@ extends RefCounted
 ## its rotation, for which hull a peck lands on):
 ##   NESTING:   at the nest. Once the cooldown (time_left) is over and the boat comes within
 ##              geese_radius of the nest, it starts HISSING;
-##   HISSING:   the telegraph, geese_warning seconds (time_left) of hissing and raised wings; a
-##              boat that leaves the radius calms them (back to NESTING with no cooldown), one
-##              that stays gets the charge;
+##   HISSING:   the telegraph, geese_warning seconds (time_left) of hissing and raised wings; once
+##              they hiss the charge always comes, whether or not the boat stays in the radius;
 ##   CHARGING:  for geese_attack_time seconds (time_left) the flock flies toward the boat at
 ##              geese_speed, and while within geese_peck_range of it pecks: the first peck the
 ##              moment it is in range, then one every geese_peck_interval seconds, each a beer
@@ -81,15 +80,11 @@ func step(delta: float, boat_position: Vector2, boat_rotation: float = 0.0) -> A
 				state = State.HISSING
 				time_left = tuning.geese_warning
 		State.HISSING:
-			if not boat_near(boat_position):
-				state = State.NESTING
-				time_left = 0.0
-			else:
-				time_left = maxf(time_left - delta, 0.0)
-				if time_left <= 0.0:
-					state = State.CHARGING
-					time_left = tuning.geese_attack_time
-					_peck_timer = 0.0
+			time_left = maxf(time_left - delta, 0.0)
+			if time_left <= 0.0:
+				state = State.CHARGING
+				time_left = tuning.geese_attack_time
+				_peck_timer = 0.0
 		State.CHARGING:
 			time_left = maxf(time_left - delta, 0.0)
 			position = position.move_toward(boat_position, tuning.geese_speed * delta)

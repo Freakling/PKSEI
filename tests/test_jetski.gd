@@ -7,10 +7,14 @@ extends "res://tools/test_case.gd"
 ## jetski_hit_radius of takes one hit: a shove of jetski_shove along the jet-ski's travel and a
 ## beer overboard on the hull it came from, in the boat's frame (GDD › Systems › Hazards, the
 ## Jet-ski idiot row). One event per trigger; same inputs, same hit.
+## T52 · The course is a diagonal from the lake's edge: it starts level with the trigger, runs
+## through the aim point, and carries on past the far edge (the straight line from the start
+## through the aim), so the boat's own y moves the course's slope.
 ##
-## The tick is 1/64 s and the speeds and distances are multiples of it, so every sum is exact:
-## the warning is 64 ticks, the jet-ski moves 10 px per tick and crosses the 640 px lake plus
-## the margins (1360 px) in 136 ticks, and the ticks can be named.
+## The tick is 1/64 s and the speed is a multiple of it, so each move is 10 px along the course
+## (the course's x and y steps are not whole numbers, so positions are compared with tolerance).
+## The trigger's line is level with the trigger; the aim is 64 px above the boat, which sits at
+## ON_LINE, so the course climbs 64 px over 640 px: a slope of -0.1.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 64.0
@@ -28,16 +32,20 @@ const TRIGGER: Vector2 = Vector2(-100.0, -1000.0)
 ## Inside the radius, 60 px to the right of the trigger, on its y.
 const NEAR: Vector2 = Vector2(-40.0, -1000.0)
 const FAR: Vector2 = Vector2(-100.0, -800.0)
-## The jet-ski's course: LEAD ahead of NEAR, and the boat sitting on it.
-const COURSE_Y: float = NEAR.y - LEAD
-const ON_LINE: Vector2 = Vector2(NEAR.x, COURSE_Y)
+## Where the jet-ski sets off: the left edge plus the margin, level with the trigger.
+const START: Vector2 = Vector2(-680.0, -1000.0)
+## The aim: LEAD ahead of NEAR. A boat sitting on it is on the course.
+const ON_LINE: Vector2 = Vector2(-40.0, -1064.0)
+## Where the course leaves by the right edge: the line from START through ON_LINE at x = EDGE.
+const FAR_END: Vector2 = Vector2(680.0, -1136.0)
 ## The tick the warning starts, the tick the crossing starts, the tick the jet-ski's path first
-## comes within HIT_RADIUS of ON_LINE (its x goes -680, -670, ... and -50 is the first within
-## 16 px of -40), and the tick it leaves by the far edge (136 moves).
+## comes within HIT_RADIUS of ON_LINE (move 63: 630 px along the course, 13 px short of the boat;
+## move 62 is 23 px short), and the tick it leaves by the far edge (137 moves: x gains 9.95 px a
+## move, and 136 moves leave it 7 px short of the edge).
 const START_TICK: int = 1
 const CROSS_TICK: int = START_TICK + 64
 const HIT_TICK: int = CROSS_TICK + 63
-const END_TICK: int = CROSS_TICK + 136
+const END_TICK: int = CROSS_TICK + 137
 
 var tuning: LakeTuning
 var jetski: JetSki
@@ -73,6 +81,23 @@ func run(ticks: int, boat: Vector2, rotation: float = 0.0) -> Array[int]:
 	return hits
 
 
+## The unit direction of the course: from START through ON_LINE.
+func course_direction() -> Vector2:
+	return (ON_LINE - START).normalized()
+
+
+## How far a point is off the course's line, signed (zero on the line).
+func off_line(point: Vector2) -> float:
+	var along: Vector2 = point - START
+	var direction: Vector2 = course_direction()
+	return along.x * direction.y - along.y * direction.x
+
+
+## Two points within a hundredth of a pixel: the course's steps are not exact in float32.
+func expect_point(actual: Vector2, expected: Vector2, message: String) -> void:
+	expect_near(actual.distance_to(expected), 0.0, 0.01, message)
+
+
 func test_nothing_happens_outside_the_radius() -> void:
 	var hits: Array[int] = run(400, FAR)
 	expect_eq(jetski.state, JetSki.State.WAITING, "still armed")
@@ -93,21 +118,26 @@ func test_the_warning_lasts_jetski_warning_with_no_movement() -> void:
 	expect_eq(jetski.state, JetSki.State.CROSSING, "then the jet-ski sets off")
 	expect_near(jetski.time_left, 0.0, 0.0001, "the warning is over")
 	expect_eq(jetski.aim, ON_LINE, "aimed jetski_lead ahead of the boat")
-	expect_eq(jetski.jetski, Vector2(-EDGE, COURSE_Y), "from off-screen beyond the left edge, on the aimed line")
+	expect_eq(jetski.jetski, START, "from off-screen beyond the left edge, level with the trigger")
+	expect_eq(jetski.course, course_direction(), "on the course through the aimed point")
 
 
-func test_the_crossing_is_a_straight_line_at_jetski_speed_toward_the_aimed_point() -> void:
+func test_the_crossing_is_a_straight_line_at_jetski_speed_through_the_aimed_point() -> void:
 	run(CROSS_TICK, NEAR)
-	for tick: int in 64:
+	var previous: Vector2 = jetski.jetski
+	for move: int in 65:
 		run(1, NEAR)
-		expect_eq(jetski.jetski, Vector2(-EDGE + 10.0 * (tick + 1), COURSE_Y), "10 px per tick along the line, at move %d" % (tick + 1))
-	expect_eq(jetski.jetski, Vector2(ON_LINE.x, COURSE_Y), "through the aimed point after 64 moves")
-	run(END_TICK - CROSS_TICK - 64 - 1, NEAR)
-	expect_eq(jetski.state, JetSki.State.CROSSING, "still crossing one tick short of the far edge")
-	expect_eq(jetski.jetski, Vector2(EDGE - 10.0, COURSE_Y), "almost off-screen")
+		expect_near(previous.distance_to(jetski.jetski), SPEED * TICK, 0.0001, "jetski_speed along the course, move %d" % (move + 1))
+		expect_near(off_line(jetski.jetski), 0.0, 0.01, "on the line from the edge through the aim, move %d" % (move + 1))
+		previous = jetski.jetski
+	expect(jetski.jetski.x > ON_LINE.x, "past the aimed point after 65 moves")
+	expect(jetski.jetski.y < TRIGGER.y - 50.0, "a diagonal: well up the lake by the aim, not level with the trigger")
+	run(136 - 65, NEAR)
+	expect_eq(jetski.state, JetSki.State.CROSSING, "still crossing one move short of the far edge")
+	expect(jetski.jetski.x < EDGE, "not yet off the far edge")
 	run(1, NEAR)
 	expect_eq(jetski.state, JetSki.State.SPENT, "spent once it has left by the far edge")
-	expect_eq(jetski.jetski, Vector2(EDGE, COURSE_Y), "it left beyond the right edge")
+	expect_point(jetski.jetski, FAR_END, "it carried on along the course to the far edge")
 
 
 func test_a_trigger_right_of_the_middle_sends_it_leftward() -> void:
@@ -117,11 +147,11 @@ func test_a_trigger_right_of_the_middle_sends_it_leftward() -> void:
 		mirrored.step(TICK, boat)
 	expect_eq(mirrored.state, JetSki.State.CROSSING, "set off")
 	expect_eq(mirrored.direction, -1.0, "leftward")
-	expect_eq(mirrored.jetski, Vector2(EDGE, COURSE_Y), "from beyond the right edge")
+	expect_eq(mirrored.jetski, Vector2(EDGE, -1000.0), "from beyond the right edge, level with the trigger")
 	for tick: int in END_TICK - CROSS_TICK:
 		mirrored.step(TICK, boat)
-	expect_eq(mirrored.state, JetSki.State.SPENT, "across after 136 moves")
-	expect_eq(mirrored.jetski, Vector2(-EDGE, COURSE_Y), "it left beyond the left edge")
+	expect_eq(mirrored.state, JetSki.State.SPENT, "across after 137 moves")
+	expect_point(mirrored.jetski, Vector2(-EDGE, -1136.0), "it left beyond the left edge, up the lake")
 
 
 func test_a_boat_on_the_line_gets_one_hit_shoved_along_the_travel_on_the_hull_it_came_from() -> void:
@@ -129,8 +159,8 @@ func test_a_boat_on_the_line_gets_one_hit_shoved_along_the_travel_on_the_hull_it
 	var hits: Array[int] = run(END_TICK - CROSS_TICK, ON_LINE, 0.0)
 	expect_eq(hits, [HIT_TICK] as Array[int], "one hit, the tick the jet-ski's path reaches the boat")
 	expect_eq(last_hit.hull, Rescue.Hull.LEFT, "facing the island, it came from the left hull")
-	expect_near(last_hit.shove.x, SHOVE, 0.0001, "shoved rightward, the way it travels, by jetski_shove")
-	expect_near(last_hit.shove.y, 0.0, 0.0001, "and not along the lake")
+	expect_eq(last_hit.shove, course_direction() * SHOVE, "shoved along its course by jetski_shove")
+	expect(last_hit.shove.y < -1.0, "up the lake along the course, not sideways")
 	expect_eq(jetski.state, JetSki.State.SPENT, "it carries on to the far edge")
 	expect(jetski.hit_given, "the hit is used up")
 
@@ -139,7 +169,7 @@ func test_the_hull_is_the_side_it_came_from_in_the_boats_frame() -> void:
 	run(CROSS_TICK, NEAR)
 	run(END_TICK - CROSS_TICK, ON_LINE, PI)
 	expect_eq(last_hit.hull, Rescue.Hull.RIGHT, "facing the shore, the right hull faces the left edge")
-	expect_near(last_hit.shove.x, SHOVE, 0.0001, "the shove is still the jet-ski's travel, not the boat's side")
+	expect_eq(last_hit.shove, course_direction() * SHOVE, "the shove is still the jet-ski's travel, not the boat's side")
 	jetski.reset()
 	run(CROSS_TICK, NEAR)
 	run(END_TICK - CROSS_TICK, ON_LINE, -PI / 4.0)
@@ -147,13 +177,14 @@ func test_the_hull_is_the_side_it_came_from_in_the_boats_frame() -> void:
 	var mirrored: JetSki = JetSki.new(tuning, Vector2(100.0, -1000.0))
 	var hit: JetSki.Hit = null
 	for tick: int in END_TICK:
-		var boat: Vector2 = Vector2(40.0, -1000.0) if tick < CROSS_TICK else Vector2(40.0, COURSE_Y)
+		var boat: Vector2 = Vector2(40.0, -1000.0) if tick < CROSS_TICK else Vector2(40.0, -1064.0)
 		var this_hit: JetSki.Hit = mirrored.step(TICK, boat, 0.0)
 		if this_hit != null:
 			hit = this_hit
 	expect(hit != null, "the leftward jet-ski hits too")
 	expect_eq(hit.hull, Rescue.Hull.RIGHT, "from the right edge: the right hull")
-	expect_near(hit.shove.x, -SHOVE, 0.0001, "shoved leftward")
+	expect(hit.shove.x < 0.0, "shoved leftward")
+	expect_near(hit.shove.length(), SHOVE, 0.0001, "by jetski_shove")
 
 
 func test_a_boat_well_off_the_line_gets_none() -> void:
@@ -163,23 +194,23 @@ func test_a_boat_well_off_the_line_gets_none() -> void:
 	expect_false(jetski.hit_given, "no hit given")
 	jetski.reset()
 	run(CROSS_TICK, NEAR)
-	hits = run(END_TICK - CROSS_TICK, Vector2(NEAR.x, COURSE_Y - HIT_RADIUS - 1.0))
-	expect_eq(hits.size(), 0, "just outside jetski_hit_radius: nothing")
+	hits = run(END_TICK - CROSS_TICK, Vector2(ON_LINE.x, ON_LINE.y - HIT_RADIUS - 1.0))
+	expect_eq(hits.size(), 0, "just outside jetski_hit_radius of the course: nothing")
 
 
 func test_a_fast_jetski_cannot_step_over_the_boat() -> void:
 	run(CROSS_TICK, NEAR)
 	var hit: JetSki.Hit = jetski.step(1.5, ON_LINE, 0.0)
 	expect(hit != null, "one move of 960 px passes right over the boat and still hits")
-	expect_eq(jetski.jetski, Vector2(-EDGE + 960.0, COURSE_Y), "it is past the boat now")
+	expect_eq(jetski.jetski, START + course_direction() * 960.0, "it is past the boat now")
 
 
 func test_one_event_per_trigger() -> void:
 	run(CROSS_TICK, NEAR)
 	var first: Array[int] = run(HIT_TICK - CROSS_TICK, ON_LINE)
 	expect_eq(first.size(), 1, "hit")
-	# The boat gets ahead of the jet-ski along its line and meets it again: no second hit.
-	var again: Array[int] = run(END_TICK - HIT_TICK, Vector2(200.0, COURSE_Y))
+	# The boat gets ahead of the jet-ski along its course and meets it again: no second hit.
+	var again: Array[int] = run(END_TICK - HIT_TICK, Vector2(200.0, -1088.0))
 	expect_eq(again.size(), 0, "the jet-ski never hits twice")
 	expect_eq(jetski.state, JetSki.State.SPENT, "spent")
 	var later: Array[int] = run(400, ON_LINE)
@@ -201,7 +232,7 @@ func test_the_hit_applied_to_run_state_shoves_the_boat_and_knocks_a_beer_over() 
 	# What scripts/hazards/jetski.gd does with a hit.
 	state.shove(hit.shove)
 	var seat: int = state.beer_overboard(hit.hull, ON_LINE)
-	expect_eq(state.take_shove(), Vector2(SHOVE, 0.0), "the boat takes the hard shove along the jet-ski's travel")
+	expect_eq(state.take_shove(), hit.shove, "the boat takes the hard shove along the jet-ski's course")
 	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy's beer went over: he winds up")
 	expect(state.rescue.winding_up(seat), "winding up to jump")
 	state.free()
