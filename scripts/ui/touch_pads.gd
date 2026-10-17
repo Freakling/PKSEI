@@ -2,16 +2,17 @@ extends Control
 class_name TouchPads
 ## TouchPads · the touch controls (GDD › Presentation and Platforms, Touch; research in
 ## design/research/touch-controls.md). The left half of the screen is the left hull and the
-## right half the right hull; a touch in the upper half of the screen charges that hull's front
-## seat, in the lower half its back seat (seat_for: the whole half counts, not just the pad
-## art). A finger charges from its press to its release, and the release strokes through
-## RunState.stroke(seat, hold_time, backwards): forward, or backwards after a flick down of at
-## least BoatTuning.touch_flick_distance between the press and the release (is_reverse). Each
-## finger is tracked by its index, so several charge at once; a second finger on a seat
-## already being charged is ignored. The seat is the press position's, so a flick may cross
-## the midline. Lives under lake.tscn's HUD CanvasLayer, filling it, drawn before the HUD rows
-## so the pads sit under them: four pad.png sprites (tools/gen_sprites.gd) tinted per seat,
-## laid out from the view size, one brightening while its seat is charged. Shown when
+## right half the right hull; within a half, a touch in the outer part (toward the screen edge)
+## charges that hull's back seat and a touch in the inner part (toward the middle) its front
+## seat (seat_for: the x position decides, the whole height counting). A finger charges from its
+## press to its release, and the release strokes through RunState.stroke(seat, hold_time,
+## backwards): forward, or backwards after a flick down of at least
+## BoatTuning.touch_flick_distance between the press and the release (is_reverse). Each finger
+## is tracked by its index, so several charge at once; a second finger on a seat already being
+## charged is ignored. The seat is the press position's, so a flick may cross the midline.
+## Lives under lake.tscn's HUD CanvasLayer, filling it, drawn before the HUD rows so the pads
+## sit under them: four pad.png sprites (tools/gen_sprites.gd) tinted per seat, in a row across
+## the bottom from the view size, one brightening while its seat is charged. Shown when
 ## DisplayServer says there is a touchscreen, or on the first touch; hidden on keyboard play,
 ## which stays in scripts/catamaran.gd. The boat reads held_time(seat) for its timing bar and
 ## listens to stroke_released for the reach animation. Touches are taken in _input, before the
@@ -24,12 +25,12 @@ class_name TouchPads
 signal stroke_released(seat: int)
 
 const PAD_TEXTURE: Texture2D = preload("res://assets/sprites/pad.png")
-## Where a pad's centre sits, as fractions of the view: this far in from its hull's side of
-## the screen, and this far down for the front and the back row (where a thumb rests; the
-## HUD's rows are in the top-left corner, above the left front pad).
-const PAD_X_FRACTION: float = 0.15
-const PAD_Y_FRONT: float = 0.3
-const PAD_Y_BACK: float = 0.72
+## Where a pad's centre sits, as fractions of the view: the centre of its outer quarter of the
+## screen (the back seats) or its inner quarter (the front seats), and this far down, where a
+## thumb rests.
+const PAD_X_OUTER: float = 0.125
+const PAD_X_INNER: float = 0.375
+const PAD_Y: float = 0.7
 ## A pad's tint is its seat's shirt colour at IDLE_ALPHA, and while charged the colour
 ## lightened by PRESSED_LIGHTEN at full alpha.
 const IDLE_ALPHA: float = 0.7
@@ -141,26 +142,30 @@ func _finger_on(seat: int) -> Finger:
 	return null
 
 
-## Visual only: the pads from the view size, each on its hull's side at its row's height.
+## Visual only: the four pads in a row across the bottom of the view, one at each quarter's
+## centre, so the outer pads are the back seats and the inner pads the front seats.
 func _layout() -> void:
 	for seat: int in _pads.size():
-		var left: bool = Paddling.seat_side(seat) > 0.0
-		var x_fraction: float = PAD_X_FRACTION if left else 1.0 - PAD_X_FRACTION
-		var y_fraction: float = PAD_Y_BACK if Paddling.is_back_seat(seat) else PAD_Y_FRONT
-		_pads[seat].position = (size * Vector2(x_fraction, y_fraction)).round()
+		var x_fraction: float = PAD_X_OUTER if Paddling.is_back_seat(seat) else PAD_X_INNER
+		if Paddling.seat_side(seat) < 0.0:
+			x_fraction = 1.0 - x_fraction
+		_pads[seat].position = (size * Vector2(x_fraction, PAD_Y)).round()
 
 
 # --- the mapping, pure --------------------------------------------------------------------------
 
-## The seat a touch at `position` charges in a view of `view_size`: the left half of the
-## screen is the left hull and the right half the right hull; the upper half of the screen is
-## the front seat and the lower half the back. The midlines count as right and back.
+## The seat a touch at `position` charges in a view of `view_size`. The x position decides it,
+## the whole height counting: the left half of the screen is the left hull and the right half
+## the right hull; within a half, the outer quarter (toward the screen edge) is the back seat and
+## the inner part (toward the middle) the front seat. The midline counts as right (x = w/2 is the
+## right hull). On the quarter lines the left hull's outer part is strictly below w/4, so w/4
+## is inner; the right hull's outer part starts at 3w/4, so 3w/4 is outer.
 static func seat_for(position: Vector2, view_size: Vector2) -> int:
-	var left: bool = position.x < view_size.x * 0.5
-	var front: bool = position.y < view_size.y * 0.5
-	if left:
-		return Paddling.Seat.LEFT_FRONT if front else Paddling.Seat.LEFT_BACK
-	return Paddling.Seat.RIGHT_FRONT if front else Paddling.Seat.RIGHT_BACK
+	if position.x < view_size.x * 0.5:
+		var outer_left: bool = position.x < view_size.x * 0.25
+		return Paddling.Seat.LEFT_BACK if outer_left else Paddling.Seat.LEFT_FRONT
+	var outer_right: bool = position.x >= view_size.x * 0.75
+	return Paddling.Seat.RIGHT_BACK if outer_right else Paddling.Seat.RIGHT_FRONT
 
 
 ## True when the finger was released at least `flick_distance` below where it pressed (a

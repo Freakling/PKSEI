@@ -244,9 +244,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: Q/A drive the left back seat, W/S the left front, I/K the right front, O/L the right back (check: the input map quoted) · the HUD labels and the sand text show it (play)
 - GDD: Presentation and Platforms
 
-### T58 · Touch pads split sideways like the keys: outer back, inner front · in-progress 2026-10-17 · S · agent
+### T58 · Touch pads split sideways like the keys: outer back, inner front · done · S · agent
 - Depends on: T54, T57
-- Touches: scripts/ui/touch_pads.gd, tests/test_touch_pads.gd, scenes/lake.tscn
+- Touches: scripts/ui/touch_pads.gd, tests/test_touch_pads.gd
 - Done when: within a screen half, the outer part maps to the back seat and the inner part to the front seat, the whole height of the half counting (test) · the four pads sit outer/inner in each half with the same up/down hints (play)
 - GDD: Presentation and Platforms
 
