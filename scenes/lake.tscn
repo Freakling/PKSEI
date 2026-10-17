@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
 [ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/sand.png" id="6_sand"]
 [ext_resource type="Texture2D" path="res://assets/sprites/island.png" id="7_island"]
 [ext_resource type="Script" path="res://scripts/ui/offscreen_arrows.gd" id="8_arrows"]
+[ext_resource type="Texture2D" path="res://assets/sprites/sand_text.png" id="9_sandtext"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
 size = Vector2(6000, 400)
@@ -40,6 +41,10 @@ end_cap_mode = 2
 texture_repeat = 2
 texture = ExtResource("6_sand")
 polygon = PackedVector2Array(-3000, 0, 3000, 0, 3000, 400, -3000, 400)
+
+[node name="SandText" type="Sprite2D" parent="Shore/Visual"]
+position = Vector2(0, 70)
+texture = ExtResource("9_sandtext")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Shore"]
 position = Vector2(0, 200)

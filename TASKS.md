@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T48 · B5
+**Next IDs:** T50 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -183,6 +183,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd, scripts/resources/boat_tuning.gd (+empty_drift_multiplier), data/boat_tuning.tres, tests/test_run_state.gd
 - Done when: with nobody aboard, Motion.drift_to_shore is current_speed × empty_drift_multiplier per second; with anyone aboard it is current_speed (test)
 - GDD: Systems › Setbacks
+
+### T48 · The control scheme is written in the sand on the launch shore · done · S · agent
+- Depends on: T22
+- Touches: scenes/lake.tscn, tools/gen_sprites.gd, assets/sprites/sand_text.png (new)
+- Done when: at the launch shore, text scratched into the sand shows the four keys at their seats (Q A left, I K right, hold to charge, release to stroke) beside the boat's start, and nothing of it is on screen once the boat has left (play)
+- GDD: Presentation and Platforms
+
+### T49 · Remove the unused single-pose guy sprites and their generator branch · todo · S · agent
+- Depends on: T23
+- Touches: tools/gen_sprites.gd, assets/sprites/guy_0..3.png (+.import, deleted)
+- Done when: no scene or script references assets/sprites/guy_<seat>.png and the files and their generator code are gone (check)
+- GDD: —
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10

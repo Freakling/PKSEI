@@ -51,3 +51,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · An on-screen arrow points to every guy in the water who is off-screen, so the player can find him · why: the human's call; a rescue you can't locate isn't fair · from: conversation
 - 2026-10-17 · At most one beer overboard per couple of seconds; hits inside the window still shove or stop the boat but cost no beer · why: the human's call; prevents a wipeout from a cluster of hits · from: conversation
 - 2026-10-17 · With all four in the water the boat is uncontrollable and its drift home speeds up to about five times the headwind · why: the human's call; a lost crossing shouldn't keep the player waiting · from: conversation
+- 2026-10-17 · The control scheme is shown as text written in the sand on the launch shore, visible at the start and gone once the boat has left · why: the human's call; teaches without a HUD element during play · from: conversation

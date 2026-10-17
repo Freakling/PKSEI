@@ -104,7 +104,7 @@ Difficulty comes from drunkenness, which only rises over the attempt, from the c
 ## Presentation and Platforms
 - Platforms: Web (HTML5, itch.io). Desktop builds for development.
 - Target aspect ratios: 16:9 at a 640×360 canvas, integer-scaled (720p, 1080p, 1440p).
-- Input: keyboard, four keys, one per seat, hold to charge and release to stroke: Q left front, A left back, I right front, K right back. The left hand drives the left hull and the right hand the right hull. Local co-op with one guy per player is a planned mode (Q5); there each player gets two keys, stroke and lean.
+- Input: keyboard, four keys, one per seat, hold to charge and release to stroke: Q left front, A left back, I right front, K right back. The left hand drives the left hull and the right hand the right hull. The scheme is shown once, written in the sand on the launch shore, so it is there at the start and gone once the boat has left. Local co-op with one guy per player is a planned mode (Q5); there each player gets two keys, stroke and lean.
 - Camera: top-down, follows the catamaran, biased toward the direction of travel so hazards show early.
 - Art direction: top-down, bright pixel art, a bit retro, lots of comedy. Godot primitives and flat colours until pixel art replaces them. Telegraphs come first: every wind-up and hazard warning gets its pixel animation before any decorative art.
 - Audio: telegraphs first. Sound announces hazards before they are visible: a motorboat engine before its wake, a jet-ski heard from offscreen, geese hissing, wind rising before a gust or a headwind stretch. Then stroke, splash and guy noises for the comedy. Silent until the audio stage.

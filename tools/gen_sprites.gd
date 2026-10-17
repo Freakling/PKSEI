@@ -24,6 +24,7 @@ const WATER_SHALLOW: Color = Color8(112, 192, 232)
 const SAND: Color = Color8(234, 210, 130)
 const SAND_DARK: Color = Color8(206, 178, 98)
 const SAND_LIGHT: Color = Color8(250, 236, 172)
+const SAND_GROOVE: Color = Color8(178, 144, 80)
 const GRASS: Color = Color8(98, 182, 74)
 const GRASS_DARK: Color = Color8(58, 132, 54)
 const GRASS_LIGHT: Color = Color8(152, 216, 102)
@@ -94,6 +95,7 @@ func _init() -> void:
 		_save(_campfire(frame), "campfire_%d" % frame)
 	_save(_water(), "water")
 	_save(_sand(), "sand")
+	_save(_sand_text(), "sand_text")
 	_save(_island(), "island")
 	_save(_log(), "log")
 	_save(_arrow(), "arrow")
@@ -400,6 +402,46 @@ func _sand() -> Image:
 	return img
 
 
+## 120×60 writing scratched in the sand on the launch shore (GDD › Presentation and Platforms,
+## Input): a catamaran from above, with Q and A beside the left hull's front and back seats and I
+## and K beside the right hull's, then the two lines HOLD = CHARGE and RELEASE = STROKE. Its
+## grooves are 1-px darker sand with a lighter edge (_scratch); the rest is transparent, so the
+## sand shows through. Its place is in lake.tscn, under the shore, so it scrolls off with it.
+func _sand_text() -> Image:
+	var img: Image = _new(120, 60)
+	var grooves: Dictionary[Vector2i, bool] = {}
+	var boat_top: int = 3
+	var boat_height: int = 34
+	var left_x: int = 44
+	var right_x: int = 76
+	var front_row: int = boat_top + 9
+	var back_row: int = boat_top + 22
+	for hull_x: int in [left_x, right_x]:
+		# Two pointed hulls, half-width 3 at the middle, as in _catamaran().
+		for row: int in boat_height:
+			var half: int = mini(3, (mini(row, boat_height - 1 - row) + 1) / 2)
+			_groove_px(grooves, hull_x - half, boat_top + row)
+			_groove_px(grooves, hull_x + half, boat_top + row)
+		# A thwart across each seat.
+		for seat_row: int in [front_row, back_row]:
+			for x: int in range(hull_x - 1, hull_x + 2):
+				_groove_px(grooves, x, seat_row)
+	# Cross-bars lashing the hulls, fore and aft of the seats.
+	for bar_row: int in [boat_top + 6, boat_top + 27]:
+		for x: int in range(left_x + 4, right_x - 3):
+			_groove_px(grooves, x, bar_row)
+	# The keys, each beside its seat: left keys on the left, right keys on the right.
+	_glyph_grooves(grooves, "Q", left_x - 8, front_row - 2)
+	_glyph_grooves(grooves, "A", left_x - 8, back_row - 2)
+	_glyph_grooves(grooves, "I", right_x + 6, front_row - 2)
+	_glyph_grooves(grooves, "K", right_x + 6, back_row - 2)
+	# The two lines, centred under the boat.
+	_text_grooves(grooves, "HOLD = CHARGE", 41, 60)
+	_text_grooves(grooves, "RELEASE = STROKE", 50, 60)
+	_scratch(img, grooves)
+	return img
+
+
 ## 160×140 island: shallows, an outlined sand beach, grass, three pines and a clearing with a
 ## fire pit. The beach reaches about 70 px from the centre (lake.gd scales it to island_radius).
 func _island() -> Image:
@@ -587,6 +629,76 @@ static func _ellipse(img: Image, cx: int, cy: int, rx: int, ry: int, colour: Col
 			var fy: float = float(dy) / (float(ry) + 0.5)
 			if fx * fx + fy * fy <= 1.0:
 				_px(img, cx + dx, cy + dy, colour)
+
+
+## A groove pixel for _scratch(): recorded, not drawn yet, so each groove's lighter edge can be
+## told from the grooves beside it.
+static func _groove_px(grooves: Dictionary[Vector2i, bool], x: int, y: int) -> void:
+	grooves[Vector2i(x, y)] = true
+
+
+## Paints the grooves SAND_GROOVE, and the lighter edge of each (its bottom-right neighbour,
+## unless that is a groove too) SAND_LIGHT, as if the scratch threw a little light.
+static func _scratch(img: Image, grooves: Dictionary[Vector2i, bool]) -> void:
+	for groove: Vector2i in grooves:
+		var edge: Vector2i = groove + Vector2i(1, 1)
+		if not grooves.has(edge):
+			_px(img, edge.x, edge.y, SAND_LIGHT)
+	for groove: Vector2i in grooves:
+		_px(img, groove.x, groove.y, SAND_GROOVE)
+
+
+## One line of the sand writing, centred on x = centre_x with its top at y. A glyph is 3×5 with
+## 1 px before the next; a space is 2 px. Letters without a glyph are an error.
+static func _text_grooves(grooves: Dictionary[Vector2i, bool], line: String, y: int, centre_x: int) -> void:
+	var x: int = centre_x - _text_width(line) / 2
+	for letter: String in line:
+		if letter == " ":
+			x += 3
+		else:
+			_glyph_grooves(grooves, letter, x, y)
+			x += 4
+
+
+## The width of a line from _text_grooves: the glyphs' and spaces' advances, less the last gap.
+static func _text_width(line: String) -> int:
+	var width: int = -1
+	for letter: String in line:
+		width += 3 if letter == " " else 4
+	return width
+
+
+## Draws one 3×5 glyph with its top-left corner at (x, y): each '#' in its rows is a groove.
+static func _glyph_grooves(grooves: Dictionary[Vector2i, bool], letter: String, x: int, y: int) -> void:
+	var rows: PackedStringArray = _glyph(letter)
+	for row: int in rows.size():
+		for col: int in 3:
+			if rows[row][col] == "#":
+				_groove_px(grooves, x + col, y + row)
+
+
+## The 3×5 glyphs for the sand writing: '#' is a groove, '.' is sand. Only the letters the
+## scheme needs (the keys, HOLD, CHARGE, RELEASE, STROKE), and the '=' between the two lines.
+static func _glyph(letter: String) -> PackedStringArray:
+	match letter:
+		"A": return PackedStringArray([".#.", "#.#", "###", "#.#", "#.#"])
+		"C": return PackedStringArray([".##", "#..", "#..", "#..", ".##"])
+		"D": return PackedStringArray(["##.", "#.#", "#.#", "#.#", "##."])
+		"E": return PackedStringArray(["###", "#..", "##.", "#..", "###"])
+		"G": return PackedStringArray([".##", "#..", "#.#", "#.#", ".##"])
+		"H": return PackedStringArray(["#.#", "#.#", "###", "#.#", "#.#"])
+		"I": return PackedStringArray(["###", ".#.", ".#.", ".#.", "###"])
+		"K": return PackedStringArray(["#.#", "#.#", "##.", "#.#", "#.#"])
+		"L": return PackedStringArray(["#..", "#..", "#..", "#..", "###"])
+		"O": return PackedStringArray(["###", "#.#", "#.#", "#.#", "###"])
+		"Q": return PackedStringArray(["###", "#.#", "#.#", "###", "..#"])
+		"R": return PackedStringArray(["##.", "#.#", "##.", "#.#", "#.#"])
+		"S": return PackedStringArray(["###", "#..", "###", "..#", "###"])
+		"T": return PackedStringArray(["###", ".#.", ".#.", ".#.", ".#."])
+		"=": return PackedStringArray(["...", "###", "...", "###", "..."])
+		_:
+			push_error("no sand glyph for '%s'" % letter)
+			return PackedStringArray()
 
 
 ## Every transparent pixel next to a drawn one (4-neighbours) becomes the outline.
