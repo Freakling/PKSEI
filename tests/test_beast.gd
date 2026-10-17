@@ -12,7 +12,8 @@ extends "res://tools/test_case.gd"
 ## beast_random_rate for one grab, then dives. Same inputs and seed, same beast.
 ## RunState.beast_grab() puts the hit hull's guy in the water beast_spit_distance back toward
 ## the shore, beerless (GDD › Systems › Hazards, the Loch-Brez beast row; GDD › Systems ›
-## Setbacks).
+## Setbacks). B5: a boat anywhere on the guaranteed path is never out of bounds (GDD: "the
+## guaranteed path never leads there").
 ##
 ## The tick is 1/64 s: the warning is 128 ticks, a lap of the fin 80, the ram 5 px a tick, and
 ## the ram timeout (1 s here) 64 ticks.
@@ -124,6 +125,29 @@ func test_out_of_bounds_on_both_edges_and_beyond_the_island() -> void:
 	expect_false(beast.in_open_water(LAUNCH), "the launch is not")
 	expect_false(beast.in_open_water(Vector2(0.0, -1950.0)), "nor the island's beach")
 	expect_false(beast.in_open_water(LEFT_OUT), "nor out of bounds")
+
+
+## B5 regression: the corridor Hazards plans keeps clear of the beast's edge zone, so a boat
+## following it, on its centre or either edge, never summons the beast. Before the fix the
+## corridor's centre could sit lake_width / 2 - path_width / 2 out, with its edge at the lake's
+## edge, well inside beast_edge_margin.
+func test_a_boat_anywhere_on_the_guaranteed_path_is_never_out_of_bounds() -> void:
+	tuning.band_length = 160.0
+	tuning.path_width = 120.0
+	tuning.path_wander = 200.0
+	var half_path: float = tuning.path_width * 0.5
+	var bound: float = LAKE_WIDTH * 0.5 - EDGE_MARGIN
+	var furthest: float = 0.0
+	for lake_seed: int in 50:
+		var y: float = 0.0
+		while y >= -ISLAND_DISTANCE:
+			var centre: float = Hazards.corridor_x(tuning, lake_seed, y)
+			for x: float in [centre - half_path, centre, centre + half_path]:
+				expect_false(beast.out_of_bounds(Vector2(x, y)), "seed %d y %.0f: a boat on the path at x %.1f is inside the bounds" % [lake_seed, y, x])
+			furthest = maxf(furthest, absf(centre) + half_path)
+			y -= 4.0
+	expect(furthest > bound - HIT_RADIUS - 1.0, "the path does wander out to its reach (%.1f), a beast's half-width short of the bound (%.1f)" % [furthest, bound])
+	expect(furthest <= bound - HIT_RADIUS + 0.0001, "and no further")
 
 
 func test_it_stays_under_while_the_boat_is_inside() -> void:

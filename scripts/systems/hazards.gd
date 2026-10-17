@@ -19,7 +19,9 @@ extends RefCounted
 ## (band 0) and 0 again at the island's near edge (band band_count, the far edge of the last
 ## band), each step in between drawn from an RNG seeded with band_seed(seed, band,
 ## PATH_GENERATION), at most path_wander from the centre before it, kept far enough inside
-## lake_width for the whole corridor to fit, and pulled home: within (bands left) * path_wander
+## lake_width for the whole corridor to clear the beast's edge zone (path_reach(): the corridor's
+## outer edge stays beast_edge_margin plus the beast's half-width, beast_hit_radius, inside the
+## lake's edge, so following the path never summons it, B5), and pulled home: within (bands left) * path_wander
 ## of 0, so the remaining steps can always bring it back to the island. Between two centres the
 ## corridor's x is the straight line from one to the next (corridor_x(tuning, seed, y)), so the
 ## corridor is continuous across band edges; off the shore it sits at 0 (the launch) and so does
@@ -215,9 +217,13 @@ static func open_width(tuning: LakeTuning) -> float:
 	return maxf(tuning.lake_width - tuning.path_width, 0.0)
 
 
-## Furthest the corridor's centre may sit from x = 0 with the whole corridor inside the lake.
+## Furthest the corridor's centre may sit from x = 0 with the whole corridor inside the lake and
+## clear of the beast's edge zone: the corridor's outer edge (centre + path_width / 2) stays
+## beast_edge_margin inside the lake's edge, where the beast rises (Beast.out_of_bounds), and the
+## beast's own half-width (beast_hit_radius) further, so a boat on the path never meets it (B5).
+## Never negative: a lake too narrow for all that keeps the path up the middle.
 static func path_reach(tuning: LakeTuning) -> float:
-	return open_width(tuning) * 0.5
+	return maxf(open_width(tuning) * 0.5 - tuning.beast_edge_margin - tuning.beast_hit_radius, 0.0)
 
 
 ## The corridor's centre x at every band edge: entry `band` is the centre at that band's near

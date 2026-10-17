@@ -15,6 +15,8 @@ extends "res://tools/test_case.gd"
 ## T43: an object's footprint (HazardSpec.half_width) stays clear of the corridor on both sides, so a
 ## fishing line's full length never crosses the path whichever way it runs; a spec too wide for the
 ## band is skipped.
+## B5: the corridor never leads into the beast's edge zone: its outer edge stays beast_edge_margin
+## plus the beast's half-width (beast_hit_radius) inside the lake's edge.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
@@ -31,11 +33,15 @@ const FAR_EDGE: float = DISTANCE - RADIUS
 const BAND: float = 160.0
 const WIDTH: float = 400.0
 const DENSITIES: Array[int] = [1, 2, 2, 3, 3]
-## The path: a corridor 80 px wide whose centre moves by at most 100 px between bands, so it can
-## sit anywhere within 160 px of the middle with the whole corridor inside the 400 px of water.
+## The path: a corridor 80 px wide whose centre moves by at most 100 px between bands. The beast
+## rises 20 px in from either edge and is 10 px wide to the hit, so the corridor's outer edge
+## stays 30 px inside the 400 px of water and its centre can sit anywhere within 130 px of the
+## middle (B5).
 const PATH_WIDTH: float = 80.0
 const WANDER: float = 100.0
-const REACH: float = WIDTH * 0.5 - PATH_WIDTH * 0.5
+const BEAST_MARGIN: float = 20.0
+const BEAST_RADIUS: float = 10.0
+const REACH: float = WIDTH * 0.5 - PATH_WIDTH * 0.5 - BEAST_MARGIN - BEAST_RADIUS
 
 var tuning: LakeTuning
 
@@ -50,6 +56,8 @@ func before_each() -> void:
 	tuning.density_curve = Curves.ramp(1.0, 3.0)
 	tuning.path_width = PATH_WIDTH
 	tuning.path_wander = WANDER
+	tuning.beast_edge_margin = BEAST_MARGIN
+	tuning.beast_hit_radius = BEAST_RADIUS
 	tuning.hazards = [spec(1.0, 0), spec(3.0, 2)]
 
 
@@ -408,6 +416,27 @@ func test_no_wander_is_a_straight_path_up_the_middle() -> void:
 			expect_near(Hazards.path_center(tuning, lake_seed, band), 0.0, 0.0001, "seed %d band %d: dead centre" % [lake_seed, band])
 		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
 			expect(absf(placement.position.x) >= PATH_WIDTH * 0.5, "seed %d: nothing in the middle strip" % lake_seed)
+
+
+## B5 regression: the corridor's outer edge (centre ± path_width / 2) never crosses the beast's
+## bound (lake_width / 2 - beast_edge_margin), and keeps the beast's half-width clear of it, at
+## every y for many seeds. Before the fix the reach was lake_width / 2 - path_width / 2, so the
+## corridor ran right up to the lake's edge, into the beast's zone.
+func test_the_corridor_never_leads_into_the_beasts_edge_zone() -> void:
+	var bound: float = WIDTH * 0.5 - BEAST_MARGIN
+	expect_near(Hazards.path_reach(tuning), REACH, 0.0001, "the reach keeps the beast's margin and half-width clear")
+	var furthest: float = 0.0
+	for lake_seed: int in 100:
+		var y: float = 0.0
+		while y >= -DISTANCE:
+			var edge: float = absf(Hazards.corridor_x(tuning, lake_seed, y)) + PATH_WIDTH * 0.5
+			expect(edge <= bound + 0.0001, "seed %d y %.0f: the corridor's edge (%.1f) stays inside the beast's bound (%.1f)" % [lake_seed, y, edge, bound])
+			expect(edge <= bound - BEAST_RADIUS + 0.0001, "seed %d y %.0f: and the beast's half-width clear of it" % [lake_seed, y])
+			furthest = maxf(furthest, edge)
+			y -= 1.0
+	expect_near(furthest, bound - BEAST_RADIUS, 0.0001, "over many seeds the corridor goes right up to the clear zone, no further")
+	tuning.beast_edge_margin = WIDTH
+	expect_near(Hazards.path_reach(tuning), 0.0, 0.0001, "a margin wider than the lake keeps the path up the middle, never a negative reach")
 
 
 # --- events -------------------------------------------------------------------------------------

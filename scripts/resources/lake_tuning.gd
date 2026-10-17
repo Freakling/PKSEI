@@ -125,9 +125,11 @@ extends Resource
 ## Seconds under water after the random visit's grab, after a ram that gave up, or after the boat
 ## came back inside.
 @export var beast_dive_time: float = 2.0 ## PLACEHOLDER
-## Chance per second, while the boat is inside the bounds and in open water, that the beast
-## rises anyway for one grab: the rare deep-water visit.
-@export var beast_random_rate: float = 0.004 ## PLACEHOLDER
+## Chance per roll, rolled once a second while the boat is inside the bounds and in open water,
+## that the beast rises anyway for one grab: the rare deep-water visit, less than once in a
+## typical crossing (GDD). A five-minute crossing is 300 rolls, so it expects rate × 300 visits:
+## at 0.0003 that is 0.09, about one crossing in eleven (T60).
+@export var beast_random_rate: float = 0.0003 ## PLACEHOLDER
 ## Pixels from a log or a rock within which, with the boat heading toward it, a guy calls it out
 ## in a bubble (T56; read by scripts/hazards/log.gd and rock.gd). Objects have no warning of their
 ## own: being ahead on the path is theirs.

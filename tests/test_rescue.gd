@@ -6,7 +6,11 @@ extends "res://tools/test_case.gd"
 ## and a floating guy lying there is washed up.
 ## T34 · A beer overboard bobs away loose for jump_delay seconds while its guy winds up aboard;
 ## he jumps from where the boat is then, not before.
+## T59 · After swim_back_delay seconds adrift a floating guy swims back toward the boat at
+## swim_back_speed on top of the drift, never past it; a guy swimming for his beer and a
+## washed-up one don't, and the data keeps swim_back_speed below loose_drift_speed.
 
+const BOAT_DATA: BoatTuning = preload("res://data/boat_tuning.tres")
 const ALL: Array[int] = [
 	Paddling.Seat.LEFT_FRONT, Paddling.Seat.LEFT_BACK, Paddling.Seat.RIGHT_FRONT, Paddling.Seat.RIGHT_BACK,
 ]
@@ -14,6 +18,8 @@ const BOAT: Vector2 = Vector2(100.0, -200.0)
 const BEER: Vector2 = Vector2(130.0, -200.0)
 const CURRENT: Vector2 = Vector2(0.0, 10.0)
 const DELAY: float = 2.5
+const SWIM_BACK_DELAY: float = 5.0
+const SWIM_BACK_SPEED: float = 12.0
 
 var tuning: BoatTuning
 var rescue: Rescue
@@ -23,6 +29,8 @@ func before_each() -> void:
 	tuning = BoatTuning.new()
 	tuning.swim_speed = 10.0
 	tuning.shore_margin = 40.0
+	tuning.swim_back_delay = SWIM_BACK_DELAY
+	tuning.swim_back_speed = SWIM_BACK_SPEED
 	rescue = Rescue.new()
 
 
@@ -257,3 +265,67 @@ func test_falling_in_during_the_wind_up_swims_for_the_beer_anyway() -> void:
 	expect_eq(swimmer.state, Rescue.State.FLOATING, "he reached it and holds it")
 	expect_eq(swimmer.position, swimmer.beer_position, "where the beer drifted to")
 	expect(rescue.pickup(seat), "picked up with his beer")
+
+
+## T59: a floating guy stays put for swim_back_delay, then swims swim_back_speed toward where
+## the boat is now, on top of the drift, and lands on it rather than passing it.
+func test_after_swim_back_delay_a_floating_guy_swims_slowly_back_toward_the_boat() -> void:
+	var seat: int = Paddling.Seat.RIGHT_BACK
+	var fell_in: Vector2 = BOAT + Vector2(100.0, 0.0)
+	rescue.guy_overboard(seat, fell_in)
+	var swimmer: Rescue.Swimmer = rescue.swimmer_of(seat)
+	rescue.step(SWIM_BACK_DELAY, Vector2.ZERO, tuning, BOAT)
+	expect_eq(swimmer.position, fell_in, "at the delay he is still where he fell in")
+	expect_near(swimmer.adrift, SWIM_BACK_DELAY, 0.0001, "the clock counts his seconds afloat")
+	rescue.step(1.0, Vector2.ZERO, tuning, BOAT)
+	expect_eq(swimmer.position, fell_in + Vector2(-SWIM_BACK_SPEED, 0.0), "past the delay he swam swim_back_speed toward the boat")
+	expect_eq(swimmer.beer_position, swimmer.position, "the beer still in his hand")
+	expect_eq(swimmer.state, Rescue.State.FLOATING, "still floating")
+	var before: Vector2 = swimmer.position
+	rescue.step(1.0, CURRENT, tuning, BOAT)
+	var drifted: Vector2 = before + CURRENT
+	var expected: Vector2 = drifted + (BOAT - drifted).normalized() * SWIM_BACK_SPEED
+	expect(swimmer.position.is_equal_approx(expected), "with a current he drifts and swims toward the boat on top of it (got %s, expected %s)" % [swimmer.position, expected])
+	var boat_later: Vector2 = swimmer.position + Vector2(5.0, 5.0)
+	rescue.step(1.0, Vector2.ZERO, tuning, boat_later)
+	expect_eq(swimmer.position, boat_later, "a boat within reach this step is reached exactly, never passed, where it is now")
+	expect_eq(rescue.within_reach(boat_later, 1.0), [seat] as Array[int], "and he is there to pick up")
+
+
+## T59: a guy swimming for his beer keeps swimming for it, his clock not started; a washed-up
+## guy lies where he is; and the shoreline hold still applies to a guy swimming back.
+func test_a_guy_swimming_for_his_beer_and_a_washed_up_one_dont_swim_back() -> void:
+	var far_beer: Vector2 = BOAT + Vector2(300.0, 0.0)
+	jump_now(Rescue.Hull.LEFT, ALL, BOAT, far_beer)
+	var swimming: Rescue.Swimmer = rescue.swimmer_of(Paddling.Seat.LEFT_FRONT)
+	rescue.step(SWIM_BACK_DELAY + 1.0, Vector2.ZERO, tuning, BOAT)
+	expect_eq(swimming.state, Rescue.State.SWIMMING, "300 px at 10 px/s: still swimming for the beer after 6 s")
+	expect_eq(swimming.position, BOAT + Vector2(60.0, 0.0), "away from the boat, toward the beer, at swim_speed alone")
+	expect_near(swimming.adrift, 0.0, 0.0001, "his clock hasn't started")
+	var washed: int = Paddling.Seat.RIGHT_BACK
+	var at_shoreline: Vector2 = Vector2(50.0, -tuning.shore_margin)
+	rescue.guy_overboard(washed, at_shoreline)
+	var lying: Rescue.Swimmer = rescue.swimmer_of(washed)
+	rescue.step(SWIM_BACK_DELAY + 1.0, Vector2.ZERO, tuning, BOAT)
+	expect(lying.washed_up, "washed up")
+	expect_eq(lying.position, at_shoreline, "he lies where he is, past the delay or not")
+	rescue.step(10.0, CURRENT, tuning, BOAT)
+	expect_eq(lying.position, at_shoreline, "the current and the clock change nothing")
+	var held: int = Paddling.Seat.RIGHT_FRONT
+	var near_shore: Vector2 = Vector2(50.0, -tuning.shore_margin - 5.0)
+	var boat_at_shore: Vector2 = Vector2(50.0, -tuning.shore_margin + 10.0)
+	rescue.guy_overboard(held, near_shore)
+	var swimmer: Rescue.Swimmer = rescue.swimmer_of(held)
+	rescue.step(SWIM_BACK_DELAY, Vector2.ZERO, tuning, boat_at_shore)
+	expect_eq(swimmer.position, near_shore, "5 px off the shoreline, at the delay: he stays")
+	rescue.step(1.0, Vector2.ZERO, tuning, boat_at_shore)
+	expect_eq(swimmer.position, Vector2(50.0, -tuning.shore_margin), "swimming back toward a boat at the shore he is held at the shoreline")
+	expect(swimmer.washed_up, "and lies there washed up")
+
+
+## T59: the data's swim-back is a placeholder slower than the wind carries him, so the boat still
+## has to come for him.
+func test_the_data_swims_back_slower_than_the_drift() -> void:
+	expect(BOAT_DATA.swim_back_delay > 0.0, "a few seconds adrift first")
+	expect(BOAT_DATA.swim_back_speed > 0.0, "he does swim back")
+	expect(BOAT_DATA.swim_back_speed < BOAT_DATA.loose_drift_speed, "slower than loose_drift_speed: he still loses water, so the rescue is the boat's job")

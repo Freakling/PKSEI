@@ -8,13 +8,15 @@ extends RefCounted
 ## BoatTuning.jump_delay seconds while the guy chosen by jumper() winds up aboard (he still
 ## paddles); when the countdown ends in step() he jumps in from where the boat is then and swims
 ## toward the beer at swim_speed (on top of the current, like everything in the water) until he
-## reaches it, then floats, drifting with the current and drinking. He never swims back; the boat
-## has to come to him. A guy can also fall in some other way (the pee antic, T13): with no beer
+## reaches it, then floats, drifting with the current and drinking. After swim_back_delay seconds
+## adrift (Swimmer.adrift, counted while FLOATING) he swims slowly back toward the boat at
+## swim_back_speed on top of the drift (T59): slower than the wind carries him, so the rescue is
+## still the boat's job, but a patient one can meet him halfway. A guy can also fall in some other way (the pee antic, T13): with no beer
 ## loose he floats at once and doesn't drink; caught mid-wind-up he swims for his beer anyway, as
 ## if he had jumped early. There is no limit on how many are in the water at a time. Nothing
 ## loose drifts past the shoreline: a beer or a guy stops
 ## shore_margin above it (B2) and a guy lying there is washed up, within pickup_radius of a boat
-## resting at the shore.
+## resting at the shore; he doesn't swim back from there.
 
 ## Which hull a hazard hit; the guy who jumps comes from that side when one is aboard.
 enum Hull { LEFT, RIGHT }
@@ -34,6 +36,8 @@ class Swimmer extends RefCounted:
 	var has_beer: bool = true
 	## Lying at the shoreline, as far as the current takes him (set by step()).
 	var washed_up: bool = false
+	## Seconds he has been FLOATING (counted by step()): past swim_back_delay he swims back.
+	var adrift: float = 0.0
 
 	func _init(swimmer_seat: int, at: Vector2, beer_at: Vector2, swimmer_state: State, beer: bool) -> void:
 		seat = swimmer_seat
@@ -117,11 +121,13 @@ static func seats_on(side: Hull) -> Array[int]:
 
 ## One timestep: every loose beer and every floating guy drifts by `current` (pixels per second);
 ## a swimming guy drifts too and swims swim_speed toward his beer on top of it, and holds it
-## (FLOATING) once he reaches it this step. Every wind-up counts down, and a guy whose wind-up
-## ends this step jumps in at `boat_at` (where the boat is now, not where the beer went over)
-## and swims for his beer from next step. Nothing drifts past the shoreline: beers and guys stop
-## at y = -shore_margin, and a guy lying there is washed_up. Returns the seats that jumped this
-## step, so the holder can take them off the boat.
+## (FLOATING) once he reaches it this step. A floating guy's `adrift` clock runs, and once it
+## is past swim_back_delay he also swims swim_back_speed toward `boat_at` on top of the drift,
+## never past it; not from the shoreline, where he lies washed up. Every wind-up counts down,
+## and a guy whose wind-up ends this step jumps in at `boat_at` (where the boat is now, not where
+## the beer went over) and swims for his beer from next step. Nothing drifts past the shoreline:
+## beers and guys stop at y = -shore_margin, and a guy lying there is washed_up. Returns the
+## seats that jumped this step, so the holder can take them off the boat.
 func step(delta: float, current: Vector2, tuning: BoatTuning, boat_at: Vector2) -> Array[int]:
 	var drift: Vector2 = current * delta
 	var shoreline: float = -tuning.shore_margin
@@ -137,7 +143,16 @@ func step(delta: float, current: Vector2, tuning: BoatTuning, boat_at: Vector2) 
 			else:
 				swimmer.position = drifted + to_beer.normalized() * reach
 		else:
-			swimmer.position = held_back(swimmer.position + drift, shoreline)
+			var drifted: Vector2 = held_back(swimmer.position + drift, shoreline)
+			swimmer.adrift += delta
+			if swimmer.adrift > tuning.swim_back_delay and drifted.y < shoreline:
+				var reach: float = tuning.swim_back_speed * delta
+				var to_boat: Vector2 = boat_at - drifted
+				if to_boat.length() <= reach:
+					drifted = boat_at
+				else:
+					drifted += to_boat.normalized() * reach
+			swimmer.position = held_back(drifted, shoreline)
 			swimmer.beer_position = swimmer.position
 		swimmer.washed_up = swimmer.position.y >= shoreline
 	var jumped: Array[int] = []

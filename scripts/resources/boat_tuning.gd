@@ -48,6 +48,12 @@ extends Resource
 @export var jump_delay: float = 2.5 ## PLACEHOLDER
 ## Pixels from the boat's centre within which a floating guy is picked up (the lake checks it).
 @export var pickup_radius: float = 20.0 ## PLACEHOLDER
+## Seconds a guy floats with his beer before he starts swimming back toward the boat (T59,
+## GDD › Setbacks: "after a few seconds adrift"). Read by Rescue.
+@export var swim_back_delay: float = 5.0 ## PLACEHOLDER
+## Pixels per second he swims back toward the boat at, on top of the drift; kept below
+## loose_drift_speed so he still loses water and the boat has to come for him. Read by Rescue.
+@export var swim_back_speed: float = 12.0 ## PLACEHOLDER
 ## Pixels above the shoreline (y = 0) where everything loose stops (B2): no beer or swimmer drifts
 ## past y = -shore_margin, so a washed-up guy lies within pickup_radius of a boat resting at the
 ## shore. Read by Rescue.

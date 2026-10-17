@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (105 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (107 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -250,22 +250,22 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: within a screen half, the outer part maps to the back seat and the inner part to the front seat, the whole height of the half counting (test) · the four pads sit outer/inner in each half with the same up/down hints (play)
 - GDD: Presentation and Platforms
 
-### T59 · After a few seconds adrift a swimmer swims slowly back toward the boat · in-progress 2026-10-17 · S · agent
+### T59 · After a few seconds adrift a swimmer swims slowly back toward the boat · done · S · agent
 - Depends on: T9
-- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+swim_back_delay, +swim_back_speed), data/boat_tuning.tres, scripts/autoload/run_state.gd (pass the boat position to Rescue.step, already there), tests/test_rescue.gd
+- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+swim_back_delay, +swim_back_speed), data/boat_tuning.tres, tests/test_rescue.gd
 - Done when: a FLOATING swimmer, after swim_back_delay seconds, moves toward the boat at swim_back_speed on top of the drift, with swim_back_speed a placeholder below loose_drift_speed (test) · a SWIMMING guy (after his beer) and a washed-up one are unaffected (test)
 - GDD: Systems › Setbacks
 
-### B5 · The guaranteed path can lead into the beast's edge zone · in-progress 2026-10-17 · S · agent · high
+### B5 · The guaranteed path can lead into the beast's edge zone · done · S · agent · high
 - Depends on: T37, T50
 - Touches: scripts/systems/hazards.gd (path_reach), tests/test_hazards.gd, tests/test_beast.gd
 - Repro: follow the corridor where it wanders to the lake's side → expected: the beast never rises on the path / actual: path_reach allows corridor centres up to lake_width/2 − path_width/2 = 740 px while the beast rises beyond lake_width/2 − beast_edge_margin = 680 px, so the path summons it
 - Found in: ad hoc (the human's play)
 - GDD: Systems › Hazards
 
-### T60 · The beast's random visit is super rare · in-progress 2026-10-17 · S · agent
+### T60 · The beast's random visit is super rare · done · S · agent
 - Depends on: T50
-- Touches: data/lake_tuning.tres (beast_random_rate)
+- Touches: data/lake_tuning.tres (beast_random_rate), scripts/resources/lake_tuning.gd
 - Done when: beast_random_rate is set so the expected number of random visits in a five-minute crossing is well below one (the arithmetic quoted) (check)
 - GDD: Systems › Hazards
 
