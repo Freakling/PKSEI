@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="LakeTuning" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="LakeTuning" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/lake_tuning.gd" id="1_lake"]
 [ext_resource type="Resource" path="res://data/hazards/log.tres" id="2_log"]
+[ext_resource type="Resource" path="res://data/hazards/rock.tres" id="8_rock"]
 [ext_resource type="Resource" path="res://data/hazards/geese.tres" id="3_geese"]
 [ext_resource type="Resource" path="res://data/hazards/wake.tres" id="4_wake"]
 [ext_resource type="Resource" path="res://data/hazards/gust.tres" id="5_gust"]
@@ -45,4 +46,4 @@ headwind_force = 25.0
 headwind_length = 400.0
 stripe_force = 40.0
 stripe_length = 300.0
-hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current")]
+hazards = [ExtResource("2_log"), ExtResource("3_geese"), ExtResource("4_wake"), ExtResource("5_gust"), ExtResource("6_headwind"), ExtResource("7_cross_current"), ExtResource("8_rock")]

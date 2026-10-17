@@ -202,9 +202,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: while the boat is inside the stripe it is pushed by stripe_force in the stripe's direction (test) · the stripe is visible as a band of faster water (play)
 - GDD: Systems › Hazards
 
-### T19 · Rock or buoy · todo · S · agent
+### T19 · Rock or buoy · done · S · agent
 - Depends on: T10
-- Touches: scripts/hazards/rock.gd (new), scenes/hazards/rock.tscn (new)
+- Touches: scripts/hazards/rock.gd (new), scenes/hazards/rock.tscn (new), data/hazards/rock.tres (new), data/lake_tuning.tres, tests/test_rock.gd (new)
 - Done when: hitting it stops the boat and knocks a beer overboard on the side hit (test)
 - GDD: Systems › Hazards
 

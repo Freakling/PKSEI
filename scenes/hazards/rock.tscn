@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/hazards/rock.gd" id="1_rock"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_rock"]
+radius = 10.0
+
+[node name="Rock" type="Area2D"]
+script = ExtResource("1_rock")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_rock")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Stone" type="Polygon2D" parent="Visual"]
+color = Color(0.5, 0.5, 0.52, 1)
+polygon = PackedVector2Array(-10, -4, -4, -10, 5, -9, 10, -3, 9, 5, 3, 10, -6, 9, -10, 3)
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

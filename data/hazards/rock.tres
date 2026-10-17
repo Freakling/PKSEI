@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="HazardSpec" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/hazard.gd" id="1_spec"]
+[ext_resource type="PackedScene" path="res://scenes/hazards/rock.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_spec")
+scene = ExtResource("2_scene")
+weight = 1.0
+first_band = 0
+shove_strength = 0.0
+hit_cooldown = 1.0
