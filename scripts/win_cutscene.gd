@@ -116,12 +116,14 @@ func begin(boat: CharacterBody2D, camera: Camera2D, island_radius: float, island
 		master.tween_interval(HOP_INTERVAL)
 
 
-## Once the title is up, any key (or ui_accept) ends the crossing: the lake goes again.
+## Once the title is up, any key (or ui_accept), or a touch on a touchscreen (T54), ends the
+## crossing: the lake goes again.
 func _unhandled_input(event: InputEvent) -> void:
 	if _done or not _title_shown:
 		return
 	var key: bool = event is InputEventKey and event.is_pressed() and not event.is_echo()
-	if key or event.is_action_pressed(&"ui_accept"):
+	var touch: bool = event is InputEventScreenTouch and event.is_pressed()
+	if key or touch or event.is_action_pressed(&"ui_accept"):
 		_done = true
 		again.emit()
 

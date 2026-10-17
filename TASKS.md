@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T57 · B5
+**Next IDs:** T58 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (102 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (103 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -220,9 +220,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: Q/A, W/S, I/K, O/L map to forward/reverse strokes of the left front, left back, right front and right back seats (check: the input map quoted) · a reverse stroke's thrust is the forward thrust times reverse_thrust_fraction, negated, with the same turn magnitude negated and the same stamina burn (test) · the HUD labels and the sand text show the new keys (play)
 - GDD: Core Loop › Moment to moment · Presentation and Platforms
 
-### T54 · Touch controls: hull pads, seat by height, flick to reverse · in-progress 2026-10-17 · M · agent
+### T54 · Touch controls: hull pads, seat by height, flick to reverse · done · M · agent
 - Depends on: T53
-- Touches: scripts/ui/touch_pads.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd, project.godot (touch settings), tests/test_touch_pads.gd (new), tools/gen_sprites.gd, assets/sprites/ (pad art)
+- Touches: scripts/ui/touch_pads.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd, scripts/resources/boat_tuning.gd (+touch_flick_distance), data/boat_tuning.tres, scripts/win_cutscene.gd, scenes/win.tscn, tests/test_touch_pads.gd (new), tools/gen_sprites.gd, assets/sprites/pad.png
 - Done when: a pure helper maps a touch's position and its release motion to (seat, backwards): left/right half → hull, upper/lower part → front/back, a downward flick of at least flick_distance before release → reverse (test) · each finger charges from touch to release and strokes through RunState.stroke(seat, hold_time, backwards), several fingers at once (play) · the pads show only on a touchscreen and the keyboard still works (play)
 - GDD: Presentation and Platforms
 
@@ -237,6 +237,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/ui/speech_bubbles.gd (new), data/lines.tres (new, Swedish lines per telegraph), scripts/resources/lines.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd
 - Done when: at each wind-up (stamina warning, antic wind-up, timing-bar wind-up, jump wind-up) a small bubble over the guy shows a Swedish line for that telegraph, drawn from a per-telegraph list in data (e.g. pee: "Jag måste pissa", break: "Fyfan va trött jag är!"), and goes away at the effect (play) · the lines live in a Resource the human can edit, with a test that every telegraph has at least one line (test)
 - GDD: World and Narrative · Systems › Drunkenness · Systems › Stamina
+
+### T57 · Key columns: outer keys are the back seats, inner keys the front · in-progress 2026-10-17 · S · agent
+- Depends on: T53
+- Touches: project.godot (input actions), scripts/ui/hud.gd (labels), tools/gen_sprites.gd, assets/sprites/sand_text.png
+- Done when: Q/A drive the left back seat, W/S the left front, I/K the right front, O/L the right back (check: the input map quoted) · the HUD labels and the sand text show it (play)
+- GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10

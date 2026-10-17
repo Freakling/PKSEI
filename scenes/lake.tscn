@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
 [ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/island.png" id="7_island"]
 [ext_resource type="Script" path="res://scripts/ui/offscreen_arrows.gd" id="8_arrows"]
 [ext_resource type="Texture2D" path="res://assets/sprites/sand_text.png" id="9_sandtext"]
+[ext_resource type="Script" path="res://scripts/ui/touch_pads.gd" id="10_pads"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
 size = Vector2(6000, 400)
@@ -70,6 +71,15 @@ boat = NodePath("../Catamaran")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("3_hud")
+
+[node name="TouchPads" type="Control" parent="HUD" groups=["touch_pads"]]
+script = ExtResource("10_pads")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="HUD"]
 anchors_preset = 15

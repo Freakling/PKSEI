@@ -33,6 +33,11 @@ extends Resource
 ## (GDD › Presentation and Platforms, Camera). Read by scripts/lake_camera.gd.
 @export var camera_lead: float = 80.0 ## PLACEHOLDER
 
+## Touch (GDD › Presentation and Platforms, Touch; read by scripts/ui/touch_pads.gd).
+## Pixels, at the 640×360 canvas, a finger must move down between its press and its release
+## for its stroke to be a reverse one (the flick down); any smaller move strokes forward.
+@export var touch_flick_distance: float = 24.0 ## PLACEHOLDER
+
 ## Rescue (GDD › Systems › Setbacks; read by Rescue through RunState).
 ## How fast a guy swims for his beer, in pixels per second through the water (on top of the current).
 @export var swim_speed: float = 30.0 ## PLACEHOLDER

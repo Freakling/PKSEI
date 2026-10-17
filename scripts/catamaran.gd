@@ -16,7 +16,8 @@ extends CharacterBody2D
 ## (so his lag shows as the reach held) and a fumble when it missed. The flat primitives that
 ## remain are a white marker flashing over a warned guy (it keeps the warning readable through
 ## his strokes), his dropped paddle floating beside the hull, and the timing bar beside a guy
-## on the top tier while his key is held, its marker sweeping over the green band. A guy
+## on the top tier while his key is held (or a finger on the touch pads, scripts/ui/touch_pads.gd,
+## whose release also gives the reach), its marker sweeping over the green band. A guy
 ## winding up to jump after a beer (Rescue's winding_up, T34) rocks in his seat; a guy in the
 ## water has no sprite here (the lake draws him), and once the attempt is won nobody is drawn
 ## here (the win cutscene, T28, draws the boys stepping ashore from guy_global_position). Hazard
@@ -107,9 +108,15 @@ var _bar_markers: Array[Node2D] = []
 ## Per seat, the stroke one-shot in progress (empty for none) and its seconds left.
 var _one_shots: Array[StringName] = [&"", &"", &"", &""]
 var _one_shot_left: Array[float] = [0.0, 0.0, 0.0, 0.0]
+## The touch pads (scripts/ui/touch_pads.gd, the "touch_pads" group) when the lake has them;
+## null for the boat alone (tests). Read for the timing bar; their release gives the reach.
+var _touch_pads: TouchPads = null
 
 
 func _ready() -> void:
+	_touch_pads = get_tree().get_first_node_in_group(&"touch_pads") as TouchPads
+	if _touch_pads != null:
+		_touch_pads.stroke_released.connect(_on_touch_released)
 	for seat: int in GUY_PATHS.size():
 		var guy: AnimatedSprite2D = get_node(GUY_PATHS[seat]) as AnimatedSprite2D
 		guy.sprite_frames = _build_frames(seat)
@@ -176,9 +183,20 @@ func _read_key(seat: int, action: StringName, hold_times: Array[float], backward
 
 
 ## How long the key this seat is charging has been held: the forward key's time, else the
-## reverse key's (0 with neither down).
+## reverse key's, else the touch pad's finger's (0 with none down).
 func _held_time(seat: int) -> float:
-	return _hold_times[seat] if _hold_times[seat] > 0.0 else _reverse_hold_times[seat]
+	if _hold_times[seat] > 0.0:
+		return _hold_times[seat]
+	if _reverse_hold_times[seat] > 0.0:
+		return _reverse_hold_times[seat]
+	return _touch_pads.held_time(seat) if _touch_pads != null else 0.0
+
+
+## A finger on the touch pads released this seat (just before its stroke, as a key's release):
+## a guy who can paddle reaches at once.
+func _on_touch_released(seat: int) -> void:
+	if RunState.can_paddle(seat):
+		_start_one_shot(seat, &"reach", REACH_TIME)
 
 
 ## Debug-only (see DEBUG_BEER_ACTIONS): a beer overboard at the boat, on the key's side.

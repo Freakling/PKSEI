@@ -73,6 +73,10 @@ const JETSKI_DARK: Color = Color8(214, 150, 24)
 const RIDER: Color = Color8(232, 68, 52)
 const FISHER: Color = Color8(62, 122, 204)
 const FLOAT_RED: Color = Color8(232, 52, 52)
+## The touch pad's translucency (T54): its body, its arrow hints and its outline.
+const PAD_ALPHA: float = 0.35
+const PAD_HINT_ALPHA: float = 0.9
+const PAD_OUTLINE_ALPHA: float = 0.6
 
 ## Shirt and hair per seat, in Paddling.Seat order (LF, LB, RF, RB). Hair alpha 0 = bald.
 const SHIRTS: Array[Color] = [
@@ -124,6 +128,7 @@ func _init() -> void:
 	_save(_island(), "island")
 	_save(_log(), "log")
 	_save(_arrow(), "arrow")
+	_save(_pad(), "pad")
 	for frame: int in 2:
 		_save(_beast_fin(frame), "beast_fin_%d" % frame)
 		_save(_beast_head(frame), "beast_head_%d" % frame)
@@ -833,6 +838,19 @@ func _arrow() -> Image:
 	return img
 
 
+## 36×52 touch pad (T54): a translucent rounded rectangle, white so scripts/ui/touch_pads.gd
+## tints it per seat, with the hints of the touch scheme (GDD › Presentation and Platforms):
+## an up arrow near the top (release strokes forward) and a down arrow near the bottom (a flick
+## down strokes in reverse), both brighter than the pad, in a soft outline.
+func _pad() -> Image:
+	var img: Image = _new(36, 52)
+	_rounded_rect(img, 1, 1, 34, 50, 6, Color(SPLASH, PAD_ALPHA))
+	_arrow_glyph(img, 17, 7, 1, Color(SPLASH, PAD_HINT_ALPHA))
+	_arrow_glyph(img, 17, 44, -1, Color(SPLASH, PAD_HINT_ALPHA))
+	_outline(img, Color(OUTLINE, PAD_OUTLINE_ALPHA))
+	return img
+
+
 # --- parts --------------------------------------------------------------------------------------
 
 ## A top-down head at (cx, cy): a skin disc with the hair over its back half, or a bald shine.
@@ -947,6 +965,26 @@ static func _rect(img: Image, x: int, y: int, width: int, height: int, colour: C
 	for yy: int in range(y, y + height):
 		for xx: int in range(x, x + width):
 			_px(img, xx, yy, colour)
+
+
+## A rectangle with its corners rounded by `radius` (the corner pixels inside a disc of that
+## radius, as _disc draws them).
+static func _rounded_rect(img: Image, x: int, y: int, width: int, height: int, radius: int, colour: Color) -> void:
+	for yy: int in range(y, y + height):
+		for xx: int in range(x, x + width):
+			var dx: int = maxi(maxi(x + radius - xx, xx - (x + width - 1 - radius)), 0)
+			var dy: int = maxi(maxi(y + radius - yy, yy - (y + height - 1 - radius)), 0)
+			if dx * dx + dy * dy <= radius * radius + radius:
+				_px(img, xx, yy, colour)
+
+
+## An arrow 7 wide and 9 tall with its tip at (cx, tip_y), pointing up for direction 1 (the
+## rest of it below the tip) and down for -1: a 4-row head over a 3-wide shaft, as _arrow().
+static func _arrow_glyph(img: Image, cx: int, tip_y: int, direction: int, colour: Color) -> void:
+	for row: int in 4:
+		_rect(img, cx - row, tip_y + row * direction, 2 * row + 1, 1, colour)
+	var shaft_top: int = tip_y + 4 if direction > 0 else tip_y - 8
+	_rect(img, cx - 1, shaft_top, 3, 5, colour)
 
 
 static func _disc(img: Image, cx: int, cy: int, radius: int, colour: Color) -> void:
