@@ -71,6 +71,9 @@ extends Resource
 ## Seconds a guy's bubble calling out a hazard stays up (T56, GDD › World and Narrative). Read by
 ## scripts/ui/speech_bubbles.gd; a wind-up's bubble lasts the wind-up instead.
 @export var call_out_time: float = 2.5 ## PLACEHOLDER
+## Seconds of quiet between one of a swimmer's lines and the next (T74): a guy in the water talks
+## for call_out_time, then waits this long. Read by scripts/ui/speech_bubbles.gd.
+@export var swim_talk_interval: float = 5.0 ## PLACEHOLDER
 
 ## Pixels per second of speed one unit of stroke force adds.
 @export var thrust_scale: float = 0.5 ## PLACEHOLDER

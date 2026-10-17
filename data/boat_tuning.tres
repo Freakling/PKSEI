@@ -27,6 +27,7 @@ shore_margin = 40.0
 bail_rate = 1.0
 beer_loss_cooldown = 2.0
 call_out_time = 2.5
+swim_talk_interval = 5.0
 thrust_scale = 0.5
 turn_scale = 0.01
 linear_damping = 1.0

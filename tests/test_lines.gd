@@ -26,6 +26,14 @@ func test_every_kind_has_at_least_one_line() -> void:
 			expect_false(line.strip_edges().is_empty(), "no blank line for %s" % kind)
 
 
+func test_the_swimmers_kinds_have_three_lines_each_and_the_two_quoted_ones() -> void:
+	for kind: StringName in [&"swim_fetch", &"swim_drink", &"swim_fell", &"swim_back"]:
+		expect(Lines.KINDS.has(kind), "%s is a Lines.KINDS entry" % kind)
+		expect(LINES.lines_of(kind).size() >= 3, "%s has at least three lines" % kind)
+	expect(LINES.lines_of(&"swim_drink").has("Ska bara dricka sen kommer jag"))
+	expect(LINES.lines_of(&"swim_back").has("Kom och hämta mig dåååå!"))
+
+
 func test_the_resource_lists_no_kind_outside_kinds() -> void:
 	for kind: StringName in LINES.lines.keys():
 		expect(Lines.KINDS.has(kind), "%s in data/lines.tres is a Lines.KINDS entry" % kind)

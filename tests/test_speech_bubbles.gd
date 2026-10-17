@@ -46,9 +46,61 @@ func test_every_wind_up_kind_the_screen_names_has_lines() -> void:
 	var named: Array[StringName] = [SpeechBubbles.STAMINA_KIND, SpeechBubbles.BAR_KIND, SpeechBubbles.JUMP_KIND]
 	for kind: StringName in SpeechBubbles.ANTIC_KINDS.values():
 		named.append(kind)
+	named.append_array([SpeechBubbles.SWIM_FETCH_KIND, SpeechBubbles.SWIM_DRINK_KIND,
+			SpeechBubbles.SWIM_FELL_KIND, SpeechBubbles.SWIM_BACK_KIND])
 	for kind: StringName in named:
 		expect(Lines.KINDS.has(kind), "%s is a Lines.KINDS entry" % kind)
 		expect(lines.lines_of(kind).size() >= 1, "%s has a line" % kind)
+
+
+func test_a_swimmers_kind_follows_his_state() -> void:
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.SWIMMING, true, 0.0, 5.0, false), &"swim_fetch",
+			"swimming for his beer")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 2.0, 5.0, false), &"swim_drink",
+			"floating with his beer before he swims back")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, false, 2.0, 5.0, false), &"swim_fell",
+			"floating without a beer before he swims back")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 6.0, 5.0, false), &"swim_back",
+			"swimming back, with a beer")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, false, 6.0, 5.0, false), &"swim_back",
+			"swimming back, without one")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 5.0, 5.0, false), &"swim_drink",
+			"exactly at the delay he has not started back yet")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 9.0, 5.0, true), &"",
+			"washed up: nothing")
+	expect_eq(SpeechBubbles.swim_kind(Rescue.State.SWIMMING, true, 0.0, 5.0, true), &"",
+			"washed up while swimming: nothing")
+
+
+func test_a_swimmer_talks_at_once_then_goes_quiet_then_talks_again() -> void:
+	var talk: SpeechBubbles.SwimTalk = SpeechBubbles.SwimTalk.new()
+	expect(talk.step(0.1, &"swim_fetch", 5.0, 2.5), "a line at once on a fresh kind")
+	expect(talk.showing(), "it shows")
+	expect_false(talk.step(2.0, &"swim_fetch", 5.0, 2.5), "no new line while one shows")
+	expect(talk.showing(), "still showing before call_out_time is up")
+	expect_false(talk.step(0.6, &"swim_fetch", 5.0, 2.5))
+	expect_false(talk.showing(), "hidden after call_out_time")
+	expect_false(talk.step(4.5, &"swim_fetch", 5.0, 2.5), "quiet for the interval")
+	expect_false(talk.showing())
+	expect(talk.step(0.6, &"swim_fetch", 5.0, 2.5), "a new line is due after the interval")
+	expect(talk.showing())
+
+
+func test_a_change_of_kind_restarts_the_talk_with_a_line_at_once() -> void:
+	var talk: SpeechBubbles.SwimTalk = SpeechBubbles.SwimTalk.new()
+	talk.step(0.1, &"swim_fetch", 5.0, 2.5)
+	talk.step(3.0, &"swim_fetch", 5.0, 2.5)
+	expect_false(talk.showing(), "quiet between lines")
+	expect(talk.step(0.1, &"swim_drink", 5.0, 2.5), "the new kind speaks at once")
+	expect(talk.showing())
+
+
+func test_no_kind_means_no_talk_and_the_next_swim_starts_fresh() -> void:
+	var talk: SpeechBubbles.SwimTalk = SpeechBubbles.SwimTalk.new()
+	talk.step(0.1, &"swim_back", 5.0, 2.5)
+	expect_false(talk.step(0.1, &"", 5.0, 2.5), "washed up or picked up: nothing due")
+	expect_false(talk.showing())
+	expect(talk.step(0.1, &"swim_fell", 5.0, 2.5), "a later fall speaks at once")
 
 
 func test_the_hulls_front_guy_speaks_first() -> void:

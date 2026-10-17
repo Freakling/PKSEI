@@ -13,9 +13,12 @@ class_name SpeechBubbles
 ## RunState.telegraphed and puts the line on the guy on that hull (front seat first; any aboard
 ## guy when the hull is empty or unknown: speaker_for, Rescue's jumper rule) for
 ## BoatTuning.call_out_time seconds, over his wind-up's bubble while it lasts. A guy in the water
-## shows no bubble, nor does anyone once the attempt is won; a reset clears them all. A screen:
-## it only reads RunState and calls its methods; it rolls nothing. The pure parts are static, so
-## tests/test_speech_bubbles.gd runs them without a tree.
+## (T74) talks from where he floats: a line of his swim_kind (fetching his beer, drinking it,
+## fallen in, swimming back) at once when the kind changes and again every
+## BoatTuning.swim_talk_interval seconds, each for call_out_time (SwimTalk); the bubble goes away at
+## the pickup or when he is washed up. Nobody shows a bubble once the attempt is won; a reset
+## clears them all. A screen: it only reads RunState and calls its methods; it rolls nothing. The
+## pure parts are static, so tests/test_speech_bubbles.gd runs them without a tree.
 
 const FONT_SIZE: int = 8
 const BUBBLE_COLOUR: Color = Color(1.0, 1.0, 1.0, 1.0)
@@ -42,6 +45,53 @@ const ANTIC_KINDS: Dictionary[int, StringName] = {
 const STAMINA_KIND: StringName = &"stamina_warning"
 const BAR_KIND: StringName = &"bar_windup"
 const JUMP_KIND: StringName = &"jump_windup"
+## The line kinds for a guy in the water (T74).
+const SWIM_FETCH_KIND: StringName = &"swim_fetch"
+const SWIM_DRINK_KIND: StringName = &"swim_drink"
+const SWIM_FELL_KIND: StringName = &"swim_fell"
+const SWIM_BACK_KIND: StringName = &"swim_back"
+
+
+## A swimmer's talking rhythm: a line shows for `show_time`, then nothing for `interval`, then a
+## new line is due; a change of kind restarts it with a line due at once. Pure.
+class SwimTalk extends RefCounted:
+	var kind: StringName = &""
+	var shown_left: float = 0.0
+	var wait_left: float = 0.0
+
+	## Advance by `delta` for a swimmer of `new_kind`; true when a new line is due now.
+	func step(delta: float, new_kind: StringName, interval: float, show_time: float) -> bool:
+		if new_kind != kind:
+			kind = new_kind
+			shown_left = 0.0
+			wait_left = 0.0
+			if kind.is_empty():
+				return false
+			shown_left = show_time
+			return true
+		if kind.is_empty():
+			return false
+		if shown_left > 0.0:
+			shown_left -= delta
+			if shown_left <= 0.0:
+				shown_left = 0.0
+				wait_left = interval
+			return false
+		wait_left -= delta
+		if wait_left <= 0.0:
+			wait_left = 0.0
+			shown_left = show_time
+			return true
+		return false
+
+	## Is a line showing now?
+	func showing() -> bool:
+		return shown_left > 0.0
+
+	func clear() -> void:
+		kind = &""
+		shown_left = 0.0
+		wait_left = 0.0
 
 ## The boat, set in lake.tscn: where each guy is on the lake.
 @export var boat: CharacterBody2D
@@ -56,12 +106,16 @@ var _windup_lines: Array[String] = ["", "", "", ""]
 ## Per seat, the hazard line he is calling out (empty for none) and its seconds left.
 var _call_outs: Array[String] = ["", "", "", ""]
 var _call_out_left: Array[float] = [0.0, 0.0, 0.0, 0.0]
+## Per seat, the talk of a guy in the water and the line he is saying.
+var _swim_talks: Array[SwimTalk] = []
+var _swim_lines: Array[String] = ["", "", "", ""]
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for seat: int in RunState.GUY_COUNT:
 		_bubbles.append(_build_bubble(seat))
+		_swim_talks.append(SwimTalk.new())
 	RunState.telegraphed.connect(_on_telegraphed)
 	RunState.run_reset.connect(_clear)
 
@@ -74,21 +128,50 @@ func _process(delta: float) -> void:
 		if _call_out_left[seat] <= 0.0:
 			_call_outs[seat] = ""
 		var aboard: bool = RunState.guys[seat].aboard and not won
-		var kind: StringName = _windup_kind_of(seat) if aboard else &""
-		if kind != _windup_kinds[seat]:
-			_windup_kinds[seat] = kind
-			_windup_lines[seat] = RunState.pick_line(kind) if not kind.is_empty() else ""
-		var text: String = _call_outs[seat] if not _call_outs[seat].is_empty() else _windup_lines[seat]
 		var bubble: PanelContainer = _bubbles[seat]
-		bubble.visible = aboard and boat != null and not text.is_empty()
+		var text: String = ""
+		var at: Vector2 = Vector2.ZERO
+		if aboard:
+			_swim_talks[seat].clear()
+			_swim_lines[seat] = ""
+			var kind: StringName = _windup_kind_of(seat)
+			if kind != _windup_kinds[seat]:
+				_windup_kinds[seat] = kind
+				_windup_lines[seat] = RunState.pick_line(kind) if not kind.is_empty() else ""
+			text = _call_outs[seat] if not _call_outs[seat].is_empty() else _windup_lines[seat]
+			if boat != null:
+				at = to_screen * boat.guy_global_position(seat)
+		else:
+			_windup_kinds[seat] = &""
+			_windup_lines[seat] = ""
+			var swimmer: Rescue.Swimmer = null if won else RunState.rescue.swimmer_of(seat)
+			text = _swim_text_of(seat, swimmer, delta)
+			if swimmer != null:
+				at = to_screen * swimmer.position
+		bubble.visible = not text.is_empty() and (boat != null or not aboard)
 		if not bubble.visible:
 			continue
 		if _labels[seat].text != text:
 			_labels[seat].text = text
 			bubble.reset_size()
-		var guy_at: Vector2 = to_screen * boat.guy_global_position(seat)
-		bubble.position = bubble_position(guy_at, bubble.size, TAIL_HEIGHT + LIFT)
+		bubble.position = bubble_position(at, bubble.size, TAIL_HEIGHT + LIFT)
 		_tails[seat].position = Vector2(bubble.size.x * 0.5, bubble.size.y)
+
+
+## What a guy in the water says now (empty for nothing): runs his talk rhythm and draws a new line
+## through RunState when one is due.
+func _swim_text_of(seat: int, swimmer: Rescue.Swimmer, delta: float) -> String:
+	var talk: SwimTalk = _swim_talks[seat]
+	var kind: StringName = &""
+	var tuning: BoatTuning = RunState.paddling.tuning
+	if swimmer != null:
+		kind = swim_kind(swimmer.state, swimmer.has_beer, swimmer.adrift, tuning.swim_back_delay,
+				swimmer.washed_up)
+	if talk.step(delta, kind, tuning.swim_talk_interval, tuning.call_out_time):
+		_swim_lines[seat] = RunState.pick_line(kind)
+	if kind.is_empty():
+		_swim_lines[seat] = ""
+	return _swim_lines[seat] if talk.showing() else ""
 
 
 ## The kind of wind-up this guy is in now, from the states catamaran.gd shows (empty for none).
@@ -117,6 +200,8 @@ func _clear() -> void:
 		_windup_lines[seat] = ""
 		_call_outs[seat] = ""
 		_call_out_left[seat] = 0.0
+		_swim_talks[seat].clear()
+		_swim_lines[seat] = ""
 		_bubbles[seat].visible = false
 
 
@@ -181,6 +266,20 @@ static func windup_kind(antic: Antics.State, antic_kind: Antics.Kind, jump_windi
 	if bar_winding_up:
 		return BAR_KIND
 	return &""
+
+
+## The line kind for a guy in the water (T74): swimming for his beer, floating with it before he
+## swims back, floating without one (fallen in) before he swims back, swimming back once `adrift`
+## passes `swim_back_delay`; empty when he is washed up.
+static func swim_kind(state: Rescue.State, has_beer: bool, adrift: float, swim_back_delay: float,
+		washed_up: bool) -> StringName:
+	if washed_up:
+		return &""
+	if state == Rescue.State.SWIMMING:
+		return SWIM_FETCH_KIND
+	if adrift > swim_back_delay:
+		return SWIM_BACK_KIND
+	return SWIM_DRINK_KIND if has_beer else SWIM_FELL_KIND
 
 
 ## Who calls a hazard on `hull` out: the aboard guy on that hull, front first; any aboard guy
