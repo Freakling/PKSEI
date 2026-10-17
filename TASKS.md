@@ -2,14 +2,14 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T44 · B4
+**Next IDs:** T44 · B5
 
 ## Milestones
 | Milestone | Status |
 |---|---|
 | Design: pitch, pillars and core loop decided | ✅ done (Q5, co-op timing, still open) |
 | Foundation: project settings, first system with a test, check passing | ✅ done |
-| Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
+| Core loop playable (grey-box): T6, T8, T9, T13, T28 | 🟨 in progress (T13 left) |
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
@@ -268,10 +268,17 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the field's doc comment says pixels per second, matching how catamaran.gd applies drift (check)
 - GDD: —
 
-### T28 · Win cutscene: the boys land, make camp and drink · todo · M · agent
+### T28 · Win cutscene: the boys land, make camp and drink · done · M · agent
 - Depends on: T6
-- Touches: scenes/win.tscn (new), scripts/win_cutscene.gd (new), scenes/lake.tscn (hand-off on `WON`)
+- Touches: scenes/win.tscn (new), scripts/win_cutscene.gd (new), scripts/lake.gd (hand-off on `WON`, go-again via new_attempt), scenes/lake.tscn, scripts/catamaran.gd, scripts/ui/hud.gd, scripts/autoload/audio.gd (cheer), tools/gen_sprites.gd, tools/gen_audio.gd, assets/sprites/{guy_camp_0..3,tent,campfire_0,campfire_1}.png, assets/audio/cheer.wav
 - Done when: when RunState's phase becomes `WON` (already set by `arrive()`, T6) the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
+- GDD: Win and Loss
+
+### B4 · A hazard push can nudge the stopped boat during the win cutscene · todo · S · agent · low
+- Depends on: T28
+- Touches: scripts/catamaran.gd
+- Repro: win while a gust, wake or jet-ski is active near the island → expected: the boat stays put through the cutscene / actual: take_shove/take_push still move it
+- Found in: T28
 - GDD: Win and Loss
 
 ### T13 · Antics: stand up, drop the paddle, nod off, pee, each with a wind-up · todo · M · agent

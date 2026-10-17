@@ -35,6 +35,8 @@ func _init() -> void:
 	_save(_beer_over(), "beer_over")
 	for seat: int in GRUNT_PITCHES.size():
 		_save(_grunt(GRUNT_PITCHES[seat]), "guy_grunt_%d" % seat)
+	# Last: it uses no noise, so the RNG's sequence for the sounds above stays as it was.
+	_save(_cheer(), "cheer")
 	quit()
 
 
@@ -91,6 +93,20 @@ func _grunt(hz: float) -> PackedFloat32Array:
 	_mix(sound, 0.0, _tone(0.2, hz * 1.1, hz * 0.85, Wave.SQUARE, 0.015, 0.09), 0.5)
 	_mix(sound, 0.0, _tone(0.2, hz * 1.1, hz * 0.85, Wave.TRIANGLE, 0.015, 0.09), 0.5)
 	return _lowpass(sound, hz * 6.0)
+
+
+## The boys' cheer as they land (the win cutscene, T28): a rising major arpeggio on a square
+## wave with a triangle an octave under it, the top note held.
+func _cheer() -> PackedFloat32Array:
+	var sound: PackedFloat32Array = _blank(0.8)
+	var notes: Array[float] = [523.0, 659.0, 784.0, 1047.0]
+	for i: int in notes.size():
+		var last: bool = i == notes.size() - 1
+		var length: float = 0.45 if last else 0.14
+		var decay: float = 0.2 if last else 0.08
+		_mix(sound, 0.1 * i, _tone(length, notes[i], notes[i], Wave.SQUARE, 0.005, decay), 0.3)
+		_mix(sound, 0.1 * i, _tone(length, notes[i] * 0.5, notes[i] * 0.5, Wave.TRIANGLE, 0.005, decay), 0.4)
+	return sound
 
 
 # --- synthesis ----------------------------------------------------------------------------------

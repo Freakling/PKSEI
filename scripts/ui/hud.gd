@@ -1,7 +1,8 @@
 extends CanvasLayer
-## HUD · shows the crossing (GDD › Core Loop › Moment to moment, GDD › Win and Loss): the
-## progress bar, each guy's drunkenness and stamina with his seat and key, and "Made it!" once
-## the attempt is won. A screen: it only reads RunState every frame. The win cutscene is T28's.
+## HUD · shows the crossing (GDD › Core Loop › Moment to moment): the progress bar and each
+## guy's drunkenness and stamina with his seat and key. Hidden once the attempt is won, when
+## the win cutscene (scenes/win.tscn, GDD › Win and Loss) takes the screen. A screen: it only
+## reads RunState every frame.
 
 ## The guys' panels in the grid, laid out like the boat: front row, then back row.
 const GRID_SEATS: Array[int] = [
@@ -17,7 +18,6 @@ const FONT_SIZE: int = 10
 
 @onready var _progress: ProgressBar = %Progress
 @onready var _guys: GridContainer = %Guys
-@onready var _won: Label = %Won
 
 var _labels: Array[Label] = []
 var _drunk_bars: Array[ProgressBar] = []
@@ -50,7 +50,7 @@ func _process(_delta: float) -> void:
 		_drunk_bars[seat].value = guy.drunkenness
 		_stamina_bars[seat].value = guy.stamina
 		_labels[seat].text = SEAT_LABELS[seat] + _state_suffix(seat)
-	_won.visible = RunState.phase == RunState.Phase.WON
+	visible = RunState.phase != RunState.Phase.WON
 
 
 func _make_bar(fill: Color) -> ProgressBar:

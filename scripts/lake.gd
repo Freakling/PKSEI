@@ -3,7 +3,11 @@ extends Node2D
 ## screen, open water, and the island up-screen. Places the island by LakeTuning.island_distance
 ## and sizes it by LakeTuning.island_radius; sizes the water and the shore to the lake by
 ## lake_width and island_distance. It reports the boat's progress to RunState every physics
-## frame, and calls RunState.arrive() when the boat enters the island's area.
+## frame, and calls RunState.arrive() when the boat enters the island's area. Once RunState's
+## phase is WON it puts the win cutscene (scenes/win.tscn, GDD › Win and Loss) at the island
+## and hands it the boat and the camera (the camera's follow is off while it plays); when the
+## cutscene asks to go again it is taken down, RunState.new_attempt() starts the next attempt,
+## and the boat and the hazards are placed as after a shore reset.
 ##
 ## The art is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the water and the
 ## shore are tiles repeated over their polygons, the island a sprite scaled to its radius.
@@ -28,6 +32,7 @@ extends Node2D
 ## builds the overlay stays hidden and empty.
 
 const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
+const WIN_SCENE: PackedScene = preload("res://scenes/win.tscn")
 const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
 ## Points the debug overlay samples per band of the corridor (the band's edges are among them).
 const PATH_OVERLAY_STEPS: int = 4
@@ -66,6 +71,7 @@ const SHORE_DEPTH: float = 400.0
 @onready var _swimmers: Node2D = $Visual/Swimmers
 @onready var _hazards: Node2D = $Hazards
 @onready var _path_overlay: Line2D = $Visual/PathOverlay
+@onready var _camera: Camera2D = $Camera
 
 ## Debug tools (the debug overlay, the F5/F6-style keys) exist only in debug builds and when the
 ## dev_tools feature is set; release builds never read them.
@@ -79,6 +85,8 @@ var _markers: Dictionary[int, Node2D] = {}
 ## One beer sprite per seat winding up, at the loose beer's position.
 var _loose_beers: Dictionary[int, Sprite2D] = {}
 var _bob_clock: float = 0.0
+## The win cutscene while it plays; null otherwise.
+var _win: WinCutscene = null
 
 
 func _ready() -> void:
@@ -105,6 +113,8 @@ func _physics_process(delta: float) -> void:
 		RunState.pickup(seat)
 	_show_swimmers(delta)
 	_show_loose_beers()
+	if RunState.phase == RunState.Phase.WON and _win == null:
+		_start_win()
 	if _debug_tools and Input.is_action_just_pressed(DEBUG_PATH_ACTION):
 		_path_overlay.visible = not _path_overlay.visible
 
@@ -126,8 +136,36 @@ func _on_island_body_entered(body: Node2D) -> void:
 
 
 func _on_shore_reset_done() -> void:
+	_restart()
+
+
+## The boat back at its start and this attempt's hazards placed: after a shore reset, and for
+## a new attempt after the win.
+func _restart() -> void:
 	_boat.place(_start)
 	_spawn_hazards()
+
+
+## The attempt is won: the cutscene plays at the island (it draws the boys from the boat's
+## seats, so it goes in the frame the boat stops showing them) and takes the camera over.
+func _start_win() -> void:
+	_win = WIN_SCENE.instantiate() as WinCutscene
+	_win.position = _island.position
+	_win.again.connect(_on_win_again)
+	_camera.set_physics_process(false)
+	add_child(_win)
+	_win.begin(_boat, _camera, TUNING.island_radius, _island_visual.scale.x)
+
+
+## The player goes again: the cutscene leaves at once, the camera follows the boat again, and
+## the next attempt (a new lake) starts from the shore.
+func _on_win_again() -> void:
+	remove_child(_win)
+	_win.queue_free()
+	_win = null
+	_camera.set_physics_process(true)
+	RunState.new_attempt()
+	_restart()
 
 
 ## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed.

@@ -25,7 +25,7 @@ const AUDIO_DIR: String = "res://assets/audio"
 ## pass instantiates autoloads before it has imported a new WAV, so a parse-time preload fails
 ## on a fresh clone's first import.
 const SOUNDS: Array[StringName] = [
-	&"stroke", &"fumble", &"splash", &"pickup", &"beer_over",
+	&"stroke", &"fumble", &"splash", &"pickup", &"beer_over", &"cheer",
 	&"guy_grunt_0", &"guy_grunt_1", &"guy_grunt_2", &"guy_grunt_3",
 ]
 ## Each seat's grunt, in Paddling.Seat order.

@@ -13,7 +13,8 @@ extends CharacterBody2D
 ## blinks beside a guy while his tier is announced, then shows beside him while his key is held,
 ## the marker sweeping over the green band); a guy winding up to jump after a beer (Rescue's
 ## winding_up, T34) rocks in his seat; a guy in the water has no sprite here (the lake draws
-## him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
+## him), and once the attempt is won nobody is drawn here (the win cutscene, T28, draws the boys
+## stepping ashore from guy_global_position). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
 ## and yaw, take_shove() is added to its speed, and take_push() (a gust's sustained wind) is a
 ## velocity the boat moves at this frame like the drift, undamped and stopped by the shore. In
 ## debug builds F5/F6 knock a beer over on the left/right without a hazard. No rules live here.
@@ -108,7 +109,13 @@ func _read_debug_keys() -> void:
 			RunState.beer_overboard(side as Rescue.Hull, position)
 
 
-## Puts the boat at `at`, facing the island, still: the lake calls it after a shore reset.
+## Where `seat`'s guy sits, in world pixels: the win cutscene starts his sprite there.
+func guy_global_position(seat: int) -> Vector2:
+	return _guys[seat].global_position
+
+
+## Puts the boat at `at`, facing the island, still: the lake calls it after a shore reset and
+## for a new attempt.
 func place(at: Vector2) -> void:
 	position = at
 	rotation = 0.0
@@ -127,7 +134,7 @@ func _show_telegraphs(delta: float) -> void:
 	var flash_on: bool = _flash_clock < WARNING_FLASH_PERIOD * 0.5
 	for seat: int in _guys.size():
 		var state: Stamina.State = RunState.stamina.state_of(seat)
-		_guys[seat].visible = RunState.guys[seat].aboard
+		_guys[seat].visible = RunState.guys[seat].aboard and RunState.phase != RunState.Phase.WON
 		_guys[seat].modulate = BREAK_DIM if state == Stamina.State.BREAK else Color.WHITE
 		_guys[seat].rotation = _wind_up_rock(seat)
 		_warnings[seat].visible = state == Stamina.State.WARNING and flash_on

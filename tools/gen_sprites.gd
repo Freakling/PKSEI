@@ -46,8 +46,12 @@ const BEER_LIGHT: Color = Color8(254, 238, 140)
 const COOLER: Color = Color8(222, 52, 52)
 const COOLER_LID: Color = Color8(246, 246, 250)
 const FIRE: Color = Color8(250, 140, 40)
+const FIRE_LIGHT: Color = Color8(254, 230, 96)
 const ASH: Color = Color8(90, 86, 96)
 const SPLASH: Color = Color8(255, 255, 255)
+const TENT: Color = Color8(226, 92, 60)
+const TENT_LIGHT: Color = Color8(246, 142, 104)
+const TENT_DARK: Color = Color8(168, 58, 44)
 
 ## Shirt and hair per seat, in Paddling.Seat order (LF, LB, RF, RB). Hair alpha 0 = bald.
 const SHIRTS: Array[Color] = [
@@ -70,7 +74,11 @@ func _init() -> void:
 	for seat: int in SHIRTS.size():
 		_save(_guy(seat), "guy_%d" % seat)
 		_save(_guy_swim(seat), "guy_swim_%d" % seat)
+		_save(_guy_camp(seat), "guy_camp_%d" % seat)
 	_save(_beer(), "beer")
+	_save(_tent(), "tent")
+	for frame: int in 2:
+		_save(_campfire(frame), "campfire_%d" % frame)
 	_save(_water(), "water")
 	_save(_sand(), "sand")
 	_save(_island(), "island")
@@ -154,6 +162,58 @@ func _guy_swim(seat: int) -> Image:
 	for splash: Vector2i in [Vector2i(1, 4), Vector2i(0, 7), Vector2i(13, 4), Vector2i(13, 8),
 			Vector2i(5, 11), Vector2i(9, 11)]:
 		_px(img, splash.x, splash.y, SPLASH)
+	return img
+
+
+## 9×12 the same guy ashore (the win cutscene, T28): shoulders and head facing up, no paddle,
+## both hands held out in front, one of them for a beer. The body is centred on x 4.
+func _guy_camp(seat: int) -> Image:
+	var img: Image = _new(9, 12)
+	var shirt: Color = SHIRTS[seat]
+	_rect(img, 1, 4, 7, 6, shirt)
+	_rect(img, 1, 9, 7, 1, shirt.darkened(0.25))
+	for corner: Vector2i in [Vector2i(1, 4), Vector2i(7, 4), Vector2i(1, 9), Vector2i(7, 9)]:
+		_clear(img, corner.x, corner.y)
+	_px(img, 1, 3, SKIN)
+	_px(img, 7, 3, SKIN)
+	_head(img, 4, 4, HAIRS[seat])
+	_outline(img, OUTLINE)
+	return img
+
+
+## 22×18 ridge tent seen from above: the lit slope, the shaded slope, the ridge between them and
+## a door flap opening at the right end.
+func _tent() -> Image:
+	var img: Image = _new(22, 18)
+	_rect(img, 1, 1, 20, 8, TENT_LIGHT)
+	_rect(img, 1, 9, 20, 8, TENT)
+	_rect(img, 1, 8, 20, 1, TENT_DARK)
+	for corner: Vector2i in [Vector2i(1, 1), Vector2i(20, 1), Vector2i(1, 16), Vector2i(20, 16)]:
+		_clear(img, corner.x, corner.y)
+	# The door: a dark wedge opening toward the right end.
+	for i: int in 3:
+		_rect(img, 20 - i, 8 - i, 1, 2 * i + 1, OUTLINE)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 12×12 camp fire, two frames: an ash ring, two crossed logs and a flame whose tongues lick a
+## different way each frame (the cutscene flips between them).
+func _campfire(frame: int) -> Image:
+	var img: Image = _new(12, 12)
+	_disc(img, 6, 6, 4, ASH)
+	_rect(img, 2, 6, 8, 2, WOOD)
+	_rect(img, 5, 2, 2, 8, WOOD)
+	_rect(img, 2, 6, 8, 1, WOOD_LIGHT)
+	_disc(img, 6, 6, 2, FIRE)
+	var tongues: Array[Vector2i] = [Vector2i(6, 3), Vector2i(8, 4), Vector2i(4, 5)]
+	if frame == 1:
+		tongues = [Vector2i(5, 3), Vector2i(8, 7), Vector2i(3, 4)]
+	for tongue: Vector2i in tongues:
+		_px(img, tongue.x, tongue.y, FIRE)
+	_px(img, 6, 6, FIRE_LIGHT)
+	_px(img, 6 - frame, 5, FIRE_LIGHT)
+	_outline(img, OUTLINE)
 	return img
 
 

@@ -92,19 +92,4 @@ unique_name_in_owner = true
 layout_mode = 2
 columns = 2
 
-[node name="SpacerTop" type="Control" parent="HUD/Margin/Rows"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="Won" type="Label" parent="HUD/Margin/Rows"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-text = "Made it!"
-horizontal_alignment = 1
-
-[node name="SpacerBottom" type="Control" parent="HUD/Margin/Rows"]
-layout_mode = 2
-size_flags_vertical = 3
-
 [connection signal="body_entered" from="Island" to="." method="_on_island_body_entered"]
