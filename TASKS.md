@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (107 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (108 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -275,9 +275,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the motorboat and the dinghy are at least the catamaran's size (40×56) and the jet-ski at least 32×18 with its rider, the sprays and the fisherman scaled with them, and the hit radii still match the art (check: sizes quoted) · they read at a glance in play (play)
 - GDD: Presentation and Platforms
 
-### T62 · Reset: R on the keyboard, a hold-to-reset corner button on touch · in-progress 2026-10-17 · S · agent
+### T62 · Reset: R on the keyboard, a hold-to-reset corner button on touch · done · S · agent
 - Depends on: T28, T54
-- Touches: project.godot (input action reset R), scripts/lake.gd (restart on reset), scripts/ui/touch_pads.gd or scripts/ui/reset_button.gd (new), scenes/lake.tscn, tools/gen_sprites.gd, assets/sprites/reset.png (new), tests/test_reset_button.gd (new)
+- Touches: project.godot (input action reset R), scripts/lake.gd (restart on reset), scripts/ui/reset_button.gd (new), scenes/lake.tscn, scripts/resources/boat_tuning.gd (+reset_hold_time), data/boat_tuning.tres, tools/gen_sprites.gd, assets/sprites/reset.png (new), tests/test_reset_button.gd (new)
 - Done when: pressing R starts a new attempt (RunState.new_attempt and the lake's restart), also during the win cutscene (play) · on a touchscreen a small corner button resets only after being held for reset_hold_time with a ring filling, and a shorter touch does nothing; the hold logic is a pure helper with a test (test) · the button never overlaps the pads (play)
 - GDD: Presentation and Platforms
 

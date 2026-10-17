@@ -16,6 +16,7 @@ empty_drift_multiplier = 5.0
 loose_drift_speed = 30.0
 camera_lead = 80.0
 touch_flick_distance = 24.0
+reset_hold_time = 1.2
 swim_speed = 30.0
 beer_toss = 32.0
 jump_delay = 2.5

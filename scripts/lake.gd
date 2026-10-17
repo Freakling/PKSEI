@@ -9,6 +9,9 @@ extends Node2D
 ## hazards stop for it (their processing is disabled and their telegraph loops end, B4); when the
 ## cutscene asks to go again it is taken down, RunState.new_attempt() starts the next attempt,
 ## and the boat and the hazards are placed as after a shore reset, the hazards running again.
+## A reset (GDD › Presentation and Platforms, Reset: R on the keyboard, the `reset` action, or
+## the touch button's hold, scripts/ui/reset_button.gd, under the HUD) takes the same path in
+## any phase, taking the cutscene down first if it is up (T62).
 ##
 ## The art is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the water and the
 ## shore are tiles repeated over their polygons, the island a sprite scaled to its radius.
@@ -40,6 +43,7 @@ const WIN_SCENE: PackedScene = preload("res://scenes/win.tscn")
 ## The one beast per attempt (T50), spawned with the plan, not by it.
 const BEAST_SCENE: PackedScene = preload("res://scenes/hazards/beast.tscn")
 const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
+const RESET_ACTION: StringName = &"reset"
 ## Points the debug overlay samples per band of the corridor (the band's edges are among them).
 const PATH_OVERLAY_STEPS: int = 4
 ## The debug overlay's marker at an event's trigger point: a diamond this many pixels from its
@@ -128,6 +132,14 @@ func _physics_process(delta: float) -> void:
 		_path_overlay.visible = not _path_overlay.visible
 
 
+## R starts a new attempt at once, in any phase. Taken here, before the win cutscene's
+## _unhandled_input, and marked handled, so its "any key" does not go again on top of it.
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed(RESET_ACTION):
+		_new_attempt()
+		get_viewport().set_input_as_handled()
+
+
 ## Sizes the water and the shore to the lake: the water runs from the shore line up past the
 ## island, and both run across lake_width plus WATER_MARGIN on each side of x = 0. Their tiles
 ## repeat over the polygons (Polygon2D maps an unset uv from the points, one tile per texture
@@ -181,13 +193,25 @@ func _quiet_hazards() -> void:
 			hazard.set_deferred(&"monitoring", false)
 
 
-## The player goes again: the cutscene leaves at once, the camera follows the boat again, and
-## the next attempt (a new lake) starts from the shore.
+## The player goes again from the win cutscene.
 func _on_win_again() -> void:
-	remove_child(_win)
-	_win.queue_free()
-	_win = null
-	_camera.set_physics_process(true)
+	_new_attempt()
+
+
+## The touch button's hold reached reset_hold_time.
+func _on_reset_requested() -> void:
+	_new_attempt()
+
+
+## The next attempt (a new lake) starts from the shore at once: the cutscene, if it is up,
+## leaves and the camera follows the boat again (freeing it ends its tweens), then
+## RunState.new_attempt() draws the lake and the boat and the hazards are placed.
+func _new_attempt() -> void:
+	if _win != null:
+		remove_child(_win)
+		_win.queue_free()
+		_win = null
+		_camera.set_physics_process(true)
 	RunState.new_attempt()
 	_restart()
 

@@ -129,6 +129,7 @@ func _init() -> void:
 	_save(_log(), "log")
 	_save(_arrow(), "arrow")
 	_save(_pad(), "pad")
+	_save(_reset(), "reset")
 	for frame: int in 2:
 		_save(_beast_fin(frame), "beast_fin_%d" % frame)
 		_save(_beast_head(frame), "beast_head_%d" % frame)
@@ -950,6 +951,30 @@ func _pad() -> Image:
 	_rounded_rect(img, 1, 1, 34, 50, 6, Color(SPLASH, PAD_ALPHA))
 	_arrow_glyph(img, 17, 7, 1, Color(SPLASH, PAD_HINT_ALPHA))
 	_arrow_glyph(img, 17, 44, -1, Color(SPLASH, PAD_HINT_ALPHA))
+	_outline(img, Color(OUTLINE, PAD_OUTLINE_ALPHA))
+	return img
+
+
+## 20×20 reset icon (T62, scripts/ui/reset_button.gd): a translucent white disc like the pad's
+## body, with a circular arrow over it in the pad's hint white: a 2-px ring open at the top
+## right and an arrowhead at the top pointing clockwise, in the pad's soft outline. White so
+## the button can tint it.
+func _reset() -> Image:
+	var img: Image = _new(20, 20)
+	var centre: Vector2 = Vector2(9.5, 9.5)
+	for y: int in 20:
+		for x: int in 20:
+			var offset: Vector2 = Vector2(x, y) - centre
+			var distance: float = offset.length()
+			if distance <= 9.0:
+				_px(img, x, y, Color(SPLASH, PAD_ALPHA))
+			var in_gap: bool = offset.y < 0.0 and offset.x > 0.0
+			if distance >= 5.5 and distance <= 7.5 and not in_gap:
+				_px(img, x, y, Color(SPLASH, PAD_HINT_ALPHA))
+	# The arrowhead: a triangle pointing right, its base on the ring's top end and its tip 4 px on.
+	for column: int in 4:
+		var half: int = 3 - column
+		_rect(img, 10 + column, 3 - half, 1, 2 * half + 1, Color(SPLASH, PAD_HINT_ALPHA))
 	_outline(img, Color(OUTLINE, PAD_OUTLINE_ALPHA))
 	return img
 

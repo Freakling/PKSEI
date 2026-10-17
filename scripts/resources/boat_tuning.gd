@@ -37,6 +37,10 @@ extends Resource
 ## Pixels, at the 640×360 canvas, a finger must move down between its press and its release
 ## for its stroke to be a reverse one (the flick down); any smaller move strokes forward.
 @export var touch_flick_distance: float = 24.0 ## PLACEHOLDER
+## Seconds the corner reset button must be held before it resets (GDD › Presentation and
+## Platforms, Reset: a ring fills meanwhile, so a stray tap does nothing). Read by
+## scripts/ui/reset_button.gd.
+@export var reset_hold_time: float = 1.2 ## PLACEHOLDER
 
 ## Rescue (GDD › Systems › Setbacks; read by Rescue through RunState).
 ## How fast a guy swims for his beer, in pixels per second through the water (on top of the current).

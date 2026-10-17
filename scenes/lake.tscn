@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/lake.gd" id="1_lake"]
 [ext_resource type="PackedScene" path="res://scenes/catamaran.tscn" id="2_boat"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/sand_text.png" id="9_sandtext"]
 [ext_resource type="Script" path="res://scripts/ui/touch_pads.gd" id="10_pads"]
 [ext_resource type="Script" path="res://scripts/ui/speech_bubbles.gd" id="11_bubbles"]
+[ext_resource type="Script" path="res://scripts/ui/reset_button.gd" id="12_reset"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_shore"]
 size = Vector2(6000, 400)
@@ -82,6 +83,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="ResetButton" type="Control" parent="HUD/TouchPads"]
+script = ExtResource("12_reset")
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -32.0
+offset_top = 16.0
+offset_right = -4.0
+offset_bottom = 44.0
+grow_horizontal = 0
+mouse_filter = 2
+
 [node name="Margin" type="MarginContainer" parent="HUD"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -123,3 +137,4 @@ grow_vertical = 2
 mouse_filter = 2
 
 [connection signal="body_entered" from="Island" to="." method="_on_island_body_entered"]
+[connection signal="reset_requested" from="HUD/TouchPads/ResetButton" to="." method="_on_reset_requested"]
