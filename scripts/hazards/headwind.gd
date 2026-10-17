@@ -25,6 +25,9 @@ var _wind: Headwind
 var _boat: CharacterBody2D
 ## Seconds into the animation.
 var _clock: float = 0.0
+## Whether the boat was inside the stretch on the last step, to catch it entering and leaving
+## for the sound.
+var _was_inside: bool = false
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -48,5 +51,19 @@ func _physics_process(delta: float) -> void:
 	var extra: float = _wind.extra_drift(_boat.global_position)
 	if extra > 0.0:
 		RunState.set_extra_drift(extra)
+	_sound_state()
 	_clock += delta
 	_whitecaps.texture = WHITECAP_FRAMES[_frame_at(_clock, WHITECAP_FRAMES.size(), FRAME_PERIOD)]
+
+
+## Sound only (T26): the whitecaps' wind loops while the boat is inside the stretch, from the
+## step it enters to the step it leaves.
+func _sound_state() -> void:
+	var inside: bool = _wind.inside(_boat.global_position)
+	if inside == _was_inside:
+		return
+	_was_inside = inside
+	if inside:
+		_start_loop(&"whitecaps")
+	else:
+		_stop_loop()

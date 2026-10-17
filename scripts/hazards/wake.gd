@@ -35,6 +35,8 @@ var _wake: MotorboatWake
 var _boat: CharacterBody2D
 ## Seconds into the animation.
 var _clock: float = 0.0
+## The rule's state on the last step, to catch its changes for the sound.
+var _last_state: MotorboatWake.State = MotorboatWake.State.WAITING
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -54,7 +56,21 @@ func _physics_process(delta: float) -> void:
 		RunState.beer_overboard(hit.hull, _boat.global_position)
 		RunState.shove(hit.shove)
 		RunState.water_aboard(hit.hull, hit.water)
+	_sound_state()
 	_show_state(delta)
+
+
+## Sound only (T26): the motorboat's engine loops from the moment it sets out (CROSSING, before
+## its wave is anywhere near) until the wave is spent.
+func _sound_state() -> void:
+	var state: MotorboatWake.State = _wake.state
+	if state == _last_state:
+		return
+	_last_state = state
+	if state == MotorboatWake.State.CROSSING:
+		_start_loop(&"engine")
+	elif state == MotorboatWake.State.SPENT:
+		_stop_loop()
 
 
 ## Visual only: the motorboat shows while it crosses, turned the way it goes (the sprite is

@@ -24,6 +24,7 @@ GODOT_BIN="$(LC_ALL=C tr -d '\r' < tools/godot_bin.local | head -1)"
 
 rm -rf build/web
 mkdir -p build/web
+[ -f build/.gdignore ] || touch build/.gdignore   # keep Godot from importing the export
 echo "ship: exporting Web preset with $GODOT_BIN"
 "$GODOT_BIN" --headless --export-release "Web" "build/web/index.html"
 [ -f build/web/index.html ] || { echo "ship: export failed: build/web/index.html missing (are the export templates installed?)"; exit 1; }

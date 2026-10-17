@@ -72,7 +72,9 @@ signal stroke_fumbled(seat: int)
 signal guy_jumped(seat: int)
 signal guy_picked_up(seat: int)
 signal beer_overboard_started(hull: Rescue.Hull)
-## The beast grabbed a guy in beast_grab() (T50; a sound later).
+## A guy knocked in (not a jump, not a grab) in guy_overboard() (T26: the splash).
+signal guy_fell_in(seat: int)
+## The beast grabbed a guy in beast_grab() (T50; T26: the chomp).
 signal guy_grabbed(seat: int)
 
 var guys: Array[Guy] = []
@@ -191,29 +193,38 @@ func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 ## boat, whatever antic he was busy with is over, and his strokes still waiting to land are
 ## dropped. With no beer loose for him he floats from the start and doesn't drink; caught
 ## winding up, he swims for his beer anyway (Rescue.guy_overboard). Nothing happens if he is
-## already in the water.
+## already in the water. Emits guy_fell_in: his splash.
 func guy_overboard(seat: int, at_position: Vector2) -> void:
-	if not guys[seat].aboard:
-		return
-	rescue.guy_overboard(seat, at_position)
-	guys[seat].aboard = false
-	antics.interrupt(seat)
-	_drop_pending(seat)
+	if _take_off(seat, at_position):
+		guy_fell_in.emit(seat)
 
 
 ## The beast rammed `side` with the boat at `from_position` and grabbed that hull's guy (front
 ## first, of those aboard): swallowed, dived with, and spat out `spit_distance` back toward the
-## shore (down-screen), where he goes in beerless through guy_overboard() (GDD › Systems ›
+## shore (down-screen), where he goes in beerless like a guy knocked in (GDD › Systems ›
 ## Hazards, the Loch-Brez beast row). Rescue holds him at the shoreline if that is past it.
 ## No beer goes over, so the beer-loss cooldown neither holds this back nor starts. Returns his
-## seat, or Rescue.NOBODY when nobody is aboard that hull.
+## seat, or Rescue.NOBODY when nobody is aboard that hull. Emits guy_grabbed, not guy_fell_in:
+## the grab is its own sound.
 func beast_grab(side: Rescue.Hull, from_position: Vector2, spit_distance: float) -> int:
 	var seat: int = _hull_guy(side)
 	if seat == Rescue.NOBODY:
 		return Rescue.NOBODY
-	guy_overboard(seat, from_position + Vector2.DOWN * spit_distance)
+	_take_off(seat, from_position + Vector2.DOWN * spit_distance)
 	guy_grabbed.emit(seat)
 	return seat
+
+
+## Puts the guy at `seat` in the water at `at_position` beerless (Rescue.guy_overboard), ends
+## his antic and drops his waiting strokes. False, and nothing done, if he wasn't aboard.
+func _take_off(seat: int, at_position: Vector2) -> bool:
+	if not guys[seat].aboard:
+		return false
+	rescue.guy_overboard(seat, at_position)
+	guys[seat].aboard = false
+	antics.interrupt(seat)
+	_drop_pending(seat)
+	return true
 
 
 ## The boat reached him: he is aboard again. Returns whether he brought his beer back.

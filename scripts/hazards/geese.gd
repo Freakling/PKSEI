@@ -35,6 +35,8 @@ var _sprites: Array[Sprite2D] = []
 var _clock: float = 0.0
 ## Where the flock was on the last step, to face the way it flies.
 var _last_position: Vector2 = Vector2.ZERO
+## The flock's state on the last step, to catch the hissing's start for the sound.
+var _last_state: GeeseFlock.State = GeeseFlock.State.NESTING
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -53,7 +55,18 @@ func _physics_process(delta: float) -> void:
 	var pecks: Array[GeeseFlock.Peck] = _flock.step(delta, _boat.global_position, _boat.global_rotation)
 	for peck: GeeseFlock.Peck in pecks:
 		RunState.beer_overboard(peck.hull, _boat.global_position)
+	_sound_state()
 	_show_state(delta)
+
+
+## Sound only (T26): the geese hiss as the hissing starts, each time it does.
+func _sound_state() -> void:
+	var state: GeeseFlock.State = _flock.state
+	if state == _last_state:
+		return
+	_last_state = state
+	if state == GeeseFlock.State.HISSING:
+		Audio.play(&"geese_hiss")
 
 
 ## Visual only: the geese follow the flock, face the boat while hissing and the way they fly

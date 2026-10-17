@@ -41,6 +41,8 @@ var _half_field: float = 0.0
 var _travel: float = 0.0
 ## Seconds into the animation.
 var _clock: float = 0.0
+## The rule's state on the last step, to catch the warning's start for the sound.
+var _last_state: WindGust.State = WindGust.State.WAITING
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -63,7 +65,18 @@ func _physics_process(delta: float) -> void:
 	var push: Vector2 = _gust.step(delta, _boat.global_position)
 	if push != Vector2.ZERO:
 		RunState.push(push)
+	_sound_state()
 	_show_state(delta)
+
+
+## Sound only (T26): the wind rises as the warning starts, before the gust blows.
+func _sound_state() -> void:
+	var state: WindGust.State = _gust.state
+	if state == _last_state:
+		return
+	_last_state = state
+	if state == WindGust.State.WARNING:
+		Audio.play(&"wind_rise")
 
 
 ## Visual only: the ripples show from the warning to the end of the push, racing the way the

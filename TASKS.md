@@ -12,7 +12,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ✅ done |
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
-| Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
+| Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
 | Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (102 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
@@ -310,9 +310,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the check runs the autoload without errors (check) · strokes, splashes, jumps and pick-ups have sounds, and the master volume follows the player setting (play)
 - GDD: Presentation and Platforms
 
-### T26 · Audio telegraphs: engine before the wake, jet-ski offscreen, geese hiss, wind rising · todo · M · agent
+### T26 · Audio telegraphs: engine before the wake, jet-ski offscreen, geese hiss, wind rising · done · M · agent
 - Depends on: T25, T15, T16, T17, T21, T50
-- Touches: assets/audio/hazards/ (new), scenes/hazards/wake.tscn, scenes/hazards/jetski.tscn, scenes/hazards/geese.tscn, scenes/hazards/gust.tscn, scenes/hazards/headwind.tscn, scenes/hazards/beast.tscn
+- Touches: tools/gen_audio.gd, assets/audio/hazards/ (new), scripts/autoload/audio.gd (play_loop/stop_loop), scripts/autoload/run_state.gd (signal guy_fell_in), scripts/hazards/hazard_base.gd, scripts/hazards/{wake,jetski,geese,gust,headwind,beast}.gd, tests/test_run_state.gd
 - Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play) · a guy knocked in during a pee splashes like a jumper (RunState emits a signal for `guy_overboard`) (test) · the beast's circling has a low rumble and the grab a sound, from `guy_grabbed` (play)
 - GDD: Systems › Hazards
 

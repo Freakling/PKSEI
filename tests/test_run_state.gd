@@ -27,6 +27,8 @@ extends "res://tools/test_case.gd"
 ## seconds while shove() and stop() still reach the boat; the cooldown resets with the attempt.
 ## T47 · With nobody aboard the boat's drift is current_speed times empty_drift_multiplier per
 ## second; with anyone aboard it is current_speed (GDD › Systems › Setbacks).
+## T26 · guy_overboard() fires guy_fell_in (a knock-in splashes like a jumper) and beast_grab()
+## fires guy_grabbed instead (the grab is its own sound) (GDD › Presentation and Platforms, Audio).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -905,4 +907,26 @@ func test_with_anyone_aboard_the_boat_drifts_at_current_speed() -> void:
 	var delta: float = 0.5
 	var motion: Paddling.Motion = state.step(delta, BOAT)
 	expect_near(motion.drift_to_shore, state.paddling.tuning.current_speed * delta, 0.0001, "one aboard: current_speed per second")
+	state.free()
+
+
+## T26: a guy knocked in through guy_overboard() fires guy_fell_in with his seat, once (a guy
+## already in the water doesn't fall in again); a beast grab fires guy_grabbed with the seat it
+## took and not guy_fell_in, so the grab's chomp doesn't come with a second splash.
+func test_overboard_signals_fell_in_and_grabbed() -> void:
+	var state: Node = sober_state()
+	var fell: Array[int] = []
+	var grabbed: Array[int] = []
+	state.guy_fell_in.connect(func(seat: int) -> void: fell.append(seat))
+	state.guy_grabbed.connect(func(seat: int) -> void: grabbed.append(seat))
+	state.guy_overboard(Paddling.Seat.LEFT_FRONT, BOAT)
+	expect_eq(fell, [Paddling.Seat.LEFT_FRONT] as Array[int], "guy_fell_in with the seat")
+	state.guy_overboard(Paddling.Seat.LEFT_FRONT, BOAT)
+	expect_eq(fell.size(), 1, "already in the water: no second splash")
+	expect_eq(grabbed.size(), 0, "a knock-in is no grab")
+	var seat: int = state.beast_grab(Rescue.Hull.RIGHT, BOAT, 100.0)
+	expect_ne(seat, Rescue.NOBODY, "the right hull had a guy to grab")
+	expect_eq(grabbed, [seat] as Array[int], "guy_grabbed with the seat the beast took")
+	expect_eq(fell.size(), 1, "a grab is its own sound, not a fall")
+	expect_false(state.guys[seat].aboard, "and he is in the water all the same")
 	state.free()

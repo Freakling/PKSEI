@@ -39,6 +39,9 @@ var _rng: RandomNumberGenerator
 var _boat: CharacterBody2D
 ## Seconds into the two-frame cycle.
 var _clock: float = 0.0
+## Whether the beast was up (circling or ramming) on the last step, to catch it rising and
+## diving for the sound.
+var _was_up: bool = false
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -52,13 +55,30 @@ func _setup() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _boat == null or RunState.phase == RunState.Phase.WON:
+	if _boat == null:
+		return
+	if RunState.phase == RunState.Phase.WON:
+		_stop_loop()
 		return
 	var hit: Beast.Hit = _rule.step(delta, _boat.global_position, _boat.global_rotation, _rng)
 	if hit != null:
 		RunState.shove(hit.shove)
 		RunState.beast_grab(hit.hull, _boat.global_position, tuning.beast_spit_distance)
+	_sound_state()
 	_show_state(delta)
+
+
+## Sound only (T26): the low rumble loops from the moment the beast rises (CIRCLING), through
+## the ram, until it dives. The grab's chomp is the Audio autoload's, from RunState.guy_grabbed.
+func _sound_state() -> void:
+	var up: bool = _rule.state == Beast.State.CIRCLING or _rule.state == Beast.State.RAMMING
+	if up == _was_up:
+		return
+	_was_up = up
+	if up:
+		_start_loop(&"beast_rumble")
+	else:
+		_stop_loop()
 
 
 ## Visual only: the fin over its ripples while circling, the head while ramming, each where

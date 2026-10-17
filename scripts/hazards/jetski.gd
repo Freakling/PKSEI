@@ -3,7 +3,7 @@ extends HazardBase
 ## speed (GDD › Systems › Hazards, the Jet-ski idiot row). An event: the lake places this node
 ## where the plan put it, but the placement is only the trigger and nothing shows there. When
 ## the boat comes near, the warning shows as a flashing marker at the screen's edge on the side
-## the jet-ski will come from (Visual/Warning/Marker, a stand-in for the sound until T26's audio;
+## the jet-ski will come from (Visual/Warning/Marker, beside the jet-ski loop heard from offscreen, T26;
 ## Visual-only), then the jet-ski (Visual/JetSki: the two-frame jet-ski sprite with its rider
 ## and spray from assets/sprites/hazards/, T24, drawn by tools/gen_sprites.gd, turned to face
 ## along the rule's course) crosses at the JetSki rule's position. The rule decides everything;
@@ -33,6 +33,8 @@ var _boat: CharacterBody2D
 var _flash: float = 0.0
 ## Seconds into the animation.
 var _clock: float = 0.0
+## The rule's state on the last step, to catch its changes for the sound.
+var _last_state: JetSki.State = JetSki.State.WAITING
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -50,7 +52,21 @@ func _physics_process(delta: float) -> void:
 	if hit != null:
 		RunState.shove(hit.shove)
 		RunState.beer_overboard(hit.hull, _boat.global_position)
+	_sound_state()
 	_show_state(delta)
+
+
+## Sound only (T26): the jet-ski is heard from offscreen through the warning, loops while it
+## crosses, and stops once it is spent.
+func _sound_state() -> void:
+	var state: JetSki.State = _rule.state
+	if state == _last_state:
+		return
+	_last_state = state
+	if state == JetSki.State.WARNING:
+		_start_loop(&"jetski")
+	elif state == JetSki.State.SPENT:
+		_stop_loop()
 
 
 ## Visual only: the marker flashes at the screen's edge on the jet-ski's side while the warning
