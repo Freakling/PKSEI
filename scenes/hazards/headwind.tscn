@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/hazards/headwind.gd" id="1_headwind"]
+[ext_resource type="Texture2D" path="res://assets/sprites/hazards/whitecap_0.png" id="2_whitecap"]
 
 [node name="Headwind" type="Node2D"]
 script = ExtResource("1_headwind")
@@ -11,5 +12,9 @@ script = ExtResource("1_headwind")
 color = Color(1, 1, 1, 0.08)
 polygon = PackedVector2Array(-800, -400, 800, -400, 800, 0, -800, 0)
 
-[node name="Whitecaps" type="Polygon2D" parent="Visual"]
-color = Color(0.97, 0.98, 1, 1)
+[node name="Whitecaps" type="Sprite2D" parent="Visual"]
+texture_repeat = 2
+position = Vector2(0, -200)
+texture = ExtResource("2_whitecap")
+region_enabled = true
+region_rect = Rect2(0, 0, 480, 400)

@@ -8,11 +8,12 @@ extends HazardBase
 ## toward the lake's middle and beast_grab() of the guy on the hull it hit, spat out
 ## beast_spit_distance toward the shore. Once the attempt is won (RunState.Phase.WON) it stops
 ## where it is: no hit lands during the win cutscene.
-## It shows the state at a glance: while the beast circles, the fin sprite (Visual/Fin, with its
-## ripple ring) rides the rule's position pointing the way it goes; while it rams, the head
-## sprite (Visual/Head) charges at the boat; under water nothing shows. Each sprite flips
-## between its two frames (assets/sprites/beast_*.png, from tools/gen_sprites.gd). No rules
-## and no randomness here.
+## It shows the state at a glance: while the beast circles, the fin sprite (Visual/Fin) rides
+## the rule's position pointing the way it goes over widening ripple rings (Visual/Ripples,
+## T24); while it rams, the head sprite (Visual/Head) charges at the boat; under water nothing
+## shows. Each sprite flips between its two frames (assets/sprites/beast_*.png and
+## assets/sprites/hazards/beast_ripple_*.png, from tools/gen_sprites.gd). No rules and no
+## randomness here.
 
 const FIN_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/beast_fin_0.png"), preload("res://assets/sprites/beast_fin_1.png"),
@@ -20,9 +21,14 @@ const FIN_FRAMES: Array[Texture2D] = [
 const HEAD_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/beast_head_0.png"), preload("res://assets/sprites/beast_head_1.png"),
 ]
+const RIPPLE_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/hazards/beast_ripple_0.png"),
+	preload("res://assets/sprites/hazards/beast_ripple_1.png"),
+]
 ## Seconds each frame shows (cosmetic).
 const FRAME_PERIOD: float = 0.3
 
+@onready var _ripples: Sprite2D = $Visual/Ripples
 @onready var _fin: Sprite2D = $Visual/Fin
 @onready var _head: Sprite2D = $Visual/Head
 
@@ -40,6 +46,7 @@ func _setup() -> void:
 	_rule = Beast.new(tuning)
 	_rng = Beast.rng_for(RunState.lake_seed)
 	_boat = _find_boat()
+	_ripples.visible = false
 	_fin.visible = false
 	_head.visible = false
 
@@ -54,17 +61,22 @@ func _physics_process(delta: float) -> void:
 	_show_state(delta)
 
 
-## Visual only: the fin while circling, the head while ramming, each where the rule puts the
-## beast and turned the way it moves (the sprites are drawn pointing up); nothing otherwise.
+## Visual only: the fin over its ripples while circling, the head while ramming, each where
+## the rule puts the beast and turned the way it moves (the sprites are drawn pointing up; the
+## ripples are not turned); nothing otherwise.
 func _show_state(delta: float) -> void:
-	_clock = fmod(_clock + delta, FRAME_PERIOD * 2.0)
-	var frame: int = 0 if _clock < FRAME_PERIOD else 1
+	var frame: int = _frame_at(_clock, 2, FRAME_PERIOD)
+	_clock += delta
 	var circling: bool = _rule.state == Beast.State.CIRCLING
 	var ramming: bool = _rule.state == Beast.State.RAMMING
+	_ripples.visible = circling
 	_fin.visible = circling
 	_head.visible = ramming
 	if not (circling or ramming):
 		return
+	if circling:
+		_ripples.position = to_local(_rule.position)
+		_ripples.texture = RIPPLE_FRAMES[frame]
 	var sprite: Sprite2D = _fin if circling else _head
 	sprite.texture = FIN_FRAMES[frame] if circling else HEAD_FRAMES[frame]
 	sprite.position = to_local(_rule.position)

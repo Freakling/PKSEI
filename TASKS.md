@@ -11,7 +11,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Foundation: project settings, first system with a test, check passing | ✅ done |
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ✅ done |
 | Hazards complete: T10, T15–T21 | ✅ done |
-| Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
+| Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
 | Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (102 placeholders) |
 
@@ -298,9 +298,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: every telegraph in GDD › Drunkenness and GDD › Stamina has its own animation that starts at the warning and ends at the effect (play) · a late or missed stroke is visible as a fumble (play)
 - GDD: Systems › Drunkenness · Systems › Stamina
 
-### T24 · Hazard telegraph animations · todo · M · agent
+### T24 · Hazard telegraph animations · done · M · agent
 - Depends on: T22, T15, T16, T17, T18, T19, T20, T21
-- Touches: assets/sprites/hazards/ (new), scenes/hazards/*.tscn
+- Touches: tools/gen_sprites.gd, assets/sprites/hazards/ (new, 27 frames), scenes/hazards/*.tscn, scripts/hazards/*.gd
 - Done when: each telegraph in the GDD › Hazards table is an animation that plays before the effect (play) · the jet-ski sprite faces along its diagonal course (play)
 - GDD: Systems › Hazards
 

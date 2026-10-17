@@ -3,29 +3,29 @@ extends HazardBase
 ## in it (GDD › Systems › Hazards, the Cross-current stripe row). An object placed like one: the
 ## lake puts this node where the plan put it, and the stripe is the CrossCurrent rule's rectangle
 ## from there toward the island across the whole lake. Visual/Band tints that stretch a slightly
-## different blue and Visual/Arrows (small arrow dashes on a fixed grid, pointing the way the
-## water runs) covers it, visible from spawn. Each physics frame the boat is inside, the rule's
-## push goes to RunState.push(), which the boat moves by, the same sustained push as a gust. No
-## rules and no randomness here; the tunables are the stripe_* fields on LakeTuning, which the lake
+## different blue and Visual/Arrows (a two-frame tile of an arrow and streaks moving the way the
+## water runs, from assets/sprites/hazards/, T24, drawn by tools/gen_sprites.gd, repeated over the
+## stripe) covers it, visible from spawn. Each physics frame the boat is inside, the rule's push
+## goes to RunState.push(), which the boat moves by, the same sustained push as a gust. No rules
+## and no randomness here; the tunables are the stripe_* fields on LakeTuning, which the lake
 ## sets as `tuning` before the node enters the tree.
 
-## The arrows (cosmetic): the grid's spacing across and along the stripe in pixels, an arrow's
-## length, shaft thickness, head length and head half-width, and their colours.
-const ARROW_SPACING_X: float = 200.0
-const ARROW_SPACING_Y: float = 120.0
-const ARROW_LENGTH: float = 14.0
-const ARROW_THICKNESS: float = 2.0
-const ARROW_HEAD_LENGTH: float = 5.0
-const ARROW_HEAD_HALF_WIDTH: float = 3.5
+const ARROW_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/hazards/current_arrow_0.png"),
+	preload("res://assets/sprites/hazards/current_arrow_1.png"),
+]
+## Seconds each frame shows (cosmetic): slow enough to read at 1×.
+const FRAME_PERIOD: float = 0.25
 const BAND_COLOUR: Color = Color(0.3, 0.62, 0.92, 0.35)
-const ARROW_COLOUR: Color = Color(0.75, 0.9, 1.0, 0.8)
 
 @onready var _band: Polygon2D = $Visual/Band
-@onready var _arrows: Polygon2D = $Visual/Arrows
+@onready var _arrows: Sprite2D = $Visual/Arrows
 
 var _stripe: CrossCurrent
 ## The boat: the only CharacterBody2D on the lake, found in _setup().
 var _boat: CharacterBody2D
+## Seconds into the animation.
+var _clock: float = 0.0
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -39,44 +39,17 @@ func _setup() -> void:
 	_band.polygon = PackedVector2Array([
 		Vector2(-half, top), Vector2(half, top), Vector2(half, 0.0), Vector2(-half, 0.0),
 	])
-	_build_arrows(half, top, _stripe.direction().x)
+	# The tile repeats over the whole rectangle, centred on it; its arrow points right, so it
+	# is flipped for a stripe that runs left.
+	_arrows.region_rect = Rect2(0.0, 0.0, half * 2.0, -top)
+	_arrows.position = Vector2(0.0, top * 0.5)
+	_arrows.scale.x = _stripe.direction().x
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if _boat == null:
 		return
 	if _stripe.inside(_boat.global_position):
 		RunState.push(_stripe.push())
-
-
-## Visual only: one Polygon2D holding every arrow, a grid ARROW_SPACING_X by ARROW_SPACING_Y over
-## the stripe, every arrow a shaft and a head pointing along `facing` (+1 rightward, -1 leftward).
-## Arrows that would poke past the stripe's sides are left out.
-func _build_arrows(half: float, top: float, facing: float) -> void:
-	var vertices: PackedVector2Array = PackedVector2Array()
-	var shapes: Array = []
-	var columns: int = int(floorf(half * 2.0 / ARROW_SPACING_X))
-	var rows: int = int(floorf(-top / ARROW_SPACING_Y))
-	var half_length: float = ARROW_LENGTH * 0.5
-	var half_thickness: float = ARROW_THICKNESS * 0.5
-	var head_start: float = half_length - ARROW_HEAD_LENGTH
-	for row: int in rows:
-		var y: float = top + (row + 0.5) * ARROW_SPACING_Y
-		for column: int in columns:
-			var x: float = -half + (column + 0.5) * ARROW_SPACING_X
-			if absf(x) + half_length > half:
-				continue
-			var first: int = vertices.size()
-			# The shaft, then the head, in offsets along the arrow that `facing` turns to the right.
-			vertices.append(Vector2(x - facing * half_length, y - half_thickness))
-			vertices.append(Vector2(x + facing * head_start, y - half_thickness))
-			vertices.append(Vector2(x + facing * head_start, y + half_thickness))
-			vertices.append(Vector2(x - facing * half_length, y + half_thickness))
-			vertices.append(Vector2(x + facing * head_start, y - ARROW_HEAD_HALF_WIDTH))
-			vertices.append(Vector2(x + facing * half_length, y))
-			vertices.append(Vector2(x + facing * head_start, y + ARROW_HEAD_HALF_WIDTH))
-			shapes.append(PackedInt32Array([first, first + 1, first + 2, first + 3]))
-			shapes.append(PackedInt32Array([first + 4, first + 5, first + 6]))
-	_arrows.color = ARROW_COLOUR
-	_arrows.polygon = vertices
-	_arrows.polygons = shapes
+	_clock += delta
+	_arrows.texture = ARROW_FRAMES[_frame_at(_clock, ARROW_FRAMES.size(), FRAME_PERIOD)]

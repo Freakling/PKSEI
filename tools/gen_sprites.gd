@@ -58,6 +58,21 @@ const BEAST_LIGHT: Color = Color8(92, 164, 108)
 const BEAST_DARK: Color = Color8(28, 74, 56)
 const BEAST_EYE: Color = Color8(250, 220, 60)
 const BEAST_MOUTH: Color = Color8(204, 60, 84)
+const ROCK: Color = Color8(122, 124, 136)
+const ROCK_LIGHT: Color = Color8(178, 182, 194)
+const ROCK_DARK: Color = Color8(76, 78, 92)
+const GOOSE: Color = Color8(246, 246, 250)
+const GOOSE_DARK: Color = Color8(186, 188, 200)
+const GOOSE_BEAK: Color = Color8(250, 122, 40)
+const GOSLING: Color = Color8(250, 222, 72)
+const NEST: Color = Color8(164, 128, 64)
+const NEST_LIGHT: Color = Color8(214, 180, 104)
+const MOTOR: Color = Color8(58, 58, 72)
+const JETSKI: Color = Color8(252, 202, 36)
+const JETSKI_DARK: Color = Color8(214, 150, 24)
+const RIDER: Color = Color8(232, 68, 52)
+const FISHER: Color = Color8(62, 122, 204)
+const FLOAT_RED: Color = Color8(232, 52, 52)
 
 ## Shirt and hair per seat, in Paddling.Seat order (LF, LB, RF, RB). Hair alpha 0 = bald.
 const SHIRTS: Array[Color] = [
@@ -77,6 +92,11 @@ const GUY_FRAMES: Array[String] = [
 ]
 const ZEE: Color = Color8(217, 230, 255)
 
+## The hazard telegraph frames (T24): PNGs in assets/sprites/hazards/, drawn by the _rock() to
+## _beast_ripple() functions below; the hazard scenes (scenes/hazards/*.tscn and their scripts in
+## scripts/hazards/) load them by name, so the names are their contract.
+const HAZARDS_DIR: String = "hazards"
+
 var _preview_dir: String = ""
 
 
@@ -87,6 +107,7 @@ func _init() -> void:
 			_preview_dir = args[i + 1]
 	DirAccess.make_dir_recursive_absolute(OUT_DIR)
 	DirAccess.make_dir_recursive_absolute(OUT_DIR.path_join(GUYS_DIR))
+	DirAccess.make_dir_recursive_absolute(OUT_DIR.path_join(HAZARDS_DIR))
 	_save(_catamaran(), "catamaran")
 	for seat: int in SHIRTS.size():
 		_save(_guy_swim(seat), "guy_swim_%d" % seat)
@@ -106,6 +127,24 @@ func _init() -> void:
 	for frame: int in 2:
 		_save(_beast_fin(frame), "beast_fin_%d" % frame)
 		_save(_beast_head(frame), "beast_head_%d" % frame)
+	_save(_rock(), "rock", HAZARDS_DIR)
+	_save(_goslings(), "goslings", HAZARDS_DIR)
+	_save(_goose_calm(), "goose_calm", HAZARDS_DIR)
+	_save(_motorboat(), "motorboat", HAZARDS_DIR)
+	_save(_dinghy(), "dinghy", HAZARDS_DIR)
+	_save(_gust_streak(), "gust_streak", HAZARDS_DIR)
+	for frame: int in 2:
+		_save(_goose_hiss(frame), "goose_hiss_%d" % frame, HAZARDS_DIR)
+		_save(_goose_fly(frame), "goose_fly_%d" % frame, HAZARDS_DIR)
+		_save(_motorboat_spray(frame), "motorboat_spray_%d" % frame, HAZARDS_DIR)
+		_save(_wake_crest(frame), "wake_crest_%d" % frame, HAZARDS_DIR)
+		_save(_whitecap(frame), "whitecap_%d" % frame, HAZARDS_DIR)
+		_save(_current_arrow(frame), "current_arrow_%d" % frame, HAZARDS_DIR)
+		_save(_jetski(frame), "jetski_%d" % frame, HAZARDS_DIR)
+		_save(_float(frame), "float_%d" % frame, HAZARDS_DIR)
+		_save(_beast_ripple(frame), "beast_ripple_%d" % frame, HAZARDS_DIR)
+	for frame: int in 3:
+		_save(_gust_ripple(frame), "gust_ripple_%d" % frame, HAZARDS_DIR)
 	quit()
 
 
@@ -525,6 +564,263 @@ func _beast_head(frame: int) -> Image:
 	return img
 
 
+# --- hazard telegraphs (T24, assets/sprites/hazards/) ------------------------------------------
+
+## 20×16 a rock: a grey boulder with a lighter hump, a crack, a dark waterline, and foam where
+## the water breaks on it. Static: it is visible from far off, that is its telegraph.
+func _rock() -> Image:
+	var img: Image = _new(20, 16)
+	_ellipse(img, 10, 9, 8, 5, ROCK)
+	_ellipse(img, 9, 6, 5, 3, ROCK)
+	_ellipse(img, 8, 5, 3, 1, ROCK_LIGHT)
+	_rect(img, 4, 13, 12, 1, ROCK_DARK)
+	for crack: Vector2i in [Vector2i(12, 8), Vector2i(13, 9), Vector2i(13, 10), Vector2i(14, 11)]:
+		_px(img, crack.x, crack.y, ROCK_DARK)
+	_outline(img, OUTLINE)
+	for foam: Vector2i in [Vector2i(0, 8), Vector2i(1, 11), Vector2i(19, 7), Vector2i(18, 12),
+			Vector2i(5, 15), Vector2i(15, 15)]:
+		_px(img, foam.x, foam.y, SPLASH)
+	return img
+
+
+## 24×16 the geese's nest: a ring of reeds with three goslings in it, each a yellow fluff with
+## a beak and an eye, looking different ways.
+func _goslings() -> Image:
+	var img: Image = _new(24, 16)
+	_ellipse(img, 12, 8, 11, 7, NEST)
+	for reed: int in 12:
+		var angle: float = TAU * float(reed) / 12.0
+		_px(img, 12 + roundi(cos(angle) * 9.5), 8 + roundi(sin(angle) * 5.5), NEST_LIGHT)
+	_ellipse(img, 12, 8, 7, 4, NEST_LIGHT)
+	for gosling: Vector3i in [Vector3i(7, 9, -1), Vector3i(12, 6, 0), Vector3i(17, 9, 1)]:
+		_disc(img, gosling.x, gosling.y, 1, GOSLING)
+		_px(img, gosling.x + gosling.z, gosling.y - 2, GOOSE_BEAK)
+		_px(img, gosling.x - gosling.z, gosling.y - 1, OUTLINE)
+	_outline(img, OUTLINE)
+	return img
+
+
+## A goose's body, neck and head pointing up, centred on x = cx with the body's centre at
+## (cx, body_y) and `neck` pixels of neck: the wings and the beak are the frames' business.
+func _goose_body(img: Image, cx: int, body_y: int, neck: int) -> void:
+	_ellipse(img, cx, body_y, 3, 3, GOOSE)
+	_px(img, cx, body_y + 3, GOOSE_DARK)
+	_rect(img, cx, body_y - 3 - neck, 1, neck + 1, GOOSE)
+	_disc(img, cx, body_y - 4 - neck, 1, GOOSE)
+	_px(img, cx - 1, body_y - 4 - neck, OUTLINE)
+	_px(img, cx + 1, body_y - 4 - neck, OUTLINE)
+
+
+## 12×12 a goose on the nest, calm: wings folded along its sides, neck tucked, beak closed.
+func _goose_calm() -> Image:
+	var img: Image = _new(12, 12)
+	_goose_body(img, 6, 8, 1)
+	_rect(img, 3, 7, 1, 3, GOOSE_DARK)
+	_rect(img, 9, 7, 1, 3, GOOSE_DARK)
+	_px(img, 6, 1, GOOSE_BEAK)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 16×14 a goose hissing: wings raised out and up, neck stretched, beak open wide. Two frames:
+## the wings lift higher on the second and the beak gapes wider.
+func _goose_hiss(frame: int) -> Image:
+	var img: Image = _new(16, 14)
+	_goose_body(img, 8, 10, 2)
+	var tip_y: int = 5 - frame * 2
+	for side: int in [-1, 1]:
+		var root: Vector2i = Vector2i(8 + side * 3, 10)
+		var tip: Vector2i = Vector2i(8 + side * 7, tip_y)
+		_line(img, root, tip, GOOSE)
+		_line(img, root + Vector2i(0, 1), tip + Vector2i(0, 1), GOOSE)
+		_px(img, tip.x, tip.y + 1, GOOSE_DARK)
+	if frame == 0:
+		_rect(img, 8, 0, 1, 2, GOOSE_BEAK)
+	else:
+		_rect(img, 7, 0, 3, 1, GOOSE_BEAK)
+		_px(img, 8, 1, GOOSE_BEAK)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 16×14 a goose flying: wings spread straight out on the first frame, swept back on the
+## second, feet trailing, neck out, beak closed.
+func _goose_fly(frame: int) -> Image:
+	var img: Image = _new(16, 14)
+	_goose_body(img, 8, 9, 2)
+	_px(img, 8, 2, GOOSE_BEAK)
+	for side: int in [-1, 1]:
+		var root: Vector2i = Vector2i(8 + side * 3, 9)
+		var tip: Vector2i = Vector2i(8 + side * 7, 8 if frame == 0 else 12)
+		_line(img, root, tip, GOOSE)
+		_line(img, root + Vector2i(0, 1), tip + Vector2i(0, 1), GOOSE)
+		_px(img, tip.x, tip.y + 1, GOOSE_DARK)
+		_px(img, tip.x - side, tip.y + 1, GOOSE_DARK)
+	_px(img, 7, 13, GOOSE_BEAK)
+	_px(img, 9, 13, GOOSE_BEAK)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 12×24 the motorboat pointing up: a white hull with a pointed bow, a red stripe each side, a
+## windscreen and a driver amidships, an outboard at the stern.
+func _motorboat() -> Image:
+	var img: Image = _new(12, 24)
+	for y: int in range(2, 21):
+		var half: int = mini(4, (y - 1) / 2)
+		_rect(img, 6 - half, y, 2 * half + 1, 1, HULL_LIGHT)
+		if half >= 3:
+			_rect(img, 6 - half + 2, y, 2 * half - 3, 1, HULL_FLOOR)
+	for y: int in range(10, 19):
+		_px(img, 2, y, COOLER)
+		_px(img, 10, y, COOLER)
+	_rect(img, 4, 8, 5, 1, HULL_DARK)
+	_rect(img, 4, 9, 5, 5, HULL)
+	_head_back(img, 6, 12, HAIRS[0])
+	_rect(img, 5, 20, 3, 3, MOTOR)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 16×12 the motorboat's wake trail, placed astern: two white spray lines fanning out, with
+## foam between them near the stern; the gaps in the lines move on the second frame.
+func _motorboat_spray(frame: int) -> Image:
+	var img: Image = _new(16, 12)
+	for row: int in 12:
+		var spread: int = row * 7 / 11
+		var colour: Color = SPLASH if (row + frame) % 3 != 2 else WATER_LIGHT
+		_px(img, 7 - spread, row, colour)
+		_px(img, 8 + spread, row, colour)
+	for foam: Vector2i in [Vector2i(7, 1 + frame), Vector2i(8, 3 - frame), Vector2i(6, 4 + frame),
+			Vector2i(9, 5)]:
+		_px(img, foam.x, foam.y, WATER_LIGHT)
+	return img
+
+
+## 32×8 one tile of the wake's wave front, repeated across the lake: a lighter band with a
+## white crest that rolls (its steps swap on the second frame) over a dark trough.
+func _wake_crest(frame: int) -> Image:
+	var img: Image = _new(32, 8)
+	_rect(img, 0, 2, 32, 4, WATER_LIGHT)
+	for x: int in 32:
+		var crest_y: int = 1 + (x / 4 + frame) % 2
+		_rect(img, x, crest_y, 1, 2, SPLASH)
+		if (x + frame * 3) % 5 != 4:
+			_px(img, x, 6, WATER_DEEP)
+	return img
+
+
+## 32×16 one tile of whitecaps, repeated over the harsh-wind stretch: three small waves, each a
+## light crest with white foam on top; the foam shifts and spits a drop on the second frame.
+func _whitecap(frame: int) -> Image:
+	var img: Image = _new(32, 16)
+	for cap: Vector2i in [Vector2i(3, 2), Vector2i(19, 5), Vector2i(11, 11)]:
+		_rect(img, cap.x, cap.y + 1, 6, 1, WATER_LIGHT)
+		_rect(img, cap.x + 1 + frame, cap.y, 3, 1, SPLASH)
+		if frame == 1:
+			_px(img, cap.x + 5, cap.y - 1, SPLASH)
+	return img
+
+
+## 32×16 one tile of the cross-current's faster water, repeated over the stripe: an arrow
+## pointing right (the scene flips it for a leftward stripe) with streaks before and after it,
+## all shifted along on the second frame so the water reads as moving.
+func _current_arrow(frame: int) -> Image:
+	var img: Image = _new(32, 16)
+	var shaft_x: int = 6 + frame * 2
+	_rect(img, shaft_x, 7, 10, 2, WATER_LIGHT)
+	_rect(img, shaft_x + 10, 5, 1, 6, WATER_LIGHT)
+	_rect(img, shaft_x + 11, 6, 1, 4, WATER_LIGHT)
+	_rect(img, shaft_x + 12, 7, 1, 2, WATER_LIGHT)
+	_rect(img, 22 + frame * 2, 2, 5, 1, WATER_SHALLOW)
+	_rect(img, frame * 2, 13, 5, 1, WATER_SHALLOW)
+	return img
+
+
+## 16×10 the jet-ski pointing right: a yellow hull with a pointed nose and a dark stripe, a
+## rider in red on it, spray thrown off the back; the spray dances between the two frames.
+func _jetski(frame: int) -> Image:
+	var img: Image = _new(16, 10)
+	_rect(img, 3, 4, 10, 3, JETSKI)
+	_rect(img, 13, 5, 2, 1, JETSKI)
+	_rect(img, 3, 6, 10, 1, JETSKI_DARK)
+	_rect(img, 10, 4, 1, 3, HULL_DARK)
+	_rect(img, 5, 3, 4, 4, RIDER)
+	_disc(img, 8, 5, 1, SKIN)
+	_px(img, 7, 5, HAIRS[0])
+	_outline(img, OUTLINE)
+	var spray: Array[Array] = [
+		[Vector2i(1, 3), Vector2i(0, 5), Vector2i(1, 7), Vector2i(2, 8)],
+		[Vector2i(2, 2), Vector2i(0, 4), Vector2i(1, 6), Vector2i(2, 9)],
+	]
+	for drop: Vector2i in spray[frame]:
+		_px(img, drop.x, drop.y, SPLASH)
+	return img
+
+
+## 16×12 the fisherman's dinghy, lying across the image with its fisherman amidships looking
+## right, his rod reaching out past the bow to the top-right corner, where the scene's Line2D
+## takes over (the scene flips it when the line runs left).
+func _dinghy() -> Image:
+	var img: Image = _new(16, 12)
+	_ellipse(img, 7, 7, 7, 2, WOOD)
+	_ellipse(img, 7, 7, 5, 1, WOOD_LIGHT)
+	_rect(img, 5, 5, 5, 5, FISHER)
+	_disc(img, 7, 7, 1, SKIN)
+	_rect(img, 6, 6, 1, 3, HAIRS[0])
+	_line(img, Vector2i(9, 5), Vector2i(15, 1), WOOD_DARK)
+	_outline(img, OUTLINE)
+	return img
+
+
+## 7×8 the float at the line's tip: red over white, bobbing: on the second frame it sits one
+## pixel lower with a ripple either side.
+func _float(frame: int) -> Image:
+	var img: Image = _new(7, 8)
+	_rect(img, 2, 1 + frame, 3, 2, FLOAT_RED)
+	_rect(img, 2, 3 + frame, 3, 2, SPLASH)
+	_outline(img, OUTLINE)
+	if frame == 1:
+		_px(img, 0, 5, WATER_LIGHT)
+		_px(img, 6, 5, WATER_LIGHT)
+	return img
+
+
+## 16×8 one ripple arc of a gust's warning, convex toward the right (the scene flips it for a
+## leftward wind): three frames, the arc filling out and whitening as it races.
+func _gust_ripple(frame: int) -> Image:
+	var img: Image = _new(16, 8)
+	var bulge: Array[int] = [0, 2, 3, 4, 4, 3, 2, 0]
+	for row: int in 8:
+		var x: int = 5 + bulge[row] * (frame + 1) / 3 + frame
+		_px(img, x, row, WATER_LIGHT if frame == 0 else SPLASH)
+		if frame >= 1:
+			_px(img, x - 1, row, WATER_LIGHT)
+		if frame == 2 and row > 1 and row < 6:
+			_px(img, x - 3, row, WATER_LIGHT)
+	return img
+
+
+## 18×4 a streak of wind over the water while the gust blows: white over a lighter line, both
+## tapered. The scene leans it.
+func _gust_streak() -> Image:
+	var img: Image = _new(18, 4)
+	_rect(img, 1, 1, 16, 1, SPLASH)
+	_rect(img, 3, 2, 12, 1, WATER_LIGHT)
+	_px(img, 0, 1, WATER_LIGHT)
+	_px(img, 17, 1, WATER_LIGHT)
+	return img
+
+
+## 24×24 the ripple rings under the beast's fin while it circles: two broken rings that widen
+## on the second frame.
+func _beast_ripple(frame: int) -> Image:
+	var img: Image = _new(24, 24)
+	_ring(img, 12, 12, 7 + frame, WATER_LIGHT)
+	_ring(img, 12, 12, 10 + frame, WATER_LIGHT)
+	return img
+
+
 ## 11×11 arrow pointing up, white so a scene can tint it (the off-screen swimmer arrows in
 ## scripts/ui/offscreen_arrows.gd modulate it per seat): a 7-wide head over a 3-wide shaft,
 ## outlined, with a 1-px clear border so the outline fits.
@@ -668,6 +964,14 @@ static func _ring(img: Image, cx: int, cy: int, radius: int, colour: Color) -> v
 			continue
 		var angle: float = TAU * float(i) / 24.0
 		_px(img, cx + roundi(cos(angle) * radius), cy + roundi(sin(angle) * radius), colour)
+
+
+## A 1-px line from a to b, every step along the longer axis one pixel.
+static func _line(img: Image, a: Vector2i, b: Vector2i, colour: Color) -> void:
+	var steps: int = maxi(absi(b.x - a.x), absi(b.y - a.y))
+	for i: int in steps + 1:
+		var t: float = float(i) / maxf(float(steps), 1.0)
+		_px(img, roundi(lerpf(float(a.x), float(b.x), t)), roundi(lerpf(float(a.y), float(b.y), t)), colour)
 
 
 static func _ellipse(img: Image, cx: int, cy: int, rx: int, ry: int, colour: Color) -> void:

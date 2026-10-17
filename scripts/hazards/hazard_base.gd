@@ -2,8 +2,8 @@ class_name HazardBase
 extends Node2D
 ## HazardBase · the shared base of the Node2D hazard scripts in this folder (GDD › Systems › Hazards).
 ## It holds what they share: the `tuning` and `spec` fields the lake sets before add_child (T40), the
-## null guard that reports a missing one and stops the node, the boat lookup, and a flat rectangle
-## for visuals. A hazard does its own setup in _setup(), which runs once the guard has passed, and
+## null guard that reports a missing one and stops the node, the boat lookup, and the frame pick
+## for a looping animation. A hazard does its own setup in _setup(), run once the guard has passed, and
 ## overrides _needs_spec() to return true when it reads `spec`. The Area2D hazards (log, rock) don't
 ## extend it: their root is the Area2D itself. No rules and no randomness here.
 
@@ -47,15 +47,7 @@ func _find_boat() -> CharacterBody2D:
 	return null
 
 
-## A flat rectangle centred on its origin.
-static func _rect(rect_name: String, width: float, height: float, colour: Color) -> Polygon2D:
-	var rect: Polygon2D = Polygon2D.new()
-	rect.name = rect_name
-	rect.color = colour
-	var half_width: float = width * 0.5
-	var half_height: float = height * 0.5
-	rect.polygon = PackedVector2Array([
-		Vector2(-half_width, -half_height), Vector2(half_width, -half_height),
-		Vector2(half_width, half_height), Vector2(-half_width, half_height),
-	])
-	return rect
+## Which frame of a looping animation of `count` frames shows `clock` seconds in, at `period`
+## seconds a frame: the hazards' telegraphs flip between their frames with this (T24).
+static func _frame_at(clock: float, count: int, period: float) -> int:
+	return int(floorf(clock / period)) % count
