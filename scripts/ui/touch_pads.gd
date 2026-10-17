@@ -6,10 +6,11 @@ class_name TouchPads
 ## charges that hull's back seat and a touch in the inner part (toward the middle) its front
 ## seat (seat_for: the x position decides, the whole height counting). A finger charges from its
 ## press to its release, and the release strokes through RunState.stroke(seat, hold_time,
-## backwards): forward, or backwards after a flick down of at least
-## BoatTuning.touch_flick_distance between the press and the release (is_reverse). Each finger
+## backwards): the press's height decides the direction (is_reverse, T77): on or above the pads'
+## middle line (the divider across each pad, at PAD_Y of the view) is a forward stroke, below it,
+## where the pads' down arrows are, a reverse one. No flick: a drag changes nothing. Each finger
 ## is tracked by its index, so several charge at once; a second finger on a seat already being
-## charged is ignored. The seat is the press position's, so a flick may cross the midline.
+## charged is ignored.
 ## Lives under lake.tscn's HUD CanvasLayer, filling it, drawn before the HUD rows so the pads
 ## sit under them: four pad.png sprites (tools/gen_sprites.gd) tinted per seat, in a row across
 ## the bottom from the view size, one brightening while its seat is charged. Shown when
@@ -27,7 +28,7 @@ signal stroke_released(seat: int)
 const PAD_TEXTURE: Texture2D = preload("res://assets/sprites/pad.png")
 ## Where a pad's centre sits, as fractions of the view: the centre of its outer quarter of the
 ## screen (the back seats) or its inner quarter (the front seats), and this far down, where a
-## thumb rests.
+## thumb rests. PAD_Y is also the line between forward and reverse presses (is_reverse).
 const PAD_X_OUTER: float = 0.125
 const PAD_X_INNER: float = 0.375
 const PAD_Y: float = 0.7
@@ -37,17 +38,15 @@ const IDLE_ALPHA: float = 0.7
 const PRESSED_LIGHTEN: float = 0.5
 
 
-## One finger charging a seat: where it pressed, where it is now, and for how long.
+## One finger charging a seat: where it pressed and for how long.
 class Finger extends RefCounted:
 	var seat: int = Paddling.Seat.LEFT_FRONT
 	var press_position: Vector2 = Vector2.ZERO
-	var latest_position: Vector2 = Vector2.ZERO
 	var hold_time: float = 0.0
 
 	func _init(finger_seat: int, at: Vector2) -> void:
 		seat = finger_seat
 		press_position = at
-		latest_position = at
 
 
 ## The fingers down, by the touch's index.
@@ -81,10 +80,10 @@ func _process(delta: float) -> void:
 			_pads[seat].modulate = Color(colour, IDLE_ALPHA)
 
 
-## Each touch's press starts a finger charging the seat under it and its release strokes;
-## a drag keeps the finger's latest position for the flick. A handled touch stops at the pads,
-## so the HUD's bars never take it. Once the attempt is won nothing is charged and nothing is
-## handled (the win cutscene's "any key" takes the touch); a finger still down is dropped.
+## Each touch's press starts a finger charging the seat under it and its release strokes.
+## A handled touch stops at the pads, so the HUD's bars never take it. Once the attempt is won
+## nothing is charged and nothing is handled (the win cutscene's "any key" takes the touch); a
+## finger still down is dropped.
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		visible = true
@@ -97,11 +96,6 @@ func _input(event: InputEvent) -> void:
 		else:
 			_release(touch.index)
 		get_viewport().set_input_as_handled()
-	elif event is InputEventScreenDrag:
-		var drag: InputEventScreenDrag = event as InputEventScreenDrag
-		if _fingers.has(drag.index):
-			_fingers[drag.index].latest_position = drag.position
-			get_viewport().set_input_as_handled()
 
 
 ## How long the finger charging `seat` has been down, 0 with none: the boat's timing bar reads
@@ -123,8 +117,7 @@ func _release(index: int) -> void:
 		return
 	var finger: Finger = _fingers[index]
 	_fingers.erase(index)
-	var flick_distance: float = RunState.paddling.tuning.touch_flick_distance
-	var backwards: bool = is_reverse(finger.press_position, finger.latest_position, flick_distance)
+	var backwards: bool = is_reverse(finger.press_position, size)
 	stroke_released.emit(finger.seat)
 	RunState.stroke(finger.seat, finger.hold_time, backwards)
 
@@ -168,8 +161,9 @@ static func seat_for(position: Vector2, view_size: Vector2) -> int:
 	return Paddling.Seat.RIGHT_BACK if outer_right else Paddling.Seat.RIGHT_FRONT
 
 
-## True when the finger was released at least `flick_distance` below where it pressed (a
-## flick down, screen pixels): the stroke is a reverse one. Any smaller move, or one up or
-## sideways, is a forward stroke.
-static func is_reverse(press_position: Vector2, release_position: Vector2, flick_distance: float) -> bool:
-	return release_position.y - press_position.y >= flick_distance
+## True when a press at `press_position` is below the pads' middle line, PAD_Y of the view's
+## height (the divider across each pad, with the down arrow under it): the stroke is a reverse
+## one. On the line or above it, anywhere up the screen, it is a forward stroke. The line is on
+## a whole pixel, as the pads are laid out.
+static func is_reverse(press_position: Vector2, view_size: Vector2) -> bool:
+	return press_position.y > roundf(view_size.y * PAD_Y)

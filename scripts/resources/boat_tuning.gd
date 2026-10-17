@@ -33,10 +33,6 @@ extends Resource
 ## (GDD › Presentation and Platforms, Camera). Read by scripts/lake_camera.gd.
 @export var camera_lead: float = 80.0 ## PLACEHOLDER
 
-## Touch (GDD › Presentation and Platforms, Touch; read by scripts/ui/touch_pads.gd).
-## Pixels, at the 640×360 canvas, a finger must move down between its press and its release
-## for its stroke to be a reverse one (the flick down); any smaller move strokes forward.
-@export var touch_flick_distance: float = 24.0 ## PLACEHOLDER
 ## Seconds the corner reset button must be held before it resets (GDD › Presentation and
 ## Platforms, Reset: a ring fills meanwhile, so a stray tap does nothing). Read by
 ## scripts/ui/reset_button.gd.

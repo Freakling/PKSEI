@@ -73,7 +73,7 @@ const JETSKI_DARK: Color = Color8(214, 150, 24)
 const RIDER: Color = Color8(232, 68, 52)
 const FISHER: Color = Color8(62, 122, 204)
 const FLOAT_RED: Color = Color8(232, 52, 52)
-## The touch pad's translucency (T54): its body, its arrow hints and its outline.
+## The touch pad's translucency (T54): its body, its arrow hints and middle line (T77), and its outline.
 const PAD_ALPHA: float = 0.35
 const PAD_HINT_ALPHA: float = 0.9
 const PAD_OUTLINE_ALPHA: float = 0.6
@@ -969,6 +969,8 @@ func _pad() -> Image:
 	_rounded_rect(img, 1, 1, 34, 50, 6, Color(SPLASH, PAD_ALPHA))
 	_arrow_glyph(img, 17, 7, 1, Color(SPLASH, PAD_HINT_ALPHA))
 	_arrow_glyph(img, 17, 44, -1, Color(SPLASH, PAD_HINT_ALPHA))
+	# The middle line (T77): a press on or above it strokes forward, below it in reverse.
+	_rect(img, 5, 25, 26, 1, Color(SPLASH, PAD_HINT_ALPHA))
 	_outline(img, Color(OUTLINE, PAD_OUTLINE_ALPHA))
 	return img
 

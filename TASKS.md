@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T77 · B7 · R1
+**Next IDs:** T78 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -346,6 +346,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
+
+### T77 · Touch: the press's height picks forward or reverse, no flick · done · S · agent
+- Depends on: T58
+- Touches: scripts/ui/touch_pads.gd (is_reverse by press height, no drag tracking), scripts/resources/boat_tuning.gd (-touch_flick_distance), data/boat_tuning.tres, tools/gen_sprites.gd, assets/sprites/pad.png (a middle line), tests/test_touch_pads.gd
+- Done when: is_reverse(press, view_size) is true below PAD_Y of the view's height (the pads' middle line, the down arrow under it) and false on or above it, whatever the x (test) · a drag before the release changes nothing and touch_flick_distance is gone (check) · each pad shows a line across its middle (play)
+- GDD: Presentation and Platforms
 
 ### B6 · On a phone the game shows at 1× with huge black bands · done · S · agent · high
 - Depends on: T54

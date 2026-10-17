@@ -1,12 +1,11 @@
 extends "res://tools/test_case.gd"
-## T54, T58 · Touch pads: a touch's x position picks the seat (left/right half of the screen →
+## T54, T58, T77 · Touch pads: a touch's x position picks the seat (left/right half of the screen →
 ## hull; within a half, the outer quarter toward the screen edge → back seat, the inner part
 ## toward the middle → front seat; the whole height counts), and its release motion picks the
-## direction (a flick down of at least flick_distance → reverse; a wobble, a flick up or a
-## sideways one → forward) (GDD › Presentation and Platforms, Touch).
+## direction (T77: a press below the pads' middle line, PAD_Y of the view, → reverse; on or above
+## it → forward; no flick) (GDD › Presentation and Platforms, Touch).
 
 const VIEW: Vector2 = Vector2(640.0, 360.0)
-const FLICK: float = 24.0
 
 
 ## Each quarter of the screen is one seat: the outer two are the back seats.
@@ -71,19 +70,21 @@ func test_a_portrait_view() -> void:
 	expect_eq(TouchPads.seat_for(Vector2(270.0, 600.0), view), Paddling.Seat.RIGHT_BACK, "on 3w/4")
 
 
-func test_a_flick_down_is_reverse_and_a_wobble_is_not() -> void:
-	var press: Vector2 = Vector2(100.0, 100.0)
-	expect(TouchPads.is_reverse(press, press + Vector2(0.0, FLICK), FLICK), "exactly the distance")
-	expect(TouchPads.is_reverse(press, press + Vector2(0.0, 60.0), FLICK), "well past it")
-	expect(TouchPads.is_reverse(press, press + Vector2(15.0, 30.0), FLICK), "down and a bit sideways")
-	expect_false(TouchPads.is_reverse(press, press, FLICK), "no move")
-	expect_false(TouchPads.is_reverse(press, press + Vector2(3.0, 5.0), FLICK), "a wobble")
-	expect_false(TouchPads.is_reverse(press, press + Vector2(0.0, FLICK - 1.0), FLICK), "just short")
+func test_a_press_below_the_pads_middle_line_is_reverse_and_on_or_above_it_forward() -> void:
+	var line: float = roundf(VIEW.y * TouchPads.PAD_Y)
+	expect(TouchPads.is_reverse(Vector2(80.0, line + 1.0), VIEW), "just below the line")
+	expect(TouchPads.is_reverse(Vector2(80.0, VIEW.y - 1.0), VIEW), "the bottom edge")
+	expect(TouchPads.is_reverse(Vector2(80.0, line + 20.0), VIEW), "on the down arrow")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, line), VIEW), "on the line")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, line - 20.0), VIEW), "on the up arrow")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, 0.0), VIEW), "the top edge")
 
 
-func test_a_flick_up_or_sideways_is_not_reverse() -> void:
-	var press: Vector2 = Vector2(100.0, 100.0)
-	expect_false(TouchPads.is_reverse(press, press + Vector2(0.0, -60.0), FLICK), "up")
-	expect_false(TouchPads.is_reverse(press, press + Vector2(60.0, 0.0), FLICK), "right")
-	expect_false(TouchPads.is_reverse(press, press + Vector2(-60.0, 0.0), FLICK), "left")
-	expect_false(TouchPads.is_reverse(press, press + Vector2(60.0, 10.0), FLICK), "mostly sideways")
+func test_the_direction_ignores_x_and_follows_the_view_size() -> void:
+	var small: Vector2 = Vector2(320.0, 180.0)
+	var line: float = roundf(small.y * TouchPads.PAD_Y)
+	for x: float in [0.0, 100.0, 319.0]:
+		expect(TouchPads.is_reverse(Vector2(x, line + 1.0), small), "below the line at x %s" % x)
+		expect_false(TouchPads.is_reverse(Vector2(x, line - 1.0), small), "above the line at x %s" % x)
+	expect(TouchPads.is_reverse(Vector2(80.0, 300.0), VIEW), "300 is below the line in the 360 view")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, 300.0), Vector2(640.0, 720.0)), "but above it in a 720 view")
