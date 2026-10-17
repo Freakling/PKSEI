@@ -190,7 +190,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: at the launch shore, text scratched into the sand shows the four keys at their seats (Q A left, I K right, hold to charge, release to stroke) beside the boat's start, and nothing of it is on screen once the boat has left (play)
 - GDD: Presentation and Platforms
 
-### T49 · Remove the unused single-pose guy sprites and their generator branch · in-progress 2026-10-17 · S · agent
+### T49 · Remove the unused single-pose guy sprites and their generator branch · done · S · agent
 - Depends on: T23
 - Touches: tools/gen_sprites.gd, assets/sprites/guy_0..3.png (+.import, deleted)
 - Done when: no scene or script references assets/sprites/guy_<seat>.png and the files and their generator code are gone (check)

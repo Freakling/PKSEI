@@ -84,7 +84,6 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT_DIR.path_join(GUYS_DIR))
 	_save(_catamaran(), "catamaran")
 	for seat: int in SHIRTS.size():
-		_save(_guy(seat), "guy_%d" % seat)
 		_save(_guy_swim(seat), "guy_swim_%d" % seat)
 		_save(_guy_camp(seat), "guy_camp_%d" % seat)
 		for frame: String in GUY_FRAMES:
@@ -137,31 +136,6 @@ func _catamaran() -> Image:
 	return img
 
 
-## 12×12 top-down guy on his seat: shoulders in his shirt colour, head with hair (or bald), both
-## hands on a paddle held out over the water on his hull's side. Seats on the right are mirrored.
-## The body is centred on x 7 (left) or 4 (right); the scene offsets the sprite by 1 px.
-func _guy(seat: int) -> Image:
-	var img: Image = _new(12, 12)
-	var shirt: Color = SHIRTS[seat]
-	# Paddle: shaft and blade.
-	_rect(img, 2, 1, 1, 8, WOOD)
-	_rect(img, 1, 8, 3, 3, WOOD_LIGHT)
-	_px(img, 2, 8, WOOD)
-	# Shoulders.
-	_rect(img, 4, 5, 7, 6, shirt)
-	_rect(img, 4, 10, 7, 1, shirt.darkened(0.25))
-	for corner: Vector2i in [Vector2i(4, 5), Vector2i(10, 5), Vector2i(4, 10), Vector2i(10, 10)]:
-		_clear(img, corner.x, corner.y)
-	# Hands on the shaft.
-	_px(img, 3, 5, SKIN)
-	_px(img, 3, 7, SKIN)
-	_head(img, 7, 5, HAIRS[seat])
-	_outline(img, OUTLINE)
-	if seat == Paddling.Seat.RIGHT_FRONT or seat == Paddling.Seat.RIGHT_BACK:
-		img.flip_x()
-	return img
-
-
 ## 14×12 the same guy in the water: head and shoulders, arms spread, a splash around him.
 func _guy_swim(seat: int) -> Image:
 	var img: Image = _new(14, 12)
@@ -198,10 +172,10 @@ func _guy_camp(seat: int) -> Image:
 
 
 ## 12×14 one animation frame of the guy on his seat (one of GUY_FRAMES; catamaran.gd plays
-## them): the body of _guy() with a row above and below for the paddle's reach, the head going
-## back and the glyphs. Drawn for the left seats (the water to the left) and mirrored for the
-## right ones; the body is centred on x 7 with the head at (7, 6), so the scene's 1-px offset
-## still applies. Each frame is one pose:
+## them): a paddle, a torso and a head, with a row above and below for the paddle's reach, the
+## head going back and the glyphs. Drawn for the left seats (the water to the left) and mirrored
+## for the right ones; the body is centred on x 7 with the head at (7, 6), so the scene's 1-px
+## offset still applies. Each frame is one pose:
 ##   idle · stroke_0 (the reach: blade planted ahead) · stroke_1 (the pull: blade back, splash)
 ##   fumble (paddle slipping outboard, splash) · warning_0 (wiping his brow, sweating) ·
 ##   warning_1 (slumping) · break (paddle laid down, head back, a beer at his mouth) ·
