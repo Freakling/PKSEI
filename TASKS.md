@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T54 · B5
+**Next IDs:** T56 · B5
 
 ## Milestones
 | Milestone | Status |
@@ -219,6 +219,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: project.godot (input actions), scripts/catamaran.gd, scripts/autoload/run_state.gd (stroke(seat, hold_time, backwards)), scripts/systems/paddling.gd, scripts/resources/boat_tuning.gd (+reverse_thrust_fraction), data/boat_tuning.tres, scripts/ui/hud.gd (key labels), tools/gen_sprites.gd, assets/sprites/sand_text.png, tests/test_paddling.gd, tests/test_run_state.gd
 - Done when: Q/A, W/S, I/K, O/L map to forward/reverse strokes of the left front, left back, right front and right back seats (check: the input map quoted) · a reverse stroke's thrust is the forward thrust times reverse_thrust_fraction, negated, with the same turn magnitude negated and the same stamina burn (test) · the HUD labels and the sand text show the new keys (play)
 - GDD: Core Loop › Moment to moment · Presentation and Platforms
+
+### T54 · Touch controls: hull pads, seat by height, flick to reverse · in-progress 2026-10-17 · M · agent
+- Depends on: T53
+- Touches: scripts/ui/touch_pads.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd, project.godot (touch settings), tests/test_touch_pads.gd (new), tools/gen_sprites.gd, assets/sprites/ (pad art)
+- Done when: a pure helper maps a touch's position and its release motion to (seat, backwards): left/right half → hull, upper/lower part → front/back, a downward flick of at least flick_distance before release → reverse (test) · each finger charges from touch to release and strokes through RunState.stroke(seat, hold_time, backwards), several fingers at once (play) · the pads show only on a touchscreen and the keyboard still works (play)
+- GDD: Presentation and Platforms
+
+### T55 · Mobile web layout check on real phones and tablets · todo · — · human
+- Depends on: T54
+- Touches: project.godot (stretch settings if needed), export_presets.cfg
+- Done when: the game launches from the itch.io page on an Android phone and an iPhone in landscape, the canvas is neither cropped nor blurred, and the pads are reachable with thumbs (play)
+- GDD: Presentation and Platforms
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
