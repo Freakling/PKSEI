@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (89 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (90 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -214,7 +214,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the course runs from the lake edge at the trigger's y through the point jetski_lead ahead of the boat and on past the far edge, at jetski_speed (test)
 - GDD: Systems › Hazards
 
-### T53 · Reverse strokes: eight keys, two per seat · in-progress 2026-10-17 · M · agent
+### T53 · Reverse strokes: eight keys, two per seat · done · M · agent
 - Depends on: T6, T48
 - Touches: project.godot (input actions), scripts/catamaran.gd, scripts/autoload/run_state.gd (stroke(seat, hold_time, backwards)), scripts/systems/paddling.gd, scripts/resources/boat_tuning.gd (+reverse_thrust_fraction), data/boat_tuning.tres, scripts/ui/hud.gd (key labels), tools/gen_sprites.gd, assets/sprites/sand_text.png, tests/test_paddling.gd, tests/test_run_state.gd
 - Done when: Q/A, W/S, I/K, O/L map to forward/reverse strokes of the left front, left back, right front and right back seats (check: the input map quoted) · a reverse stroke's thrust is the forward thrust times reverse_thrust_fraction, negated, with the same turn magnitude negated and the same stamina burn (test) · the HUD labels and the sand text show the new keys (play)

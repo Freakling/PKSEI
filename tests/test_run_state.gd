@@ -6,7 +6,10 @@ extends "res://tools/test_case.gd"
 ## pickup() brings him back, a swimmer drinks only while he has a beer, and shore_touched() while
 ## crossing (never while launching) restores the starting conditions (GDD › Systems › Setbacks).
 ## T31 · On the timing bar (the top drunkenness tier) a release in the green zone is the normal
-## stroke and one outside it a backwards stroke of the same power; both burn stamina.
+## stroke and one outside it a backwards stroke; both burn stamina.
+## T53 · stroke(seat, hold_time, backwards): the reverse key lands a backwards stroke, its push
+## reverse_thrust_fraction of the forward one and its turn mirrored, for the same stamina; on
+## the timing bar a miss flips either key's direction (GDD › Presentation and Platforms, Input).
 ## T32 · A guy in the water neither recovers stamina nor rolls random breaks, and comes back in
 ## the state he left when he is picked up (GDD › Systems › Stamina).
 ## B1 · A stroke released before its guy goes overboard never lands: the strokes still waiting to
@@ -209,7 +212,7 @@ func test_a_bar_hit_gives_the_normal_stroke_and_burns_its_stamina() -> void:
 	state.free()
 
 
-func test_a_bar_miss_is_a_backwards_stroke_of_the_same_power_and_still_burns() -> void:
+func test_a_bar_miss_on_the_forward_key_is_a_backwards_stroke_and_still_burns() -> void:
 	var state: Node = bar_state(Paddling.Seat.LEFT_BACK)
 	var before: float = state.guys[Paddling.Seat.LEFT_BACK].stamina
 	state.stroke(Paddling.Seat.LEFT_BACK, 1.0)
@@ -218,9 +221,47 @@ func test_a_bar_miss_is_a_backwards_stroke_of_the_same_power_and_still_burns() -
 	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, before - cost, 0.0001, "a miss burns the same stamina as a hit")
 	expect_near(state.guys[Paddling.Seat.RIGHT_BACK].stamina, 1.0, 0.0001, "nobody else pays")
 	var motion: RefCounted = state.step(TICK, BOAT)
-	expect_near(motion.thrust, -state.paddling.stroke_force(1.0), 0.0001, "a miss paddles backwards at the same power")
+	expect_near(motion.thrust, state.paddling.stroke_thrust(1.0, true), 0.0001, "a miss paddles backwards, a reverse stroke of that hold")
+	expect(motion.thrust < 0.0, "so the push is toward the shore")
 	expect_near(motion.turn, -state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 1.0), 0.0001, "and turns the other way as much")
 	expect(motion.turn < 0.0, "a backwards left-side stroke turns left")
+	state.free()
+
+
+func test_the_reverse_key_lands_backwards_by_the_fraction_with_the_turn_mirrored_for_the_same_stamina() -> void:
+	var state: Node = sober_state()
+	var fraction: float = state.paddling.tuning.reverse_thrust_fraction
+	expect(fraction > 0.0 and fraction < 1.0, "the fraction is a share of the forward push")
+	state.stroke(Paddling.Seat.LEFT_BACK, 10.0, true)
+	state.stroke(Paddling.Seat.RIGHT_BACK, 10.0)
+	var cost: float = state.stamina.burn_of(state.paddling.stroke_force(10.0))
+	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, 1.0 - cost, 0.0001, "a reverse stroke burns the forward power's stamina")
+	expect_near(state.guys[Paddling.Seat.LEFT_BACK].stamina, state.guys[Paddling.Seat.RIGHT_BACK].stamina, 0.0001, "the same as the forward stroke of that hold")
+	var motion: RefCounted = state.step(TICK, BOAT)
+	var force: float = state.paddling.stroke_force(10.0)
+	expect_near(motion.thrust, force - fraction * force, 0.0001, "forward push less the reverse stroke's fraction of it")
+	var back_turn: float = state.paddling.stroke_turn(Paddling.Seat.RIGHT_BACK, 10.0)
+	var reverse_turn: float = -state.paddling.stroke_turn(Paddling.Seat.LEFT_BACK, 10.0)
+	expect_near(motion.turn, back_turn + reverse_turn, 0.0001, "the reverse stroke's turn is the forward one negated")
+	expect(motion.turn < 0.0, "a right-side forward and a left-side reverse stroke both turn left")
+
+	state.stroke(Paddling.Seat.LEFT_FRONT, 10.0, true)
+	var alone: RefCounted = state.step(TICK, BOAT)
+	expect_near(alone.thrust, -fraction * force, 0.0001, "alone, a reverse stroke pushes back by the fraction")
+	expect_near(alone.turn, -state.paddling.stroke_turn(Paddling.Seat.LEFT_FRONT, 10.0), 0.0001, "and turns the other way by the full amount")
+	state.free()
+
+
+func test_on_the_bar_a_miss_flips_the_reverse_key_forward_and_a_hit_keeps_it_backwards() -> void:
+	var state: Node = bar_state(Paddling.Seat.LEFT_BACK)
+	state.stroke(Paddling.Seat.LEFT_BACK, 1.0, true)
+	var missed: RefCounted = state.step(TICK, BOAT)
+	expect_near(missed.thrust, state.paddling.stroke_force(1.0), 0.0001, "a bar miss on the reverse key is a forward stroke (XOR)")
+	expect(missed.turn > 0.0, "with a forward left-side stroke's turn to the right")
+	state.stroke(Paddling.Seat.LEFT_BACK, 0.5, true)
+	var hit: RefCounted = state.step(TICK, BOAT)
+	expect_near(hit.thrust, state.paddling.stroke_thrust(0.5, true), 0.0001, "a bar hit on the reverse key is the reverse stroke asked for")
+	expect(hit.turn < 0.0, "turning left")
 	state.free()
 
 

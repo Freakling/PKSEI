@@ -1,6 +1,8 @@
 extends "res://tools/test_case.gd"
 ## T4 · Paddling: four charged strokes to thrust and turn, against the current
 ## (GDD › Systems › Catamaran and paddling).
+## T53 · A backwards stroke pushes back by reverse_thrust_fraction of the forward power and
+## turns the other way by the same amount (GDD › Presentation and Platforms, Input).
 
 const HOLD: float = 1.0
 
@@ -13,6 +15,7 @@ func before_each() -> void:
 	tuning.stroke_force_min = 10.0
 	tuning.stroke_force_max = 50.0
 	tuning.charge_time = 2.0
+	tuning.reverse_thrust_fraction = 0.6
 	tuning.turn_torque = 0.5
 	tuning.steer_share_front = 0.2
 	tuning.steer_share_back = 0.8
@@ -82,6 +85,25 @@ func test_back_seat_steers_by_back_share_and_front_seat_by_front_share_with_same
 	expect(absf(back_motion.turn) > absf(front_motion.turn), "the back seat is the rudder")
 
 
+func test_a_backwards_stroke_pushes_back_by_the_reverse_fraction_and_turns_the_other_way_as_much() -> void:
+	var force: float = paddling.stroke_force(HOLD)
+	expect_near(paddling.stroke_thrust(HOLD, false), force, 0.0001, "a forward stroke pushes by its power")
+	expect_near(paddling.stroke_thrust(HOLD, true), -0.6 * force, 0.0001, "a backwards stroke pushes back by the fraction")
+
+	var forward: Array[Paddling.Stroke] = [Paddling.Stroke.new(Paddling.Seat.LEFT_BACK, HOLD)]
+	var backwards: Array[Paddling.Stroke] = [Paddling.Stroke.new(Paddling.Seat.LEFT_BACK, HOLD, true)]
+	var forward_motion: Paddling.Motion = paddling.step(forward, 0.1)
+	var backwards_motion: Paddling.Motion = paddling.step(backwards, 0.1)
+	expect_near(backwards_motion.thrust, -tuning.reverse_thrust_fraction * forward_motion.thrust, 0.0001, "the thrust is the forward thrust times the fraction, negated")
+	expect(backwards_motion.thrust < 0.0, "it pushes toward the shore")
+	expect_near(backwards_motion.turn, -forward_motion.turn, 0.0001, "the turn is the forward turn negated, not scaled")
+	expect(backwards_motion.turn < 0.0, "a backwards left-side stroke turns left")
+	expect_near(backwards_motion.drift_to_shore, forward_motion.drift_to_shore, 0.0001, "the current is the same")
+
+	tuning.reverse_thrust_fraction = 1.0
+	expect_near(paddling.step(backwards, 0.1).thrust, -forward_motion.thrust, 0.0001, "a fraction of 1 mirrors the full push")
+
+
 func test_no_strokes_drift_toward_shore_at_current_speed() -> void:
 	var none: Array[Paddling.Stroke] = []
 	var motion: Paddling.Motion = paddling.step(none, 0.5)
@@ -104,5 +126,6 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	var boat: BoatTuning = loaded
 	expect(boat.charge_time > 0.0, "charge_time positive")
 	expect(boat.stroke_force_max > boat.stroke_force_min, "max above min")
+	expect(boat.reverse_thrust_fraction > 0.0 and boat.reverse_thrust_fraction < 1.0, "a reverse stroke pushes, but less than a forward one")
 	expect(boat.steer_share_back > boat.steer_share_front, "back seats steer more than front")
 	expect(boat.current_speed > 0.0, "the current pulls toward the shore")

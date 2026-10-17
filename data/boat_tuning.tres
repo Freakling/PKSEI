@@ -7,6 +7,7 @@ script = ExtResource("1_boat")
 stroke_force_min = 20.0
 stroke_force_max = 100.0
 charge_time = 1.0
+reverse_thrust_fraction = 0.6
 turn_torque = 1.0
 steer_share_front = 0.2
 steer_share_back = 0.8

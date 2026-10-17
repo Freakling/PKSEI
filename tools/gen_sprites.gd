@@ -377,10 +377,12 @@ func _sand() -> Image:
 
 
 ## 120×60 writing scratched in the sand on the launch shore (GDD › Presentation and Platforms,
-## Input): a catamaran from above, with Q and A beside the left hull's front and back seats and I
-## and K beside the right hull's, then the two lines HOLD = CHARGE and RELEASE = STROKE. Its
-## grooves are 1-px darker sand with a lighter edge (_scratch); the rest is transparent, so the
-## sand shows through. Its place is in lake.tscn, under the shore, so it scrolls off with it.
+## Input): a catamaran from above with its eight keys, two beside each seat, the forward key with
+## an up arrow over the reverse key with a down arrow (Q↑ A↓ and W↑ S↓ beside the left hull's
+## front and back seats, I↑ K↓ and O↑ L↓ beside the right hull's), then the two lines
+## HOLD = CHARGE and UP FWD · DOWN BACK. Its grooves are 1-px darker sand with a lighter edge
+## (_scratch); the rest is transparent, so the sand shows through. Its place is in lake.tscn,
+## under the shore, so it scrolls off with it.
 func _sand_text() -> Image:
 	var img: Image = _new(120, 60)
 	var grooves: Dictionary[Vector2i, bool] = {}
@@ -404,14 +406,18 @@ func _sand_text() -> Image:
 	for bar_row: int in [boat_top + 6, boat_top + 27]:
 		for x: int in range(left_x + 4, right_x - 3):
 			_groove_px(grooves, x, bar_row)
-	# The keys, each beside its seat: left keys on the left, right keys on the right.
-	_glyph_grooves(grooves, "Q", left_x - 8, front_row - 2)
-	_glyph_grooves(grooves, "A", left_x - 8, back_row - 2)
-	_glyph_grooves(grooves, "I", right_x + 6, front_row - 2)
-	_glyph_grooves(grooves, "K", right_x + 6, back_row - 2)
+	# The keys beside each seat, the forward one above its thwart and the reverse one below:
+	# left keys left of the left hull, right keys right of the right hull.
+	var seat_keys: Dictionary[Vector2i, String] = {
+		Vector2i(left_x - 12, front_row): "QA", Vector2i(left_x - 12, back_row): "WS",
+		Vector2i(right_x + 6, front_row): "IK", Vector2i(right_x + 6, back_row): "OL",
+	}
+	for at: Vector2i in seat_keys:
+		_text_grooves(grooves, seat_keys[at][0] + "↑", at.y - 5, at.x + 3)
+		_text_grooves(grooves, seat_keys[at][1] + "↓", at.y + 1, at.x + 3)
 	# The two lines, centred under the boat.
 	_text_grooves(grooves, "HOLD = CHARGE", 41, 60)
-	_text_grooves(grooves, "RELEASE = STROKE", 50, 60)
+	_text_grooves(grooves, "UP FWD · DOWN BACK", 50, 60)
 	_scratch(img, grooves)
 	return img
 
@@ -652,24 +658,33 @@ static func _glyph_grooves(grooves: Dictionary[Vector2i, bool], letter: String, 
 
 
 ## The 3×5 glyphs for the sand writing: '#' is a groove, '.' is sand. Only the letters the
-## scheme needs (the keys, HOLD, CHARGE, RELEASE, STROKE), and the '=' between the two lines.
+## scheme needs (the eight keys, HOLD, CHARGE, UP, FWD, DOWN, BACK), the up and down arrows
+## beside the keys, and the '=' and '·' in the two lines.
 static func _glyph(letter: String) -> PackedStringArray:
 	match letter:
 		"A": return PackedStringArray([".#.", "#.#", "###", "#.#", "#.#"])
+		"B": return PackedStringArray(["##.", "#.#", "##.", "#.#", "##."])
 		"C": return PackedStringArray([".##", "#..", "#..", "#..", ".##"])
 		"D": return PackedStringArray(["##.", "#.#", "#.#", "#.#", "##."])
 		"E": return PackedStringArray(["###", "#..", "##.", "#..", "###"])
+		"F": return PackedStringArray(["###", "#..", "##.", "#..", "#.."])
 		"G": return PackedStringArray([".##", "#..", "#.#", "#.#", ".##"])
 		"H": return PackedStringArray(["#.#", "#.#", "###", "#.#", "#.#"])
 		"I": return PackedStringArray(["###", ".#.", ".#.", ".#.", "###"])
 		"K": return PackedStringArray(["#.#", "#.#", "##.", "#.#", "#.#"])
 		"L": return PackedStringArray(["#..", "#..", "#..", "#..", "###"])
+		"N": return PackedStringArray(["##.", "#.#", "#.#", "#.#", "#.#"])
 		"O": return PackedStringArray(["###", "#.#", "#.#", "#.#", "###"])
+		"P": return PackedStringArray(["##.", "#.#", "##.", "#..", "#.."])
 		"Q": return PackedStringArray(["###", "#.#", "#.#", "###", "..#"])
 		"R": return PackedStringArray(["##.", "#.#", "##.", "#.#", "#.#"])
 		"S": return PackedStringArray(["###", "#..", "###", "..#", "###"])
-		"T": return PackedStringArray(["###", ".#.", ".#.", ".#.", ".#."])
+		"U": return PackedStringArray(["#.#", "#.#", "#.#", "#.#", "###"])
+		"W": return PackedStringArray(["#.#", "#.#", "#.#", "###", "#.#"])
+		"↑": return PackedStringArray([".#.", "###", ".#.", ".#.", ".#."])
+		"↓": return PackedStringArray([".#.", ".#.", ".#.", "###", ".#."])
 		"=": return PackedStringArray(["...", "###", "...", "###", "..."])
+		"·": return PackedStringArray(["...", "...", ".#.", "...", "..."])
 		_:
 			push_error("no sand glyph for '%s'" % letter)
 			return PackedStringArray()

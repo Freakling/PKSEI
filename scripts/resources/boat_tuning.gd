@@ -12,6 +12,9 @@ extends Resource
 @export var stroke_force_max: float = 100.0 ## PLACEHOLDER
 ## Seconds the key must be held to reach stroke_force_max.
 @export var charge_time: float = 1.0 ## PLACEHOLDER
+## Share of the forward push a reverse stroke gives (GDD › Presentation and Platforms: a reverse
+## stroke pushes less, turns the same and burns the same stamina).
+@export var reverse_thrust_fraction: float = 0.6 ## PLACEHOLDER
 ## Yaw per unit of stroke force, before the seat's steer share.
 @export var turn_torque: float = 1.0 ## PLACEHOLDER
 ## Share of turn_torque a front-seat stroke steers with (back/front meant to feel like 80/20).

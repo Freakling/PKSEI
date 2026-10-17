@@ -320,13 +320,15 @@ func can_paddle(seat: int) -> bool:
 			and not is_snagged(seat) and not is_bailing(seat)
 
 
-## One key released: `seat` is the key's owner, `hold_time` how long it was held. Nothing
-## happens if he is on a break, snagged, bailing, in the water, or the attempt is over. He burns
-## stamina for the stroke's power at once; the stroke then lands after his drunkenness's lag, or
-## misses, unless he goes overboard before it lands. On the timing bar (drunkenness.uses_bar) a
-## release outside the green zone is a backwards stroke of the same power, so it burns the same
-## stamina: he swung.
-func stroke(seat: int, hold_time: float) -> void:
+## One key released: `seat` is the key's owner, `hold_time` how long it was held, `backwards`
+## whether it was his reverse key. Nothing happens if he is on a break, snagged, bailing, in the
+## water, or the attempt is over. He burns stamina for the stroke's forward power at once, the
+## same for either key (GDD › Presentation and Platforms); the stroke then lands after his
+## drunkenness's lag, or misses, unless he goes overboard before it lands. On the timing bar
+## (drunkenness.uses_bar) a release outside the green zone flips the stroke's direction: a
+## forward key paddles backwards and a reverse key forwards (an XOR), so a miss is always the
+## stroke he didn't ask for.
+func stroke(seat: int, hold_time: float, backwards: bool = false) -> void:
 	if phase == Phase.WON:
 		return
 	if not can_paddle(seat):
@@ -337,8 +339,8 @@ func stroke(seat: int, hold_time: float) -> void:
 	if drunkenness.misses(level, rng):
 		stroke_fumbled.emit(seat)
 		return
-	var backwards: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
-	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards)
+	var bar_missed: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
+	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards != bar_missed)
 	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
 
 

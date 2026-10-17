@@ -2,8 +2,8 @@ extends CharacterBody2D
 ## Catamaran · the boat scene (GDD › Systems › Catamaran and paddling, GDD › Presentation and
 ## Platforms).
 ##
-## Reads the four stroke keys, calls RunState.stroke() on each release and RunState.step() every
-## physics frame, and moves by the Motion it gets back: thrust along its facing, turn as yaw, and
+## Reads the eight stroke keys (a forward and a reverse key per seat, GDD › Presentation and
+## Platforms), calls RunState.stroke() on each release and RunState.step() every physics frame, and moves by the Motion it gets back: thrust along its facing, turn as yaw, and
 ## the current's drift down-screen toward the shore (the island is up-screen). Damping stands in
 ## for the water; the scales and damping are BoatTuning's, read through RunState.paddling. The
 ## art under `Visual` is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the hull
@@ -25,9 +25,13 @@ extends CharacterBody2D
 ## at this frame like the drift, undamped and stopped by the shore. In debug builds F5/F6 knock
 ## a beer over on the left/right without a hazard. No rules live here.
 
-## One input action per seat, in Paddling.Seat order (Q, A, I, K).
+## The forward-stroke action per seat, in Paddling.Seat order (Q, W, I, O).
 const ACTIONS: Array[StringName] = [
 	&"stroke_left_front", &"stroke_left_back", &"stroke_right_front", &"stroke_right_back",
+]
+## The reverse-stroke action per seat, in Paddling.Seat order (A, S, K, L).
+const REVERSE_ACTIONS: Array[StringName] = [
+	&"reverse_left_front", &"reverse_left_back", &"reverse_right_front", &"reverse_right_back",
 ]
 ## Debug-only: a beer overboard on each side (F5, F6) without a hazard.
 const DEBUG_BEER_ACTIONS: Array[StringName] = [&"debug_beer_left", &"debug_beer_right"]
@@ -89,7 +93,9 @@ const BAR_MARKER_COLOUR: Color = Color(1.0, 1.0, 1.0, 1.0)
 ## back into it.
 var _stroke_velocity: Vector2 = Vector2.ZERO
 var _yaw_rate: float = 0.0
+## Seconds each seat's forward key and reverse key have been held (0 while up).
 var _hold_times: Array[float] = [0.0, 0.0, 0.0, 0.0]
+var _reverse_hold_times: Array[float] = [0.0, 0.0, 0.0, 0.0]
 var _flash_clock: float = 0.0
 var _rock_clock: float = 0.0
 var _guys: Array[AnimatedSprite2D] = []
@@ -136,21 +142,33 @@ func _physics_process(delta: float) -> void:
 	_show_telegraphs(delta)
 
 
-## Hold to charge, release to stroke: the hold time goes to RunState with the seat. A guy who
-## can paddle reaches at once (the input is honoured in the animation); what the stroke then
-## does comes back as stroke_landed or stroke_fumbled.
+## Hold to charge, release to stroke: the hold time goes to RunState with the seat, and
+## whether it was the reverse key. A guy who can paddle reaches at once (the input is honoured
+## in the animation); what the stroke then does comes back as stroke_landed or stroke_fumbled.
 func _read_keys(delta: float) -> void:
 	for seat: int in ACTIONS.size():
-		var action: StringName = ACTIONS[seat]
-		if Input.is_action_just_pressed(action):
-			_hold_times[seat] = 0.0
-		if Input.is_action_pressed(action):
-			_hold_times[seat] += delta
-		if Input.is_action_just_released(action):
-			if RunState.can_paddle(seat):
-				_start_one_shot(seat, &"reach", REACH_TIME)
-			RunState.stroke(seat, _hold_times[seat])
-			_hold_times[seat] = 0.0
+		_read_key(seat, ACTIONS[seat], _hold_times, false, delta)
+		_read_key(seat, REVERSE_ACTIONS[seat], _reverse_hold_times, true, delta)
+
+
+## One key's hold timer in `hold_times[seat]`: reset on press, counted while held, and sent as
+## a stroke on release.
+func _read_key(seat: int, action: StringName, hold_times: Array[float], backwards: bool, delta: float) -> void:
+	if Input.is_action_just_pressed(action):
+		hold_times[seat] = 0.0
+	if Input.is_action_pressed(action):
+		hold_times[seat] += delta
+	if Input.is_action_just_released(action):
+		if RunState.can_paddle(seat):
+			_start_one_shot(seat, &"reach", REACH_TIME)
+		RunState.stroke(seat, hold_times[seat], backwards)
+		hold_times[seat] = 0.0
+
+
+## How long the key this seat is charging has been held: the forward key's time, else the
+## reverse key's (0 with neither down).
+func _held_time(seat: int) -> float:
+	return _hold_times[seat] if _hold_times[seat] > 0.0 else _reverse_hold_times[seat]
 
 
 ## Debug-only (see DEBUG_BEER_ACTIONS): a beer overboard at the boat, on the key's side.
@@ -174,6 +192,7 @@ func place(at: Vector2) -> void:
 	_stroke_velocity = Vector2.ZERO
 	_yaw_rate = 0.0
 	_hold_times.fill(0.0)
+	_reverse_hold_times.fill(0.0)
 
 
 ## Visual only: a swimmer's sprite is hidden, each guy plays the animation his state picks, a
@@ -241,13 +260,14 @@ func _wind_up_rock(seat: int) -> float:
 	return WIND_UP_ROCK * (0.5 + 0.5 * build_up) * sin(TAU * _rock_clock / WIND_UP_ROCK_PERIOD)
 
 
-## Visual only: the bar shows beside a guy while his key is held once it applies (its wind-up
-## is his sway animation), its marker where Drunkenness says the sweep is for this hold, so
-## what the player sees is what RunState.stroke() judges.
+## Visual only: the bar shows beside a guy while either of his keys is held once it applies (its
+## wind-up is his sway animation), its marker where Drunkenness says the sweep is for this hold,
+## so what the player sees is what RunState.stroke() judges.
 func _show_bar(seat: int) -> void:
 	var drunkenness: Drunkenness = RunState.drunkenness
-	_bars[seat].visible = drunkenness.uses_bar(seat) and _hold_times[seat] > 0.0
-	_bar_markers[seat].position.x = (drunkenness.bar_position(_hold_times[seat]) - 0.5) * BAR_WIDTH
+	var held: float = _held_time(seat)
+	_bars[seat].visible = drunkenness.uses_bar(seat) and held > 0.0
+	_bar_markers[seat].position.x = (drunkenness.bar_position(held) - 0.5) * BAR_WIDTH
 
 
 ## One guy's SpriteFrames from his frame PNGs (FRAME_PATH), one animation per ANIMATIONS entry.

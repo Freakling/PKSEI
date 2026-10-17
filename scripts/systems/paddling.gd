@@ -14,7 +14,9 @@ enum Seat { LEFT_FRONT = 0, LEFT_BACK = 1, RIGHT_FRONT = 2, RIGHT_BACK = 3 }
 
 
 ## One released stroke: who paddled, for how long his key was held, and whether he paddled
-## backwards (a timing-bar miss, GDD › Drunkenness): the same power, thrust and turn reversed.
+## backwards (his reverse key, or a timing-bar miss, GDD › Drunkenness): the forward stroke
+## mirrored, its thrust reverse_thrust_fraction of the forward one and its turn the same, both
+## negated (GDD › Systems › Catamaran and paddling).
 class Stroke extends RefCounted:
 	var seat: int = Seat.LEFT_FRONT
 	var hold_time: float = 0.0
@@ -60,13 +62,20 @@ func stroke_turn(seat: int, hold_time: float) -> float:
 	return seat_side(seat) * steer_share(seat) * tuning.turn_torque * stroke_force(hold_time)
 
 
-## Sums the strokes released this step, a backwards one with its thrust and turn reversed, and
-## the current's pull over `delta` seconds.
+## Forward impulse of one stroke: its power, or for a backwards one reverse_thrust_fraction of
+## that, negated.
+func stroke_thrust(hold_time: float, backwards: bool) -> float:
+	var force: float = stroke_force(hold_time)
+	return -force * tuning.reverse_thrust_fraction if backwards else force
+
+
+## Sums the strokes released this step, a backwards one with its thrust by stroke_thrust and
+## its turn reversed, and the current's pull over `delta` seconds.
 func step(strokes: Array[Stroke], delta: float) -> Motion:
 	var motion: Motion = Motion.new()
 	for stroke: Stroke in strokes:
+		motion.thrust += stroke_thrust(stroke.hold_time, stroke.backwards)
 		var direction: float = -1.0 if stroke.backwards else 1.0
-		motion.thrust += direction * stroke_force(stroke.hold_time)
 		motion.turn += direction * stroke_turn(stroke.seat, stroke.hold_time)
 	motion.drift_to_shore = tuning.current_speed * delta
 	return motion
