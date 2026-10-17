@@ -6,9 +6,10 @@ class_name TouchPads
 ## charges that hull's back seat and a touch in the inner part (toward the middle) its front
 ## seat (seat_for: the x position decides, the whole height counting). A finger charges from its
 ## press to its release, and the release strokes through RunState.stroke(seat, hold_time,
-## backwards): the press's height decides the direction (is_reverse, T77): on or above the pads'
-## middle line (the divider across each pad, at PAD_Y of the view) is a forward stroke, below it,
-## where the pads' down arrows are, a reverse one. No flick: a drag changes nothing. Each finger
+## backwards): the press's height decides the direction (is_reverse, T77): on or above the line
+## drawn low across each pad (LINE_OFFSET below the pads' centre at PAD_Y of the view) is a
+## forward stroke, below it, where the pads' down arrows are, a reverse one; forward is the main
+## direction, so it gets most of each pad and everything above. No flick: a drag changes nothing. Each finger
 ## is tracked by its index, so several charge at once; a second finger on a seat already being
 ## charged is ignored.
 ## Lives under lake.tscn's HUD CanvasLayer, filling it, drawn before the HUD rows so the pads
@@ -28,10 +29,13 @@ signal stroke_released(seat: int)
 const PAD_TEXTURE: Texture2D = preload("res://assets/sprites/pad.png")
 ## Where a pad's centre sits, as fractions of the view: the centre of its outer quarter of the
 ## screen (the back seats) or its inner quarter (the front seats), and this far down, where a
-## thumb rests. PAD_Y is also the line between forward and reverse presses (is_reverse).
+## thumb rests, low on the screen. The line between forward and reverse presses (is_reverse) is
+## LINE_OFFSET pixels (at 1×) below the pads' centre, where the sprite draws it (gen_sprites _pad),
+## so only the pads' bottom strip with the down arrow strokes in reverse.
 const PAD_X_OUTER: float = 0.125
 const PAD_X_INNER: float = 0.375
-const PAD_Y: float = 0.7
+const PAD_Y: float = 0.8
+const LINE_OFFSET: float = 10.0
 ## A pad's tint is its seat's shirt colour at IDLE_ALPHA, and while charged the colour
 ## lightened by PRESSED_LIGHTEN at full alpha.
 const IDLE_ALPHA: float = 0.7
@@ -161,9 +165,9 @@ static func seat_for(position: Vector2, view_size: Vector2) -> int:
 	return Paddling.Seat.RIGHT_BACK if outer_right else Paddling.Seat.RIGHT_FRONT
 
 
-## True when a press at `press_position` is below the pads' middle line, PAD_Y of the view's
-## height (the divider across each pad, with the down arrow under it): the stroke is a reverse
-## one. On the line or above it, anywhere up the screen, it is a forward stroke. The line is on
-## a whole pixel, as the pads are laid out.
+## True when a press at `press_position` is below the pads' line, LINE_OFFSET under their centre
+## at PAD_Y of the view's height (with the down arrow under it): the stroke is a reverse one. On
+## the line or above it, anywhere up the screen, it is a forward stroke. The line is on a whole
+## pixel, as the pads are laid out.
 static func is_reverse(press_position: Vector2, view_size: Vector2) -> bool:
-	return press_position.y > roundf(view_size.y * PAD_Y)
+	return press_position.y > roundf(view_size.y * PAD_Y) + LINE_OFFSET

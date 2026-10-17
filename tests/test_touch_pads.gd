@@ -2,8 +2,8 @@ extends "res://tools/test_case.gd"
 ## T54, T58, T77 · Touch pads: a touch's x position picks the seat (left/right half of the screen →
 ## hull; within a half, the outer quarter toward the screen edge → back seat, the inner part
 ## toward the middle → front seat; the whole height counts), and its release motion picks the
-## direction (T77: a press below the pads' middle line, PAD_Y of the view, → reverse; on or above
-## it → forward; no flick) (GDD › Presentation and Platforms, Touch).
+## direction (T77: a press below the pads' line, LINE_OFFSET under PAD_Y of the view, → reverse;
+## on or above it → forward; no flick) (GDD › Presentation and Platforms, Touch).
 
 const VIEW: Vector2 = Vector2(640.0, 360.0)
 
@@ -70,21 +70,22 @@ func test_a_portrait_view() -> void:
 	expect_eq(TouchPads.seat_for(Vector2(270.0, 600.0), view), Paddling.Seat.RIGHT_BACK, "on 3w/4")
 
 
-func test_a_press_below_the_pads_middle_line_is_reverse_and_on_or_above_it_forward() -> void:
-	var line: float = roundf(VIEW.y * TouchPads.PAD_Y)
+func test_a_press_below_the_pads_line_is_reverse_and_on_or_above_it_forward() -> void:
+	var line: float = roundf(VIEW.y * TouchPads.PAD_Y) + TouchPads.LINE_OFFSET
 	expect(TouchPads.is_reverse(Vector2(80.0, line + 1.0), VIEW), "just below the line")
 	expect(TouchPads.is_reverse(Vector2(80.0, VIEW.y - 1.0), VIEW), "the bottom edge")
-	expect(TouchPads.is_reverse(Vector2(80.0, line + 20.0), VIEW), "on the down arrow")
+	expect(TouchPads.is_reverse(Vector2(80.0, line + 8.0), VIEW), "on the down arrow")
 	expect_false(TouchPads.is_reverse(Vector2(80.0, line), VIEW), "on the line")
-	expect_false(TouchPads.is_reverse(Vector2(80.0, line - 20.0), VIEW), "on the up arrow")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, line - 10.0), VIEW), "the pads' centre")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, line - 29.0), VIEW), "on the up arrow")
 	expect_false(TouchPads.is_reverse(Vector2(80.0, 0.0), VIEW), "the top edge")
 
 
 func test_the_direction_ignores_x_and_follows_the_view_size() -> void:
 	var small: Vector2 = Vector2(320.0, 180.0)
-	var line: float = roundf(small.y * TouchPads.PAD_Y)
+	var line: float = roundf(small.y * TouchPads.PAD_Y) + TouchPads.LINE_OFFSET
 	for x: float in [0.0, 100.0, 319.0]:
 		expect(TouchPads.is_reverse(Vector2(x, line + 1.0), small), "below the line at x %s" % x)
 		expect_false(TouchPads.is_reverse(Vector2(x, line - 1.0), small), "above the line at x %s" % x)
-	expect(TouchPads.is_reverse(Vector2(80.0, 300.0), VIEW), "300 is below the line in the 360 view")
-	expect_false(TouchPads.is_reverse(Vector2(80.0, 300.0), Vector2(640.0, 720.0)), "but above it in a 720 view")
+	expect(TouchPads.is_reverse(Vector2(80.0, 330.0), VIEW), "330 is below the line in the 360 view")
+	expect_false(TouchPads.is_reverse(Vector2(80.0, 330.0), Vector2(640.0, 720.0)), "but above it in a 720 view")
