@@ -1,6 +1,6 @@
 # Devlog 1 · How PKSEI was made in two days (a recipe)
 
-PKSEI (*Paddla Kanot Som En Idiot*) is a rage game about four drunk guys paddling a canoe catamaran across a lake while they drink, talk and fall in. It is also a tech demo for [Godot Director](https://github.com/Freakling/Godot-Director), which is [Director-Driven Development](https://freakling.github.io/Director-Driven-Development/) for Godot: the human directs, AI agents build, and one automatic check decides when a task is done. This post is the log of how the game got from an empty folder to the build on [itch.io](https://freakling.itch.io/pksei), written as a recipe you can follow for your own game.
+PKSEI (*Paddla Kanot Som En Idiot*) is a rage game about four drunk guys paddling a canoe catamaran across a lake while they drink, talk and fall in. It is also a tech demo for [Godot Director](https://github.com/Freakling/Godot-Director), which is [Director-Driven Development](https://freakling.github.io/Director-Driven-Development/) for Godot: the human directs, AI agents build, and one automatic check decides when a task is done. This post is the log of how the game got from an empty folder to the build on [itch.io](https://freakling.itch.io/pksei), written as a recipe you can follow for your own game. The whole repository, records included, is on [GitHub](https://github.com/Freakling/PKSEI): the design document, the decisions log and the task list read as the diary of everything below.
 
 The numbers, as of the build this post describes:
 
