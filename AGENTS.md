@@ -49,5 +49,5 @@ One row per system: what it owns and where its boundary is. Screens depend on sy
 ## Project rules
 <!-- Only where this project differs from the Godot Director defaults, as agreed with the human. -->
 - The agent may produce player-facing text, pixel-art sprites and audio, not only placeholders. The human still owns art direction and reviews every asset like any other change.
-- No git remote: never push.
+- Remote: https://github.com/Freakling/PKSEI.git (`origin`). The agent pushes only when the human asks.
 - Model sizing: on (Claude Code only). The `builder` subagent builds `S` items on Haiku.
