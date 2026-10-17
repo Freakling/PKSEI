@@ -11,8 +11,8 @@ extends Node2D
 ## colours, from tools/gen_sprites.gd) hop off the hulls one by one onto the beach on the boat's
 ## side and waddle up to the clearing; once all four are there the tent pops up beside the fire
 ## pit, the fire lights (two frames flickering), they sit round it with beers rising to their
-## faces in a loop, and the title with the crossing time and "Press any key to go again" fades
-## in on the Title layer. Spots on the island are island.png pixels from its centre (see
+## faces in a loop, and the title with the crossing time, the crew's names (T68) and "Press any
+## key to go again" fades in on the Title layer. Spots on the island are island.png pixels from its centre (see
 ## _island in tools/gen_sprites.gd), scaled by the island's scale.
 
 signal again()
@@ -73,6 +73,7 @@ const PROMPT_DIM: float = 0.35
 @onready var _title: CanvasLayer = $Title
 @onready var _title_box: Control = %TitleBox
 @onready var _time_label: Label = %Time
+@onready var _crew_label: Label = %Crew
 @onready var _prompt: Label = %Prompt
 
 var _island_scale: float = 1.0
@@ -227,9 +228,11 @@ func _flicker() -> void:
 	_fire.texture = FIRE_FRAMES[_fire_frame]
 
 
-## The title with the crossing time fades in; the prompt then blinks, and keys count.
+## The title with the crossing time and the crew's names fades in; the prompt then blinks, and
+## keys count.
 func _show_title() -> void:
 	_time_label.text = "Crossing time %s" % format_time(RunState.elapsed)
+	_crew_label.text = ", ".join(RunState.guy_names)
 	_title_box.modulate.a = 0.0
 	_title.visible = true
 	var fade: Tween = create_tween()

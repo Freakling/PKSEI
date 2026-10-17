@@ -50,6 +50,11 @@ layout_mode = 2
 text = "Crossing time 0:00"
 horizontal_alignment = 1
 
+[node name="Crew" type="Label" parent="Title/TitleBox/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
 [node name="Spacer" type="Control" parent="Title/TitleBox/Rows"]
 layout_mode = 2
 size_flags_vertical = 3

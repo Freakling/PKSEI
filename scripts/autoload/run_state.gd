@@ -33,7 +33,9 @@ extends Node
 ## Narrative) live here too: a hazard whose warning starts calls telegraph(kind, hull), which
 ## emits telegraphed for the speech bubbles (scripts/ui/speech_bubbles.gd), and pick_line(kind)
 ## draws one of data/lines.tres's Swedish lines for a telegraph with the RNG, so no screen rolls
-## one. Screens only read. Reads and writes no player data.
+## one. The crew's names (T68, GDD › Characters and Units) live here too: new_attempt() draws four
+## distinct ones from data/names.tres with the RNG (guy_names, name_of(seat)) and a shore reset
+## keeps them. Screens only read. Reads and writes no player data.
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
 ## step() mirrors the rule classes' levels into them so screens read one place.
@@ -107,6 +109,11 @@ var antics: Antics = Antics.new(preload("res://data/drink_tuning.tres") as Drink
 var rescue: Rescue = Rescue.new()
 ## What the guys say at each telegraph (T56), per kind; pick_line() draws from it.
 var lines: Lines = preload("res://data/lines.tres") as Lines
+## The crew's nicknames (T68, GDD › Characters and Units); new_attempt() draws four.
+var names: Names = preload("res://data/names.tres") as Names
+## This attempt's names per seat (Paddling.Seat order), drawn at new_attempt() and kept across
+## its shore resets; name_of(seat) reads them.
+var guy_names: PackedStringArray = PackedStringArray()
 ## Rolls the misses and the random breaks, and each attempt's lake_seed; tests seed it.
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## Seed of this attempt's hazard plan, drawn from rng at new_attempt(): the lake differs between
@@ -144,17 +151,19 @@ func _ready() -> void:
 	new_attempt()
 
 
-## A new attempt at the crossing: a fresh lake_seed is drawn, then the starting conditions are
-## restored with reset(). Called at start, and by the win flow (T28) once there is one; a shore
-## reset is not a new attempt and keeps the seed.
+## A new attempt at the crossing: a fresh lake_seed is drawn and the four guys get their names
+## (T68: four distinct ones from data/names.tres), then the starting conditions are restored
+## with reset(). Called at start, and by the win flow (T28) once there is one; a shore reset is
+## not a new attempt and keeps the seed and the names.
 func new_attempt() -> void:
 	lake_seed = rng.randi()
+	guy_names = names.pick_four(rng)
 	reset()
 
 
 ## Restores the starting conditions (also the shore reset, GDD › Setbacks): four guys at
 ## DrinkTuning.start_level, all aboard, stamina full, zero progress, phase `launch`, and no
-## hazard effect left pending. lake_seed stays: the same lake again.
+## hazard effect left pending. lake_seed and guy_names stay: the same lake and crew again.
 func reset() -> void:
 	drunkenness.reset()
 	stamina.reset()
@@ -350,6 +359,14 @@ func telegraph(kind: StringName, hull: int = Rescue.NOBODY) -> void:
 ## no screen rolls one; "" for a kind without lines.
 func pick_line(kind: StringName) -> String:
 	return lines.pick(kind, rng)
+
+
+## The name of `seat`'s guy this attempt (T68, GDD › Characters and Units: the HUD shows it, not
+## the key); "" before the first new_attempt() or for no such seat.
+func name_of(seat: int) -> String:
+	if seat < 0 or seat >= guy_names.size():
+		return ""
+	return guy_names[seat]
 
 
 ## Water comes in on `side` (Water aboard): `amount` of it, which that hull's guy bails at

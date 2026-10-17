@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## HUD · shows the crossing (GDD › Core Loop › Moment to moment): the progress bar and each
-## guy's drunkenness and stamina with his seat and key. Hidden once the attempt is won, when
+## guy's drunkenness and stamina under his name (T68, GDD › Characters and Units: the names, not
+## the keys; the sand text teaches those). Hidden once the attempt is won, when
 ## the win cutscene (scenes/win.tscn, GDD › Win and Loss) takes the screen. A screen: it only
 ## reads RunState every frame.
 
@@ -9,8 +10,6 @@ const GRID_SEATS: Array[int] = [
 	Paddling.Seat.LEFT_FRONT, Paddling.Seat.RIGHT_FRONT,
 	Paddling.Seat.LEFT_BACK, Paddling.Seat.RIGHT_BACK,
 ]
-## Seat and keys (forward/reverse) per Paddling.Seat (GDD › Presentation and Platforms).
-const SEAT_LABELS: Array[String] = ["LF  W/S", "LB  Q/A", "RF  I/K", "RB  O/L"]
 const DRUNK_COLOUR: Color = Color(0.9, 0.45, 0.2, 1.0)
 const STAMINA_COLOUR: Color = Color(0.3, 0.8, 0.35, 1.0)
 const BAR_SIZE: Vector2 = Vector2(72, 5)
@@ -49,7 +48,7 @@ func _process(_delta: float) -> void:
 		var guy: RunState.Guy = RunState.guys[seat]
 		_drunk_bars[seat].value = guy.drunkenness
 		_stamina_bars[seat].value = guy.stamina
-		_labels[seat].text = SEAT_LABELS[seat] + _state_suffix(seat)
+		_labels[seat].text = RunState.name_of(seat) + _state_suffix(seat)
 	visible = RunState.phase != RunState.Phase.WON
 
 
@@ -65,7 +64,7 @@ func _make_bar(fill: Color) -> ProgressBar:
 	return bar
 
 
-## What the guy is doing, after his seat and key.
+## What the guy is doing, after his name.
 func _state_suffix(seat: int) -> String:
 	match RunState.stamina.state_of(seat):
 		Stamina.State.WARNING:

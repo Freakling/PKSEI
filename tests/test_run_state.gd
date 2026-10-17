@@ -34,6 +34,8 @@ extends "res://tools/test_case.gd"
 ## then his level drops by puke_relief; a finished pee drops pee_relief, an interrupted one
 ## nothing; no second puke until the level dips below puke_level and reaches it again
 ## (GDD › Systems › Drunkenness: "drunkenness also comes down").
+## T68 · new_attempt() gives the four seats distinct names from data/names.tres; a shore reset
+## keeps them and another new_attempt() may change them (GDD › Characters and Units).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const TICK: float = 1.0 / 60.0
@@ -1052,4 +1054,35 @@ func test_a_finished_puke_emits_puked_with_the_seat_and_a_pee_does_not() -> void
 	state.step(5.0, BOAT)
 	expect_near(state.drunkenness.level_of(1), 0.42, 0.0001, "the pee ran its course")
 	expect_eq(puked.size(), 1, "a pee is no puke")
+	state.free()
+
+
+func test_new_attempt_names_the_four_seats_distinctly_from_the_list() -> void:
+	var state: Node = RunStateScript.new()
+	state.rng.seed = 7
+	state.new_attempt()
+	expect_eq(state.guy_names.size(), RunStateScript.GUY_COUNT, "a name per seat")
+	for seat: int in RunStateScript.GUY_COUNT:
+		var guy_name: String = state.name_of(seat)
+		expect(state.names.names.has(guy_name), "seat %d's %s is in data/names.tres" % [seat, guy_name])
+		for other: int in RunStateScript.GUY_COUNT:
+			if other != seat:
+				expect_ne(guy_name, state.name_of(other), "seats %d and %d differ" % [seat, other])
+	state.free()
+
+
+func test_a_shore_reset_keeps_the_names_and_another_attempt_may_change_them() -> void:
+	var state: Node = sober_state()
+	state.new_attempt()
+	var crew: PackedStringArray = state.guy_names.duplicate()
+	state.set_progress(0.4)
+	state.shore_touched()
+	expect_eq(state.phase, RunStateScript.Phase.LAUNCH, "the shore reset happened")
+	expect(state.guy_names == crew, "the same crew after the shore reset")
+	var changed: bool = false
+	for _attempt: int in 20:
+		state.new_attempt()
+		if state.guy_names != crew:
+			changed = true
+	expect(changed, "a later attempt draws another crew")
 	state.free()

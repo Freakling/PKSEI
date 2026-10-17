@@ -46,7 +46,8 @@ texture = ExtResource("6_sand")
 polygon = PackedVector2Array(-3000, 0, 3000, 0, 3000, 400, -3000, 400)
 
 [node name="SandText" type="Sprite2D" parent="Shore/Visual"]
-position = Vector2(0, 70)
+position = Vector2(0, 90)
+scale = Vector2(2, 2)
 texture = ExtResource("9_sandtext")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Shore"]

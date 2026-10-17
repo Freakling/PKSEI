@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="Names" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/names.gd" id="1_names"]
+
+[resource]
+script = ExtResource("1_names")
+names = PackedStringArray("Vajking", "Tåååny!!", "Ryggen", "Danne!", "Danne?", "Göras!", "Matte", "Bibbe", "NakenOlsson", "Skrattet", "Alkisen", "Meh-lajnen")
