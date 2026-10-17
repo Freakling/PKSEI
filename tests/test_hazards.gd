@@ -10,6 +10,8 @@ extends "res://tools/test_case.gd"
 ## T37: a guaranteed path winds through every band: a corridor path_width wide no object is placed
 ## in, whose centre wanders by at most path_wander between bands, stays inside the lake, and runs
 ## continuously from the launch (x = 0) to the island (x = 0), the same for the same seed.
+## T41: a HazardSpec marked is_event is placed inside the corridor, on the path the boat must
+## take, so every event can fire; objects stay outside it, and the density covers both kinds.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LogScene: PackedScene = preload("res://scenes/hazards/log.tscn")
@@ -53,6 +55,17 @@ func spec(weight: float, first_band: int) -> HazardSpec:
 	hazard.weight = weight
 	hazard.first_band = first_band
 	return hazard
+
+
+func event(weight: float, first_band: int) -> HazardSpec:
+	var hazard: HazardSpec = spec(weight, first_band)
+	hazard.is_event = true
+	return hazard
+
+
+## How far a placement's x is from the corridor's centre at its y.
+func gap(placement: Hazards.Placement, lake_seed: int) -> float:
+	return absf(placement.position.x - Hazards.corridor_x(tuning, lake_seed, placement.position.y))
 
 
 ## A RunState whose guys are sober (no lag, no misses) and whose rolls are seeded.
@@ -328,6 +341,84 @@ func test_no_wander_is_a_straight_path_up_the_middle() -> void:
 			expect_near(Hazards.path_center(tuning, lake_seed, band), 0.0, 0.0001, "seed %d band %d: dead centre" % [lake_seed, band])
 		for placement: Hazards.Placement in Hazards.plan(tuning, lake_seed):
 			expect(absf(placement.position.x) >= PATH_WIDTH * 0.5, "seed %d: nothing in the middle strip" % lake_seed)
+
+
+# --- events -------------------------------------------------------------------------------------
+
+func test_events_land_inside_the_corridor_and_objects_outside_it() -> void:
+	tuning.hazards = [spec(1.0, 0), event(1.0, 0)]
+	var events: int = 0
+	var objects: int = 0
+	var furthest: float = 0.0
+	for lake_seed: int in 100:
+		var placements: Array[Hazards.Placement] = Hazards.plan(tuning, lake_seed)
+		expect_eq(placements.size(), 11, "seed %d: the density covers both kinds" % lake_seed)
+		for placement: Hazards.Placement in placements:
+			var near: float = -(MARGIN + placement.band * BAND)
+			var far: float = -minf(MARGIN + (placement.band + 1) * BAND, FAR_EDGE)
+			expect(placement.position.y <= near and placement.position.y >= far, "seed %d: either kind inside its band" % lake_seed)
+			if tuning.hazards[placement.spec].is_event:
+				events += 1
+				furthest = maxf(furthest, gap(placement, lake_seed))
+				expect(gap(placement, lake_seed) <= Hazards.EVENT_SPREAD * PATH_WIDTH * 0.5 + 0.0001, "seed %d: an event's trigger is on the path (gap %.1f)" % [lake_seed, gap(placement, lake_seed)])
+			else:
+				objects += 1
+				expect(gap(placement, lake_seed) >= PATH_WIDTH * 0.5, "seed %d: an object is clear of the corridor (gap %.1f)" % [lake_seed, gap(placement, lake_seed)])
+	expect(events > 300 and objects > 300, "both kinds are drawn (%d events, %d objects)" % [events, objects])
+	expect(furthest > Hazards.EVENT_SPREAD * PATH_WIDTH * 0.5 - 2.0, "triggers spread across the path's middle (furthest %.1f)" % furthest)
+	expect(Hazards.EVENT_SPREAD > 0.0 and Hazards.EVENT_SPREAD < 1.0, "the spread keeps a trigger inside the corridor")
+
+
+func test_a_band_with_only_events_and_a_band_with_only_objects_both_plan() -> void:
+	tuning.hazards = [event(1.0, 0), spec(1.0, 2)]
+	for lake_seed: int in 20:
+		var placements: Array[Hazards.Placement] = Hazards.plan(tuning, lake_seed)
+		for band: int in DENSITIES.size():
+			expect_eq(count_in_band(placements, band), DENSITIES[band], "seed %d band %d: the band's density" % [lake_seed, band])
+		for placement: Hazards.Placement in placements:
+			if placement.band < 2:
+				expect_eq(placement.spec, 0, "seed %d: before band 2 only the event is drawn" % lake_seed)
+				expect(gap(placement, lake_seed) < PATH_WIDTH * 0.5, "seed %d: and it is on the path" % lake_seed)
+	tuning.hazards = [spec(1.0, 0), event(1.0, 2)]
+	for lake_seed: int in 20:
+		var placements: Array[Hazards.Placement] = Hazards.plan(tuning, lake_seed)
+		for band: int in DENSITIES.size():
+			expect_eq(count_in_band(placements, band), DENSITIES[band], "seed %d band %d: the band's density" % [lake_seed, band])
+		for placement: Hazards.Placement in placements:
+			if placement.band < 2:
+				expect_eq(placement.spec, 0, "seed %d: before band 2 only the object is drawn" % lake_seed)
+				expect(gap(placement, lake_seed) >= PATH_WIDTH * 0.5, "seed %d: and it is beside the path" % lake_seed)
+
+
+func test_a_lake_the_corridor_fills_still_places_its_events() -> void:
+	tuning.path_width = WIDTH
+	tuning.hazards = [spec(1.0, 0), event(1.0, 0)]
+	var placements: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
+	expect_eq(placements.size(), 11, "every band still draws its density")
+	for placement: Hazards.Placement in placements:
+		expect_eq(placement.spec, 1, "only the event: an object has no water to go in")
+		expect(absf(placement.position.x) <= WIDTH * 0.5, "on the path, inside the lake")
+	tuning.hazards = [spec(1.0, 0)]
+	expect_eq(Hazards.plan(tuning, 42).size(), 0, "a lake of objects alone places nothing in it")
+
+
+func test_an_event_takes_the_same_draws_as_an_object_so_the_rest_of_the_plan_is_unchanged() -> void:
+	var objects_only: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
+	tuning.hazards = [spec(1.0, 0), event(3.0, 2)]
+	var with_events: Array[Hazards.Placement] = Hazards.plan(tuning, 42)
+	same_placements(with_events, Hazards.plan(tuning, 42), "the same seed, the same lake with events")
+	expect_eq(with_events.size(), objects_only.size(), "as many hazards")
+	var events: int = 0
+	for i: int in mini(with_events.size(), objects_only.size()):
+		expect_eq(with_events[i].spec, objects_only[i].spec, "hazard %d is the same kind" % i)
+		expect_eq(with_events[i].band, objects_only[i].band, "hazard %d is in the same band" % i)
+		expect_near(with_events[i].position.y, objects_only[i].position.y, 0.0001, "hazard %d is at the same y" % i)
+		if with_events[i].spec == 1:
+			events += 1
+			expect(gap(with_events[i], 42) < PATH_WIDTH * 0.5, "hazard %d, now an event, moved onto the path" % i)
+		else:
+			expect_eq(with_events[i].position, objects_only[i].position, "hazard %d, still an object, is where it was" % i)
+	expect(events > 0, "the second kind was drawn")
 
 
 # --- objects ------------------------------------------------------------------------------------

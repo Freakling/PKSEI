@@ -17,3 +17,8 @@ extends Resource
 @export var shove_strength: float = 80.0 ## PLACEHOLDER
 ## Seconds after a hit before the same hazard can hit again, so one bump is one hit.
 @export var hit_cooldown: float = 1.0 ## PLACEHOLDER
+## Whether the hazard is an event (GDD: it happens as the boat passes; the placement is its
+## trigger) rather than an object fixed on the water. Hazards.plan_band() puts an event's trigger
+## inside the corridor, on the path the boat must take, so every event can fire; objects go
+## outside it, and the path winds around them.
+@export var is_event: bool = false

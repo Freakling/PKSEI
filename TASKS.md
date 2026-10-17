@@ -178,9 +178,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a motorboat crosses ahead, then a wave front follows it; a head-on crossing does nothing, a broadside one knocks a beer overboard on the high side, shoves the boat sideways by wake_shove and puts wake_water aboard, which the guy on that side bails at bail_rate while his seat gives no strokes (test) · the boat is seen before the wave (play)
 - GDD: Systems › Hazards
 
-### T41 · Event triggers are placed on the path, objects beside it · todo · M · agent
+### T41 · Event triggers are placed on the path, objects beside it · done · M · agent
 - Depends on: T16
-- Touches: scripts/resources/hazard.gd (+is_event), scripts/systems/hazards.gd, data/hazards/wake.tres, data/hazards/geese.tres, tests/test_hazards.gd, scripts/lake.gd (debug marker for triggers)
+- Touches: scripts/resources/hazard.gd (+is_event), scripts/systems/hazards.gd, data/hazards/wake.tres, data/hazards/gust.tres, data/hazards/headwind.tres, data/hazards/jetski.tres, tests/test_hazards.gd, scripts/lake.gd (debug marker for triggers)
 - Done when: a HazardSpec marked `is_event` is placed inside the corridor (on the path the boat must take) and objects outside it, so every event can fire (test) · in debug builds a small marker shows each trigger point with the F7 overlay (play)
 - GDD: Systems › Hazards
 

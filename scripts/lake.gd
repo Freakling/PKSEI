@@ -11,22 +11,27 @@ extends Node2D
 ## still loose; a floating guy bobs and is tinted. When the boat comes within
 ## BoatTuning.pickup_radius of a floating guy the lake calls RunState.pickup(); whenever the boat
 ## touches the shore it calls RunState.shore_touched(), and puts the boat back at its start when
-## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are objects, fixed
-## where Hazards.plan() put them for RunState.lake_seed: they are placed under the Hazards node on
-## start and again after each shore reset (the seed stays, so the same lake comes back), each scene
-## handed its HazardSpec and the lake's LakeTuning, and none moves or comes back once it is placed.
-## No rules and no
-## randomness live here: the plan is Hazards'.
+## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are fixed where
+## Hazards.plan() put them for RunState.lake_seed, objects beside the path and events' triggers on
+## it: they are placed under the Hazards node on start and again after each shore reset (the seed
+## stays, so the same lake comes back), each scene handed its HazardSpec and the lake's
+## LakeTuning, and none moves or comes back once it is placed. No rules and no randomness live
+## here: the plan is Hazards'.
 ##
 ## Debug builds only (the gate is _debug_tools): PathOverlay under Visual draws the corridor the
-## hazards keep clear, for tuning path_width and path_wander by eye. It is filled when the hazards
-## are placed, so it follows the attempt's seed, and F7 (debug_toggle_path) shows or hides it. In
-## release builds it stays hidden and empty.
+## objects keep clear, for tuning path_width and path_wander by eye, with a small magenta diamond
+## under it at every event's trigger point. Both are filled when the hazards are placed, so they
+## follow the attempt's seed, and F7 (debug_toggle_path) shows or hides them together. In release
+## builds the overlay stays hidden and empty.
 
 const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
 const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
 ## Points the debug overlay samples per band of the corridor (the band's edges are among them).
 const PATH_OVERLAY_STEPS: int = 4
+## The debug overlay's marker at an event's trigger point: a diamond this many pixels from its
+## centre to a corner, in this colour.
+const TRIGGER_MARKER_SIZE: float = 4.0
+const TRIGGER_MARKER_COLOUR: Color = Color(1.0, 0.0, 1.0, 0.8)
 const GUY_SIZE: float = 4.0
 const BEER_SIZE: float = 1.5
 const BEER_COLOUR: Color = Color(0.95, 0.85, 0.2, 1.0)
@@ -117,15 +122,18 @@ func _on_shore_reset_done() -> void:
 
 ## Replaces the hazards with this attempt's as launched: the whole plan for RunState.lake_seed.
 ## The old ones leave the tree at once, not at queue_free's deferred time, so only the new ones
-## are in it. Debug builds print the seed, so a lake can be had again, and fill the path overlay.
+## are in it. Debug builds print the seed, so a lake can be had again, and fill the path overlay
+## and its trigger markers.
 func _spawn_hazards() -> void:
 	for child: Node in _hazards.get_children():
 		_hazards.remove_child(child)
 		child.queue_free()
+	var placements: Array[Hazards.Placement] = Hazards.plan(TUNING, RunState.lake_seed)
 	if _debug_tools:
 		print("lake seed %d" % RunState.lake_seed)
 		_fill_path_overlay()
-	for placement: Hazards.Placement in Hazards.plan(TUNING, RunState.lake_seed):
+		_mark_triggers(placements)
+	for placement: Hazards.Placement in placements:
 		var spec: HazardSpec = TUNING.hazards[placement.spec]
 		if spec.scene == null:
 			continue
@@ -155,6 +163,24 @@ func _fill_path_overlay() -> void:
 			points.append(Vector2(Hazards.corridor_at(TUNING, centers, -distance), -distance))
 	_path_overlay.width = TUNING.path_width
 	_path_overlay.points = points
+
+
+## Debug only: one marker per event in the plan at its trigger point, as children of the path
+## overlay so F7 shows and hides them with it. The last plan's markers go first, at once, so a
+## shore reset shows only the current lake's.
+func _mark_triggers(placements: Array[Hazards.Placement]) -> void:
+	for child: Node in _path_overlay.get_children():
+		_path_overlay.remove_child(child)
+		child.queue_free()
+	for placement: Hazards.Placement in placements:
+		var spec: HazardSpec = TUNING.hazards[placement.spec]
+		if spec == null or not spec.is_event:
+			continue
+		var marker: Polygon2D = Polygon2D.new()
+		marker.color = TRIGGER_MARKER_COLOUR
+		marker.polygon = _diamond(TRIGGER_MARKER_SIZE)
+		marker.position = placement.position
+		_path_overlay.add_child(marker)
 
 
 ## Whether the boat slid against the shore last frame.
@@ -236,4 +262,11 @@ static func _rect(half_width: float, top: float, bottom: float) -> PackedVector2
 static func _square(half: float) -> PackedVector2Array:
 	return PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half),
+	])
+
+
+## A diamond: a square on its corner, `radius` from the centre to each corner.
+static func _diamond(radius: float) -> PackedVector2Array:
+	return PackedVector2Array([
+		Vector2(0.0, -radius), Vector2(radius, 0.0), Vector2(0.0, radius), Vector2(-radius, 0.0),
 	])

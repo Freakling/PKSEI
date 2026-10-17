@@ -8,7 +8,10 @@ extends RefCounted
 ## (y = -(island_distance - island_radius)), split up-screen into bands of band_length pixels,
 ## the last one possibly shorter. Each band draws round(density_curve) hazards from
 ## tuning.hazards, in proportion to HazardSpec.weight among the specs whose first_band allows the
-## band, each at a position inside the band and outside the path.
+## band, each at a position inside the band: an object (GDD: fixed on the map, the path winds
+## around it) outside the path, an event (HazardSpec.is_event; it happens as the boat passes, so
+## the placement is its trigger) inside it, on the path the boat must take, so every event can
+## fire.
 ##
 ## The path (GDD: "a guaranteed path winds through every band") is a corridor path_width wide
 ## that no object is placed in. Its centre is a random walk across the lake, one step per band:
@@ -20,16 +23,17 @@ extends RefCounted
 ## of 0, so the remaining steps can always bring it back to the island. Between two centres the
 ## corridor's x is the straight line from one to the next (corridor_x(tuning, seed, y)), so the
 ## corridor is continuous across band edges; off the shore it sits at 0 (the launch) and so does
-## the island. A placement's x is drawn from the water outside the corridor at its y; a band
-## that is all corridor (path_width at or above lake_width) places nothing.
+## the island. An object's x is drawn from the water outside the corridor at its y, an event's
+## from the corridor's middle (within EVENT_SPREAD of its half-width either side of the centre);
+## a band that is all corridor (path_width at or above lake_width) places events only.
 ##
 ## The attempt's seed is the one truth. Each band is planned on its own
 ## (plan_band(tuning, seed, band, generation)) from a RandomNumberGenerator seeded with
 ## band_seed(): a hash of the seed, the band and the band's generation, so the same seed and
 ## tuning always give the same lake, and a band can be re-planned at a later generation without
 ## touching the others (for the path and future events; the lake itself plans generation 0 only).
-## plan() is the whole lake at generation 0, band by band. Hazards are objects and stay where they
-## are placed. lake.gd instances the placements under its Hazards node.
+## plan() is the whole lake at generation 0, band by band. Objects stay where they are placed and
+## an event's trigger too. lake.gd instances the placements under its Hazards node.
 ##
 ## The effects palette (GDD › Systems › Hazards, Effects) lives on RunState, which the boat and
 ## the guys answer to; a hazard scene calls beer_overboard(hull, at), shove(impulse),
@@ -38,6 +42,10 @@ extends RefCounted
 ## The generation the path's draws are hashed with: objects use 0 and up, so the path never
 ## shares a band's RNG with them.
 const PATH_GENERATION: int = -1
+## How far across the corridor an event's trigger may sit, as a fraction of the corridor's
+## half-width either side of its centre: 0 is dead centre, 1 anywhere in the corridor. Kept
+## inside so a boat holding the path's middle still passes over it.
+const EVENT_SPREAD: float = 0.5
 
 
 ## One hazard to place: which spec (index into LakeTuning.hazards), which band, and where in
@@ -114,21 +122,30 @@ static func plan(tuning: LakeTuning, lake_seed: int) -> Array[Placement]:
 
 
 ## One band's hazards at one generation: its density's worth of weighted draws, each placed
-## inside the band and outside the path, from an RNG seeded with band_seed(). Nothing for a band
-## outside the planned water, one no spec may be drawn in, or one the corridor fills.
+## inside the band, an object outside the path and an event inside it, from an RNG seeded with
+## band_seed(). Either kind takes the same two draws (y, then x), so a lake of objects alone plans
+## as it did before events. Nothing for a band outside the planned water or one no spec may be
+## drawn in; in a lake the corridor fills only the events are drawn, objects having no water.
 static func plan_band(tuning: LakeTuning, lake_seed: int, band: int, generation: int) -> Array[Placement]:
 	var placements: Array[Placement] = []
 	if band < 0 or band >= band_count(tuning):
 		return placements
 	var specs: Array[int] = allowed(tuning, band)
-	if specs.is_empty() or open_width(tuning) <= 0.0:
+	if open_width(tuning) <= 0.0:
+		specs = specs.filter(func(spec: int) -> bool: return tuning.hazards[spec].is_event)
+	if specs.is_empty():
 		return placements
 	var centers: PackedFloat64Array = path_centers(tuning, lake_seed)
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = band_seed(lake_seed, band, generation)
 	for i: int in density(tuning, band):
 		var spec: int = draw(tuning, specs, rng)
-		placements.append(Placement.new(spec, band, place(tuning, centers, band, rng)))
+		var at: Vector2
+		if tuning.hazards[spec].is_event:
+			at = place_event(tuning, centers, band, rng)
+		else:
+			at = place(tuning, centers, band, rng)
+		placements.append(Placement.new(spec, band, at))
 	return placements
 
 
@@ -161,6 +178,17 @@ static func place(tuning: LakeTuning, centers: PackedFloat64Array, band: int, rn
 	if x >= left_of_path:
 		x += tuning.path_width
 	return Vector2(x, y)
+
+
+## An event's trigger: inside the band like an object (the same y draw), then on the path, at
+## the corridor's centre at that y plus a fraction in [-EVENT_SPREAD, EVENT_SPREAD] of its
+## half-width, so the boat following the corridor passes over it. `centers` is path_centers().
+static func place_event(tuning: LakeTuning, centers: PackedFloat64Array, band: int, rng: RandomNumberGenerator) -> Vector2:
+	var near: float = near_edge(tuning, band)
+	var far: float = minf(near + tuning.band_length, far_edge(tuning))
+	var y: float = -rng.randf_range(near, far)
+	var offset: float = rng.randf_range(-EVENT_SPREAD, EVENT_SPREAD) * tuning.path_width * 0.5
+	return Vector2(corridor_at(tuning, centers, y) + offset, y)
 
 
 # --- the path -----------------------------------------------------------------------------------
