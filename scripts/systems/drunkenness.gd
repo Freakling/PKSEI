@@ -15,22 +15,32 @@ extends RefCounted
 ## The timing bar, the top tier: at bar_level and above a guy's stroke is a timing test. While
 ## his key is held a bar sweeps 0→1→0 every bar_period seconds (bar_position); a release inside
 ## green_width of the centre is a hit (bar_hit) and gives the normal stroke, anything else a
-## backwards one (RunState applies that). Crossing bar_level is announced with a wind-up of
-## BAR_WINDUP seconds, tracked here as the levels change: bar_winding_up() is true and uses_bar()
-## still false until it is over; the bar then holds until his level drops below bar_level. The
-## boat scene draws the bar and the wind-up. Antics (the middle tier) are run by the Antics class.
+## backwards one (RunState applies that). The tier runs a small cycle per seat (BarPhase), tracked
+## here as the levels change: crossing bar_level is announced with a wind-up of BAR_WINDUP
+## seconds (bar_winding_up() true, uses_bar() still false); the bar then applies for bar_duration
+## (uses_bar()), ends, and after bar_cooldown more seconds, if he is still at or above bar_level,
+## the wind-up and the bar come again (T65; GDD: "it lasts ten to fifteen seconds at most ... it
+## can return after a while if he is still that drunk"). Dropping below bar_level ends whichever
+## phase runs and forgets the cooldown, so the next crossing is announced at once. The cycle's
+## clock stops while he is in the water (drink()'s in_water), so a crossing there is registered
+## and the wind-up waits, full, until he is back aboard. The boat scene draws the bar and the
+## wind-up. Antics (the middle tier) are run by the Antics class.
 
 ## Seconds between a guy crossing bar_level and the bar applying to his strokes: the tier's
 ## wind-up (GDD › Drunkenness: "announced with a wind-up"). Cosmetic timing, not a tunable.
 const BAR_WINDUP: float = 1.5
 
+## Where a seat is in the bar tier's cycle: OFF below bar_level; at or above it WINDING_UP
+## (BAR_WINDUP) → ON (bar_duration) → COOLING (bar_cooldown) → WINDING_UP again.
+enum BarPhase { OFF, WINDING_UP, ON, COOLING }
+
 var tuning: DrinkTuning
 ## One level per seat, 0..1.
 var levels: Array[float] = []
-## Seconds of wind-up left per seat; 0 once the bar applies, or while he is below bar_level.
-var _bar_windup: Array[float] = []
-## Whether each seat was at bar_level or above at its last level change, to spot the crossing.
-var _in_bar_tier: Array[bool] = []
+## The bar tier's phase per seat.
+var _bar_phase: Array[BarPhase] = []
+## Seconds left of the phase per seat; 0 while OFF.
+var _bar_time: Array[float] = []
 
 
 func _init(drink_tuning: DrinkTuning) -> void:
@@ -42,12 +52,12 @@ func _init(drink_tuning: DrinkTuning) -> void:
 ## forgotten.
 func reset() -> void:
 	levels.clear()
-	_bar_windup.clear()
-	_in_bar_tier.clear()
+	_bar_phase.clear()
+	_bar_time.clear()
 	for seat: int in Paddling.Seat.size():
 		levels.append(clampf(tuning.start_level, 0.0, 1.0))
-		_bar_windup.append(0.0)
-		_in_bar_tier.append(false)
+		_bar_phase.append(BarPhase.OFF)
+		_bar_time.append(0.0)
 		_track_bar_tier(seat, 0.0)
 
 
@@ -70,10 +80,10 @@ func relieve(seat: int, amount: float) -> float:
 
 
 ## Advances one guy's level by `delta` seconds of paddling, a break or floating, and returns it;
-## with `drinking` false (a swimmer with no beer) it holds. The bar tier's wind-up counts down
-## by `delta` whether he drinks or not, but not while he is `in_water`: his square and the
-## announcement are hidden there, so a crossing in the water is registered and the wind-up
-## waits, full, until he is back aboard.
+## with `drinking` false (a swimmer with no beer) it holds. The bar tier's clock (wind-up, bar
+## and cooldown) counts down by `delta` whether he drinks or not, but not while he is
+## `in_water`: his square and the announcement are hidden there, so a crossing in the water is
+## registered and the wind-up waits, full, until he is back aboard.
 func drink(seat: int, delta: float, on_break: bool, in_water: bool, drinking: bool = true) -> float:
 	levels[seat] = advance(levels[seat], delta, on_break, in_water, drinking)
 	_track_bar_tier(seat, 0.0 if in_water else delta)
@@ -114,14 +124,16 @@ func misses(level: float, rng: RandomNumberGenerator) -> bool:
 	return rng.randf() < miss_chance(level)
 
 
-## Whether the timing bar applies to this guy's strokes: at bar_level or above, wind-up over.
+## Whether the timing bar applies to this guy's strokes: at bar_level or above, wind-up over,
+## and bar_duration not yet up.
 func uses_bar(seat: int) -> bool:
-	return _in_bar_tier[seat] and _bar_windup[seat] <= 0.0
+	return _bar_phase[seat] == BarPhase.ON
 
 
-## Whether this guy has just crossed bar_level and the bar is still being announced.
+## Whether this guy's bar is being announced: he has just crossed bar_level, or its cooldown has
+## just run out with him still there.
 func bar_winding_up(seat: int) -> bool:
-	return _in_bar_tier[seat] and _bar_windup[seat] > 0.0
+	return _bar_phase[seat] == BarPhase.WINDING_UP
 
 
 ## Where the bar's marker is after the key has been held `hold_time` seconds: 0..1, sweeping
@@ -140,18 +152,42 @@ func bar_hit(hold_time: float) -> bool:
 	return absf(bar_position(hold_time) - 0.5) <= tuning.green_width * 0.5
 
 
-## Follows a level change for one seat: crossing up to bar_level starts the wind-up, `delta`
-## seconds at or above it count the wind-up down (0 when the time must not count, as in the
-## water), and dropping below clears it, so the next crossing is announced again.
+## Follows a level change for one seat through the tier's cycle: below bar_level everything is
+## off; crossing up to it starts the wind-up; `delta` seconds at or above it (0 when the time
+## must not count, as in the water) run the phase's clock down, and at 0 the next phase starts:
+## wind-up → bar (bar_duration) → cooldown (bar_cooldown) → wind-up again.
 func _track_bar_tier(seat: int, delta: float) -> void:
-	var above: bool = levels[seat] >= tuning.bar_level
-	if above and not _in_bar_tier[seat]:
-		_bar_windup[seat] = BAR_WINDUP
-	elif above:
-		_bar_windup[seat] = maxf(_bar_windup[seat] - delta, 0.0)
-	else:
-		_bar_windup[seat] = 0.0
-	_in_bar_tier[seat] = above
+	if levels[seat] < tuning.bar_level:
+		_bar_phase[seat] = BarPhase.OFF
+		_bar_time[seat] = 0.0
+		return
+	if _bar_phase[seat] == BarPhase.OFF:
+		_enter_bar_phase(seat, BarPhase.WINDING_UP)
+		return
+	_bar_time[seat] = maxf(_bar_time[seat] - delta, 0.0)
+	if _bar_time[seat] > 0.0:
+		return
+	match _bar_phase[seat]:
+		BarPhase.WINDING_UP:
+			_enter_bar_phase(seat, BarPhase.ON)
+		BarPhase.ON:
+			_enter_bar_phase(seat, BarPhase.COOLING)
+		BarPhase.COOLING:
+			_enter_bar_phase(seat, BarPhase.WINDING_UP)
+
+
+## Starts one phase of the cycle with its full time: BAR_WINDUP, bar_duration or bar_cooldown.
+func _enter_bar_phase(seat: int, phase: BarPhase) -> void:
+	_bar_phase[seat] = phase
+	match phase:
+		BarPhase.WINDING_UP:
+			_bar_time[seat] = BAR_WINDUP
+		BarPhase.ON:
+			_bar_time[seat] = tuning.bar_duration
+		BarPhase.COOLING:
+			_bar_time[seat] = tuning.bar_cooldown
+		_:
+			_bar_time[seat] = 0.0
 
 
 ## A missing curve means no effect at any level.

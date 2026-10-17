@@ -25,6 +25,12 @@ extends Resource
 @export var bar_period: float = 1.0 ## PLACEHOLDER
 ## Width of the bar's green zone as a fraction 0..1 of the bar, centred on its middle.
 @export var green_width: float = 0.2 ## PLACEHOLDER
+## Seconds the bar applies after its wind-up before it ends, whatever his level (GDD: "ten to
+## fifteen seconds at most").
+@export var bar_duration: float = 12.0 ## PLACEHOLDER
+## Seconds after the bar ends before it can be announced again, if he is still at or above
+## bar_level.
+@export var bar_cooldown: float = 20.0 ## PLACEHOLDER
 ## Antics (the middle tier, Antics): levels at which a guy does something stupid, each once per
 ## attempt the first time his level reaches it; rising order.
 @export var antic_thresholds: Array[float] = [0.4, 0.55, 0.7] ## PLACEHOLDER

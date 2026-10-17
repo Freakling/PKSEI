@@ -29,6 +29,7 @@ extends "res://tools/test_case.gd"
 ## second; with anyone aboard it is current_speed (GDD › Systems › Setbacks).
 ## T26 · guy_overboard() fires guy_fell_in (a knock-in splashes like a jumper) and beast_grab()
 ## fires guy_grabbed instead (the grab is its own sound) (GDD › Presentation and Platforms, Audio).
+## T64 · RunState emits puked(seat) when a puke finishes, not for a pee.
 ## T63 · A guy aboard whose level reaches puke_level winds up and pukes: no strokes for puke_time,
 ## then his level drops by puke_relief; a finished pee drops pee_relief, an interrupted one
 ## nothing; no second puke until the level dips below puke_level and reaches it again
@@ -1025,4 +1026,30 @@ func test_a_finished_pee_lowers_the_level_by_pee_relief_and_an_interrupted_one_d
 	expect_near(state.guys[0].drunkenness, 0.42, 0.0001, "a finished pee drops pee_relief")
 	state.step(1.0, BOAT)
 	expect_near(state.guys[0].drunkenness, 0.42, 0.0001, "once")
+	state.free()
+
+
+## T64: when a puke runs its course step() emits puked with the seat, once, on the step it ends;
+## a finished pee emits nothing.
+func test_a_finished_puke_emits_puked_with_the_seat_and_a_pee_does_not() -> void:
+	var state: Node = antic_state()
+	var puked: Array[int] = []
+	state.puked.connect(func(seat: int) -> void: puked.append(seat))
+	state.drunkenness.set_level(0, 1.0)
+	state.step(TICK, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.WINDING_UP, "the puke's wind-up")
+	state.step(1.0, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.PUKING, "he pukes")
+	state.step(2.5, BOAT)
+	expect_eq(puked.size(), 0, "nothing while he is still at it")
+	state.step(0.5, BOAT)
+	expect_eq(puked, [0] as Array[int], "puked with his seat on the step the puke ends")
+	state.step(Antics.RECOVER_TIME + 1.0, BOAT)
+	expect_eq(puked.size(), 1, "and once only")
+	state.drunkenness.set_level(1, 0.5)
+	state.antics.start(1, Antics.Kind.PEE)
+	state.step(1.0, BOAT)
+	state.step(5.0, BOAT)
+	expect_near(state.drunkenness.level_of(1), 0.42, 0.0001, "the pee ran its course")
+	expect_eq(puked.size(), 1, "a pee is no puke")
 	state.free()

@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (112 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (115 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -287,19 +287,19 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a guy whose level reaches 1.0 winds up and pukes overboard: his seat gives no strokes for puke_time, then his level drops by puke_relief (test) · finishing a pee lowers his level by pee_relief (test) · the puke has its own frames and a Swedish line, and the meter visibly falls (play)
 - GDD: Systems › Drunkenness
 
-### T64 · Puking has a one-in-fifty chance of drawing the beast · in-progress 2026-10-17 · S · agent
+### T64 · Puking has a one-in-fifty chance of drawing the beast · done · S · agent
 - Depends on: T63, T50
 - Touches: scripts/autoload/run_state.gd (signal puked), scripts/systems/beast.gd, scripts/hazards/beast.gd, scripts/resources/lake_tuning.gd (+beast_puke_chance), data/lake_tuning.tres, tests/test_beast.gd, tests/test_run_state.gd
 - Done when: when a puke finishes RunState emits puked(seat) (test) · the beast, hearing it while submerged and in open water, rolls beast_puke_chance from its own RNG and on a hit starts a random visit (one grab) (test)
 - GDD: Systems › Drunkenness · Systems › Hazards
 
-### T65 · The timing-bar tier lasts bar_duration, then ends and can return after bar_cooldown · in-progress 2026-10-17 · S · agent
+### T65 · The timing-bar tier lasts bar_duration, then ends and can return after bar_cooldown · done · S · agent
 - Depends on: T31
 - Touches: scripts/systems/drunkenness.gd, scripts/resources/drink_tuning.gd (+bar_duration, +bar_cooldown), data/drink_tuning.tres, tests/test_drunkenness.gd
 - Done when: after its wind-up the bar applies for bar_duration (10–15 s placeholder) then ends even if the level stays at or above bar_level (test) · it can be announced again after bar_cooldown if the level is still at or above bar_level (test) · dropping below bar_level ends it as before (test)
 - GDD: Systems › Drunkenness
 
-### T66 · The sand text also shows R = reset · in-progress 2026-10-17 · S · agent
+### T66 · The sand text also shows R = reset · done · S · agent
 - Depends on: T62
 - Touches: tools/gen_sprites.gd, assets/sprites/sand_text.png
 - Done when: the sand diagram carries a third line "R = RESET" (or Swedish "R = OM IGEN") under the key lines, legible at 1× (play)

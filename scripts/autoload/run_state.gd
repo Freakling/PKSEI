@@ -13,7 +13,8 @@ extends Node
 ## started on the puke antic (Antics.Kind.PUKE, never drawn at a threshold), and once he has
 ## puked his level drops by puke_relief (Drunkenness.relieve); a finished pee drops it by
 ## pee_relief, a pee cut short by a knock-in not at all (Antics.just_finished). He pukes again
-## only once his level has dipped below puke_level and reached it again (_puke_armed). The boat scene calls
+## only once his level has dipped below puke_level and reached it again (_puke_armed); a finished
+## puke emits `puked` (T64: the beast may hear it). The boat scene calls
 ## stroke() on each key release and step() once per physics frame with its position (where a guy
 ## whose wind-up ends jumps from, T34), and applies the Motion it gets back; the lake sets
 ## progress from the boat's position, calls arrive() at the island,
@@ -84,6 +85,8 @@ signal beer_overboard_started(hull: Rescue.Hull)
 signal guy_fell_in(seat: int)
 ## The beast grabbed a guy in beast_grab() (T50; T26: the chomp).
 signal guy_grabbed(seat: int)
+## A guy's puke ran its course in step() (T64: the beast listens, scripts/hazards/beast.gd).
+signal puked(seat: int)
 ## A hazard's warning started (T56): `kind` is one of Lines.KINDS, `hull` the Rescue.Hull it
 ## comes from, or Rescue.NOBODY when it comes from nowhere in particular (a headwind). Emitted
 ## by telegraph(); the speech bubbles put the line on the guy on that hull.
@@ -469,7 +472,8 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 
 
 ## A pee or a puke that ran its full course this step lowers his level by pee_relief or
-## puke_relief (T63); a pee cut short by a knock-in never gets here (Antics.just_finished).
+## puke_relief (T63); a pee cut short by a knock-in never gets here (Antics.just_finished). A
+## finished puke is announced with `puked` (T64), for the beast.
 func _relieve_after_antic(seat: int) -> void:
 	if not antics.just_finished(seat):
 		return
@@ -478,6 +482,7 @@ func _relieve_after_antic(seat: int) -> void:
 			drunkenness.relieve(seat, drunkenness.tuning.pee_relief)
 		Antics.Kind.PUKE:
 			drunkenness.relieve(seat, drunkenness.tuning.puke_relief)
+			puked.emit(seat)
 
 
 ## At DrinkTuning.puke_level an idle guy aboard starts the puke's wind-up, once per crossing:

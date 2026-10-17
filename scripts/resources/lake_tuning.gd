@@ -130,6 +130,9 @@ extends Resource
 ## typical crossing (GDD). A five-minute crossing is 300 rolls, so it expects rate × 300 visits:
 ## at 0.0003 that is 0.09, about one crossing in eleven (T60).
 @export var beast_random_rate: float = 0.0003 ## PLACEHOLDER
+## Chance that a guy's puke, heard while the beast is under and the boat is in open water, draws
+## it up for one grab: the random visit again (T64; GDD › Drunkenness: "about one in fifty").
+@export var beast_puke_chance: float = 0.02 ## PLACEHOLDER
 ## Pixels from a log or a rock within which, with the boat heading toward it, a guy calls it out
 ## in a bubble (T56; read by scripts/hazards/log.gd and rock.gd). Objects have no warning of their
 ## own: being ahead on the path is theirs.

@@ -3,10 +3,16 @@ extends "res://tools/test_case.gd"
 ## follow the level (GDD › Systems › Drunkenness).
 ## T31 · The timing bar at the top tier: the bar sweeps with bar_period, a release inside
 ## green_width of the centre is a hit, and crossing bar_level is announced with a wind-up.
+## T65 · After its wind-up the bar applies for bar_duration then ends, level or no; it can be
+## announced again after bar_cooldown if he is still at or above bar_level; dropping below
+## bar_level ends it and clears the cooldown.
 ## T63 · relieve() lowers a level by an amount, never below 0; dropping below bar_level ends the
 ## bar tier (GDD › Systems › Drunkenness: "drunkenness also comes down").
 
 const SEATS: int = 4
+## The bar's duration and cooldown these tests set (T65).
+const BAR_DURATION: float = 10.0
+const BAR_COOLDOWN: float = 20.0
 
 var tuning: DrinkTuning
 var drunkenness: Drunkenness
@@ -23,6 +29,8 @@ func before_each() -> void:
 	tuning.bar_level = 0.8
 	tuning.bar_period = 2.0
 	tuning.green_width = 0.2
+	tuning.bar_duration = BAR_DURATION
+	tuning.bar_cooldown = BAR_COOLDOWN
 	drunkenness = Drunkenness.new(tuning)
 
 
@@ -152,7 +160,7 @@ func test_bar_hit_is_a_release_inside_green_width_of_the_centre() -> void:
 	expect(drunkenness.bar_hit(0.5), "which still hits")
 
 
-func test_the_bar_applies_after_a_wind_up_at_bar_level_until_he_sobers() -> void:
+func test_the_bar_applies_after_a_wind_up_at_bar_level_and_lasts_bar_duration() -> void:
 	drunkenness.set_level(0, 0.79)
 	expect_false(drunkenness.uses_bar(0), "just below bar_level his strokes are plain")
 	expect_false(drunkenness.bar_winding_up(0), "and nothing is announced")
@@ -165,12 +173,20 @@ func test_the_bar_applies_after_a_wind_up_at_bar_level_until_he_sobers() -> void
 	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
 	expect(drunkenness.uses_bar(0), "the bar applies once the wind-up is over")
 	expect_false(drunkenness.bar_winding_up(0), "the announcement is over")
-	drunkenness.drink(0, 5.0, false, true)
-	expect(drunkenness.uses_bar(0), "and holds as he drinks on")
+	drunkenness.drink(0, BAR_DURATION * 0.5, false, false)
+	expect(drunkenness.uses_bar(0), "and holds as he drinks on, halfway through bar_duration")
 	drunkenness.set_level(0, 1.0)
 	expect(drunkenness.uses_bar(0) and not drunkenness.bar_winding_up(0), "no new wind-up while he stays in the tier")
+	drunkenness.drink(0, BAR_DURATION * 0.5 - 0.1, false, false)
+	expect(drunkenness.uses_bar(0), "still on, a tenth of a second short of bar_duration")
+	drunkenness.drink(0, 0.1, false, false)
+	expect_false(drunkenness.uses_bar(0), "after bar_duration the bar ends")
+	expect_false(drunkenness.bar_winding_up(0), "with no new announcement")
+	expect(drunkenness.level_of(0) >= tuning.bar_level, "though he is still at the top of the meter")
+	drunkenness.drink(0, 1.0, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "and stays ended: plain lag and misses")
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.uses_bar(0), "below bar_level his strokes are plain again")
+	expect_false(drunkenness.uses_bar(0), "below bar_level his strokes are plain")
 	expect_false(drunkenness.bar_winding_up(0), "nothing announced")
 	drunkenness.set_level(0, 0.9)
 	expect(drunkenness.bar_winding_up(0), "crossing again is announced again")
@@ -178,6 +194,62 @@ func test_the_bar_applies_after_a_wind_up_at_bar_level_until_he_sobers() -> void
 	expect_false(drunkenness.uses_bar(2) or drunkenness.bar_winding_up(2), "the other guys are unaffected")
 	drunkenness.reset()
 	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a reset forgets the tier")
+
+
+## T65: once the bar has ended, bar_cooldown later it is announced again if he is still at or
+## above bar_level, and the cycle repeats; like the wind-up, the clock waits in the water.
+func test_it_can_be_announced_again_after_bar_cooldown_if_he_is_still_at_bar_level() -> void:
+	drunkenness.set_level(0, 0.9)
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
+	expect(drunkenness.uses_bar(0), "the bar applies after its wind-up")
+	drunkenness.drink(0, BAR_DURATION, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "and ends after bar_duration")
+	drunkenness.drink(0, BAR_COOLDOWN * 0.5, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "halfway through the cooldown: nothing")
+	drunkenness.drink(0, BAR_COOLDOWN, false, true)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "the cooldown waits while he floats")
+	drunkenness.drink(0, BAR_COOLDOWN * 0.5 - 0.1, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a tenth of a second short of bar_cooldown: still nothing")
+	drunkenness.drink(0, 0.1, false, false)
+	expect(drunkenness.level_of(0) >= tuning.bar_level, "he is still at the top")
+	expect(drunkenness.bar_winding_up(0), "so after bar_cooldown the bar is announced again")
+	expect_false(drunkenness.uses_bar(0), "and does not apply during the new wind-up")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.bar_winding_up(0), "a full wind-up, not a shortened one")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.uses_bar(0), "then the bar applies again")
+	expect_false(drunkenness.bar_winding_up(0), "the announcement over")
+	drunkenness.drink(0, BAR_DURATION, false, false)
+	expect_false(drunkenness.uses_bar(0), "and ends again after bar_duration: the cycle repeats")
+	expect_false(drunkenness.uses_bar(1) or drunkenness.bar_winding_up(1), "the other guys are unaffected")
+
+
+## T65: dropping below bar_level ends the bar, as before, and forgets the cooldown: a re-crossing
+## is announced at once, with a full wind-up.
+func test_dropping_below_bar_level_ends_the_bar_and_clears_the_cooldown() -> void:
+	drunkenness.set_level(0, 0.9)
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
+	drunkenness.drink(0, 2.0, false, false)
+	expect(drunkenness.uses_bar(0), "the bar is on")
+	drunkenness.set_level(0, 0.79)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "below bar_level it ends")
+	drunkenness.set_level(0, 0.9)
+	expect(drunkenness.bar_winding_up(0), "crossing again is announced at once")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
+	drunkenness.drink(0, BAR_DURATION, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "the bar ran its course")
+	drunkenness.drink(0, 1.0, false, false)
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a second into the cooldown")
+	drunkenness.relieve(0, 0.25)
+	expect(drunkenness.level_of(0) < tuning.bar_level, "a puke's relief takes him below bar_level")
+	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "nothing shows below it")
+	drunkenness.set_level(0, 0.9)
+	expect(drunkenness.bar_winding_up(0), "crossing again is announced at once: the cooldown is forgotten")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.bar_winding_up(0), "with a full wind-up")
+	expect_false(drunkenness.uses_bar(0), "the bar not yet applying")
+	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
+	expect(drunkenness.uses_bar(0), "then the bar")
 
 
 func test_the_wind_up_waits_while_he_is_in_the_water_and_counts_down_once_aboard() -> void:
@@ -210,6 +282,8 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(drink.bar_level <= 1.0, "the top tier is reachable")
 	expect(drink.bar_period > 0.0, "the bar sweeps")
 	expect(drink.green_width > 0.0 and drink.green_width < 1.0, "a thin green zone: not none, not the whole bar")
+	expect(drink.bar_duration >= 10.0 and drink.bar_duration <= 15.0, "the bar lasts ten to fifteen seconds (GDD)")
+	expect(drink.bar_cooldown > 0.0, "and comes back only after a while")
 	expect(drink.drink_rate > 0.0, "the crate gets drunk")
 	expect(drink.break_drink_multiplier > 1.0, "a break drinks faster")
 	expect(drink.water_drink_multiplier > drink.break_drink_multiplier, "the water drinks faster still")

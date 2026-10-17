@@ -11,7 +11,8 @@ extends RefCounted
 ##              beast_beyond_island) makes it rise at once, a boundary visit. Inside the bounds
 ##              and in open water (in_open_water: past the launch margin, short of the island)
 ##              it rolls once a second from the caller's RNG: a chance of beast_random_rate to
-##              rise anyway, the rare random visit;
+##              rise anyway, the rare random visit. A guy's puke (hear_puke, T64) heard here
+##              rolls beast_puke_chance from the same RNG for the same visit;
 ##   CIRCLING:  the telegraph. The fin (`position`) circles the boat at CIRCLE_RADIUS, one lap
 ##              per CIRCLE_PERIOD, for beast_warning seconds (a low rumble comes with T26's
 ##              audio). On a boundary visit a boat back inside makes it dive without ramming;
@@ -30,8 +31,9 @@ extends RefCounted
 ##              rises again if the boat is still out: circle → ram → pause → circle…),
 ##              beast_dive_time after the random visit's one grab, after a ram that gave up or
 ##              when the boat came back inside. Then SUBMERGED.
-## The only randomness is the random visit's roll, from the RNG the caller passes, so the same
-## inputs and the same seed give the same visit. In the game that is the beast's own RNG,
+## The only randomness is the random visit's rolls (the once-a-second one and the puke's), from
+## the RNG the caller passes, so the same inputs and the same seed give the same visit. In the
+## game that is the beast's own RNG,
 ## rng_for(RunState.lake_seed): the crew's RunState.rng stream is never touched and the same
 ## lake gives the same visits. Positions are in the boat's frame of reference (the scene uses
 ## global coordinates), with the island up-screen (negative y) and the lake's middle at x = 0.
@@ -191,6 +193,20 @@ func step(delta: float, boat_position: Vector2, boat_rotation: float, rng: Rando
 				random_visit = false
 				roll_left = ROLL_INTERVAL
 	return hit
+
+
+## A guy aboard has puked (RunState.puked; T64, GDD › Drunkenness: "a small chance, about one in
+## fifty, of drawing the beast"). Under water with the boat in open water it rolls
+## beast_puke_chance from `rng` and on a hit rises for a random visit, one grab; returns whether
+## it rose. Already up, diving, or with the boat at the launch, the island or out of bounds (where
+## the boundary rules apply), nothing happens and the RNG is left alone.
+func hear_puke(boat_position: Vector2, rng: RandomNumberGenerator) -> bool:
+	if state != State.SUBMERGED or not in_open_water(boat_position):
+		return false
+	if rng.randf() >= tuning.beast_puke_chance:
+		return false
+	_rise(boat_position, true)
+	return true
 
 
 ## The fin surfaces on the side away from the middle and starts circling.

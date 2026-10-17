@@ -6,8 +6,10 @@ extends HazardBase
 ## made in _setup(), for the rare random visit: the crew's RunState.rng stream is untouched and
 ## the same lake gives the same visits), and applies its hit through RunState: shove() back
 ## toward the lake's middle and beast_grab() of the guy on the hull it hit, spat out
-## beast_spit_distance toward the shore. Once the attempt is won (RunState.Phase.WON) it stops
-## where it is: no hit lands during the win cutscene.
+## beast_spit_distance toward the shore. A guy's puke (RunState.puked, T64) is passed to the rule
+## as Beast.hear_puke() with the boat's position and the same RNG: its roll may start a random
+## visit. Once the attempt is won (RunState.Phase.WON) it stops
+## where it is: no hit lands during the win cutscene, and a puke there is not heard.
 ## It shows the state at a glance: while the beast circles, the fin sprite (Visual/Fin) rides
 ## the rule's position pointing the way it goes over widening ripple rings (Visual/Ripples,
 ## T24); while it rams, the head sprite (Visual/Head) charges at the boat; under water nothing
@@ -52,6 +54,7 @@ func _setup() -> void:
 	_ripples.visible = false
 	_fin.visible = false
 	_head.visible = false
+	RunState.puked.connect(_on_puked)
 
 
 func _physics_process(delta: float) -> void:
@@ -66,6 +69,14 @@ func _physics_process(delta: float) -> void:
 		RunState.beast_grab(hit.hull, _boat.global_position, tuning.beast_spit_distance)
 	_sound_state()
 	_show_state(delta)
+
+
+## A guy puked (T64): the rule hears it where the boat is, with the beast's own RNG. The rise it
+## may start shows and sounds on the next step like any other.
+func _on_puked(_seat: int) -> void:
+	if _boat == null or RunState.phase == RunState.Phase.WON:
+		return
+	_rule.hear_puke(_boat.global_position, _rng)
 
 
 ## Sound and the call-out (T26, T56): the low rumble loops from the moment the beast rises

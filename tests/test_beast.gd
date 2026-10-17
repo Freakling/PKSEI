@@ -13,7 +13,8 @@ extends "res://tools/test_case.gd"
 ## RunState.beast_grab() puts the hit hull's guy in the water beast_spit_distance back toward
 ## the shore, beerless (GDD › Systems › Hazards, the Loch-Brez beast row; GDD › Systems ›
 ## Setbacks). B5: a boat anywhere on the guaranteed path is never out of bounds (GDD: "the
-## guaranteed path never leads there").
+## guaranteed path never leads there"). T64: a puke heard (hear_puke) while it is under and the
+## boat is in open water rolls beast_puke_chance from the RNG passed in; a hit is a random visit.
 ##
 ## The tick is 1/64 s: the warning is 128 ticks, a lap of the fin 80, the ram 5 px a tick, and
 ## the ram timeout (1 s here) 64 ticks.
@@ -54,6 +55,8 @@ const RAM_MOVES: int = 28
 const HIT_TICK: int = RAM_TICK + RAM_MOVES
 const PAUSE_TICKS: int = 96
 const DIVE_TICKS: int = 128
+## The puke's chance of drawing the beast in these tests: one in fifty, as the GDD has it.
+const PUKE_CHANCE: float = 0.02
 
 var tuning: LakeTuning
 var beast: Beast
@@ -92,7 +95,30 @@ func own_tuning() -> LakeTuning:
 	lake.beast_dive_time = DIVE
 	lake.beast_ram_timeout = 6.0
 	lake.beast_random_rate = 0.0
+	lake.beast_puke_chance = PUKE_CHANCE
 	return lake
+
+
+## An RNG whose first roll lands under (or, with `under` false, at or over) PUKE_CHANCE: the
+## seeds are searched in order, so the test is deterministic and says which way the roll goes.
+func rng_rolling(under: bool) -> RandomNumberGenerator:
+	for seed: int in range(1, 10000):
+		var probe: RandomNumberGenerator = RandomNumberGenerator.new()
+		probe.seed = seed
+		if (probe.randf() < PUKE_CHANCE) == under:
+			var found: RandomNumberGenerator = RandomNumberGenerator.new()
+			found.seed = seed
+			return found
+	fail("no seed rolls %s beast_puke_chance" % ("under" if under else "over"))
+	return RandomNumberGenerator.new()
+
+
+## The state of `source` after one randf(), to check a roll was taken and nothing more.
+func rolled_once(source: RandomNumberGenerator) -> int:
+	var copy: RandomNumberGenerator = RandomNumberGenerator.new()
+	copy.seed = source.seed
+	copy.randf()
+	return copy.state
 
 
 ## Steps the beast for some ticks with the boat still; returns the ticks (1-based, counted from
@@ -432,3 +458,80 @@ func test_run_state_beast_grab_puts_the_hulls_guy_in_the_water_far_back_toward_t
 	expect_eq(state.beast_grab(Rescue.Hull.LEFT, boat, 900.0), Rescue.NOBODY, "an empty hull: nobody to grab")
 	expect_eq(_grabbed.size(), 2, "and no signal for it")
 	state.free()
+
+
+## T64: a puke heard under water in open water rolls beast_puke_chance once from the RNG passed
+## in; a roll under it is a random visit: the fin, the ram, one grab, then the dive.
+func test_a_puke_heard_in_open_water_that_rolls_under_beast_puke_chance_starts_a_random_visit() -> void:
+	var lucky: RandomNumberGenerator = rng_rolling(true)
+	var after_one: int = rolled_once(lucky)
+	expect(beast.hear_puke(INSIDE, lucky), "the roll under the chance: it rises")
+	expect_eq(lucky.state, after_one, "one roll taken, no more")
+	expect_eq(beast.state, Beast.State.CIRCLING, "the fin is up")
+	expect(beast.random_visit, "a random visit")
+	expect_near(beast.time_left, WARNING, 0.0001, "beast_warning to go")
+	expect_eq(beast.toward_middle, Vector2.LEFT, "on x = 0 the middle counts as leftward")
+	expect_near(beast.position.distance_to(INSIDE), Beast.CIRCLE_RADIUS, 0.0001, "the fin at the circle's radius")
+	run(RAM_TICK - RISE_TICK, INSIDE)
+	expect_eq(beast.state, Beast.State.RAMMING, "the warning over, it rams")
+	expect_eq(beast.position, INSIDE + Vector2.RIGHT * RAM_DISTANCE, "from the side away from the middle")
+	var hits: Array[int] = run(RAM_MOVES, INSIDE)
+	expect_eq(hits.size(), 1, "one grab")
+	expect_eq(last_hit.hull, Rescue.Hull.RIGHT, "on the hull it came from")
+	expect_eq(last_hit.shove, Vector2.LEFT * SHOVE, "shoved toward the middle")
+	expect_eq(beast.state, Beast.State.DIVING, "then it dives")
+	expect_near(beast.time_left, DIVE, 0.0001, "for the dive time, not the short pause")
+	run(DIVE_TICKS, INSIDE)
+	expect_eq(beast.state, Beast.State.SUBMERGED, "under water")
+	expect_false(beast.random_visit, "the visit is over")
+	expect_eq(run(500, INSIDE).size(), 0, "and no second grab on its own (rate 0)")
+
+
+func test_a_puke_that_rolls_over_beast_puke_chance_leaves_it_under() -> void:
+	var unlucky: RandomNumberGenerator = rng_rolling(false)
+	var after_one: int = rolled_once(unlucky)
+	expect_false(beast.hear_puke(INSIDE, unlucky), "the roll at or over the chance: nothing")
+	expect_eq(unlucky.state, after_one, "but the roll was taken")
+	expect_eq(beast.state, Beast.State.SUBMERGED, "still under")
+	expect_false(beast.random_visit, "no visit")
+	expect_eq(run(500, INSIDE).size(), 0, "and nothing follows")
+	tuning.beast_puke_chance = 0.0
+	var lucky: RandomNumberGenerator = rng_rolling(true)
+	expect_false(beast.hear_puke(INSIDE, lucky), "a chance of 0 never rises, whatever the roll")
+	expect_eq(beast.state, Beast.State.SUBMERGED, "still under")
+
+
+func test_a_puke_is_not_heard_while_it_is_up_or_diving_and_the_rng_is_left_alone() -> void:
+	var lucky: RandomNumberGenerator = rng_rolling(true)
+	var untouched: int = lucky.state
+	run(RISE_TICK + 10, LEFT_OUT)
+	expect_eq(beast.state, Beast.State.CIRCLING, "a boundary visit circles")
+	expect_false(beast.hear_puke(LEFT_OUT, lucky), "a puke while it circles: nothing")
+	expect_eq(beast.state, Beast.State.CIRCLING, "still circling")
+	expect_false(beast.random_visit, "still the boundary visit")
+	run(RAM_TICK - RISE_TICK - 10, LEFT_OUT)
+	expect_eq(beast.state, Beast.State.RAMMING, "ramming")
+	expect_false(beast.hear_puke(LEFT_OUT, lucky), "a puke while it rams: nothing")
+	expect_eq(beast.state, Beast.State.RAMMING, "still ramming")
+	run(1, INSIDE)
+	expect_eq(beast.state, Beast.State.DIVING, "back inside: it dives")
+	expect_false(beast.hear_puke(INSIDE, lucky), "a puke while it dives: nothing")
+	expect_eq(beast.state, Beast.State.DIVING, "still diving")
+	expect_near(beast.time_left, DIVE, 0.0001, "the dive untouched")
+	expect_eq(lucky.state, untouched, "and the RNG was never rolled")
+	run(DIVE_TICKS, INSIDE)
+	expect_eq(beast.state, Beast.State.SUBMERGED, "under water again")
+	expect(beast.hear_puke(INSIDE, lucky), "now a puke is heard")
+	expect(beast.random_visit, "a random visit")
+
+
+func test_a_puke_is_not_heard_out_of_open_water_and_the_rng_is_left_alone() -> void:
+	var lucky: RandomNumberGenerator = rng_rolling(true)
+	var untouched: int = lucky.state
+	expect_false(beast.hear_puke(LAUNCH, lucky), "never at the launch")
+	expect_false(beast.hear_puke(Vector2(0.0, -1950.0), lucky), "never at the island's beach")
+	expect_false(beast.hear_puke(LEFT_OUT, lucky), "never out of bounds: the boundary rules apply there")
+	expect_false(beast.hear_puke(BEYOND_ISLAND, lucky), "nor beyond the island")
+	expect_eq(beast.state, Beast.State.SUBMERGED, "still under")
+	expect_eq(lucky.state, untouched, "and the RNG was never rolled")
+	expect(beast.hear_puke(INSIDE, lucky), "the same roll in open water rises")

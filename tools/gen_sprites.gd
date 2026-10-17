@@ -454,7 +454,7 @@ func _sand() -> Image:
 ## (_scratch); the rest is transparent, so the sand shows through. Its place is in lake.tscn,
 ## under the shore, so it scrolls off with it.
 func _sand_text() -> Image:
-	var img: Image = _new(120, 60)
+	var img: Image = _new(120, 70)
 	var grooves: Dictionary[Vector2i, bool] = {}
 	var boat_top: int = 3
 	var boat_height: int = 34
@@ -485,9 +485,10 @@ func _sand_text() -> Image:
 	for at: Vector2i in seat_keys:
 		_text_grooves(grooves, seat_keys[at][0] + "↑", at.y - 5, at.x + 3)
 		_text_grooves(grooves, seat_keys[at][1] + "↓", at.y + 1, at.x + 3)
-	# The two lines, centred under the boat.
+	# The three lines, centred under the boat: the keys, then the reset key (T66).
 	_text_grooves(grooves, "HOLD = CHARGE", 41, 60)
 	_text_grooves(grooves, "UP FWD · DOWN BACK", 50, 60)
+	_text_grooves(grooves, "R = RESET", 59, 60)
 	_scratch(img, grooves)
 	return img
 
@@ -1213,8 +1214,8 @@ static func _glyph_grooves(grooves: Dictionary[Vector2i, bool], letter: String, 
 
 
 ## The 3×5 glyphs for the sand writing: '#' is a groove, '.' is sand. Only the letters the
-## scheme needs (the eight keys, HOLD, CHARGE, UP, FWD, DOWN, BACK), the up and down arrows
-## beside the keys, and the '=' and '·' in the two lines.
+## scheme needs (the eight keys, HOLD, CHARGE, UP, FWD, DOWN, BACK, RESET), the up and down
+## arrows beside the keys, and the '=' and '·' in the three lines.
 static func _glyph(letter: String) -> PackedStringArray:
 	match letter:
 		"A": return PackedStringArray([".#.", "#.#", "###", "#.#", "#.#"])
@@ -1234,6 +1235,7 @@ static func _glyph(letter: String) -> PackedStringArray:
 		"Q": return PackedStringArray(["###", "#.#", "#.#", "###", "..#"])
 		"R": return PackedStringArray(["##.", "#.#", "##.", "#.#", "#.#"])
 		"S": return PackedStringArray(["###", "#..", "###", "..#", "###"])
+		"T": return PackedStringArray(["###", ".#.", ".#.", ".#.", ".#."])
 		"U": return PackedStringArray(["#.#", "#.#", "#.#", "#.#", "###"])
 		"W": return PackedStringArray(["#.#", "#.#", "#.#", "###", "#.#"])
 		"↑": return PackedStringArray([".#.", "###", ".#.", ".#.", ".#."])
