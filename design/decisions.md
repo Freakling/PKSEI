@@ -75,3 +75,5 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · Puking has about a one-in-fifty chance of drawing the beast · why: the human's call; a punchline with teeth · from: conversation
 - 2026-10-17 · The timing-bar tier lasts ten to fifteen seconds at most, then ends and can return later (replaces "steady until he sobers up") · why: the human's call; a permanent flip blocks every other antic · from: conversation
 - 2026-10-17 · The sand text also shows the reset key · why: the human's play; the reset wasn't discoverable on the shore · from: conversation
+- 2026-10-17 · The guys are named per attempt from the crew's list of nicknames; the HUD shows names, never the keys · why: the human's call; the names are the friends on the trip · from: conversation
+- 2026-10-17 · The sand text is drawn at twice the scale · why: the human's play; too small at 1× · from: conversation

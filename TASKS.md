@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T67 · B6
+**Next IDs:** T69 · B6
 
 ## Milestones
 | Milestone | Status |
@@ -304,6 +304,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: tools/gen_sprites.gd, assets/sprites/sand_text.png
 - Done when: the sand diagram carries a third line "R = RESET" (or Swedish "R = OM IGEN") under the key lines, legible at 1× (play)
 - GDD: Presentation and Platforms
+
+### T67 · The sand text is drawn at twice the scale · in-progress 2026-10-17 · S · agent
+- Depends on: T66
+- Touches: scenes/lake.tscn (SandText scale and position)
+- Done when: the sand diagram shows at 2× on the beach beside the launch, fully on the sand and still gone once the boat has left (play)
+- GDD: Presentation and Platforms
+
+### T68 · The guys get names from the crew's list; the HUD shows names, not keys · in-progress 2026-10-17 · M · agent
+- Depends on: T6, T56
+- Touches: scripts/resources/names.gd (new), data/names.tres (new), scripts/autoload/run_state.gd (names per attempt), scripts/ui/hud.gd (labels), scripts/win_cutscene.gd (optional: names on the title), tests/test_names.gd (new), tests/test_run_state.gd
+- Done when: each new attempt gives the four seats distinct names drawn from data/names.tres with the attempt's RNG (test) · the HUD shows each guy's name instead of the seat and key labels (play) · the list is a Resource the human can edit, with a test that it holds at least four names (test)
+- GDD: Characters and Units
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
