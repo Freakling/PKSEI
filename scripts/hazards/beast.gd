@@ -8,8 +8,10 @@ extends HazardBase
 ## toward the lake's middle and beast_grab() of the guy on the hull it hit, spat out
 ## beast_spit_distance toward the shore. A guy's puke (RunState.puked, T64) is passed to the rule
 ## as Beast.hear_puke() with the boat's position and the same RNG: its roll may start a random
-## visit. Once the attempt is won (RunState.Phase.WON) it stops
-## where it is: no hit lands during the win cutscene, and a puke there is not heard.
+## visit. The warning band (T69): on the step the rule's check_approach() says the boat came into
+## it from inside, _warn_approach() calls `edge` once, on the hull facing that edge. Once the attempt
+## is won (RunState.Phase.WON) it stops where it is: no hit lands during the win cutscene, and a
+## puke there is not heard.
 ## It shows the state at a glance: while the beast circles, the fin sprite (Visual/Fin) rides
 ## the rule's position pointing the way it goes over widening ripple rings (Visual/Ripples,
 ## T24); while it rams, the head sprite (Visual/Head) charges at the boat; under water nothing
@@ -29,6 +31,9 @@ const RIPPLE_FRAMES: Array[Texture2D] = [
 ]
 ## Seconds each frame shows (cosmetic).
 const FRAME_PERIOD: float = 0.3
+## Pixels from the boat the point the edge warning comes from lies at, on the side it faces or
+## dead ahead (only which hull it lies beside matters; cosmetic).
+const WARN_REACH: float = 100.0
 
 @onready var _ripples: Sprite2D = $Visual/Ripples
 @onready var _fin: Sprite2D = $Visual/Fin
@@ -44,6 +49,8 @@ var _clock: float = 0.0
 ## Whether the beast was up (circling or ramming) on the last step, to catch it rising and
 ## diving for the sound.
 var _was_up: bool = false
+## Debug builds only (the gate is _debug_tools, as in lake.gd): each rise is printed with its cause.
+var _debug_tools: bool = OS.is_debug_build() or OS.has_feature("dev_tools")
 
 
 ## Runs once HazardBase has checked the lake's tunables.
@@ -67,6 +74,8 @@ func _physics_process(delta: float) -> void:
 	if hit != null:
 		RunState.shove(hit.shove)
 		RunState.beast_grab(hit.hull, _boat.global_position, tuning.beast_spit_distance)
+	if _rule.check_approach(_boat.global_position):
+		_warn_approach()
 	_sound_state()
 	_show_state(delta)
 
@@ -79,9 +88,24 @@ func _on_puked(_seat: int) -> void:
 	_rule.hear_puke(_boat.global_position, _rng)
 
 
+## The boat has come into the beast's warning band from inside (T69): the guy on the hull facing the
+## edge it is nearing calls it out (`edge`); beyond the island, the point ahead of the boat, so the
+## guy on the hull that faces the island's far side speaks.
+func _warn_approach() -> void:
+	var boat_at: Vector2 = _boat.global_position
+	var side: int = _rule.edge_side(boat_at)
+	var from: Vector2 = boat_at
+	if side != 0:
+		from += Vector2.RIGHT * float(side) * WARN_REACH
+	else:
+		from += Vector2.UP.rotated(_boat.global_rotation) * WARN_REACH
+	_telegraph(&"edge", from)
+
+
 ## Sound and the call-out (T26, T56): the low rumble loops from the moment the beast rises
 ## (CIRCLING), through the ram, until it dives, and the guy on the fin's side calls it out. The
-## grab's chomp is the Audio autoload's, from RunState.guy_grabbed.
+## grab's chomp is the Audio autoload's, from RunState.guy_grabbed. The rise (the only way up,
+## out of SUBMERGED) is printed in debug builds with its cause (rule.rise_cause).
 func _sound_state() -> void:
 	var up: bool = _rule.state == Beast.State.CIRCLING or _rule.state == Beast.State.RAMMING
 	if up == _was_up:
@@ -90,6 +114,8 @@ func _sound_state() -> void:
 	if up:
 		_start_loop(&"beast_rumble")
 		_telegraph(&"beast", _rule.position)
+		if _debug_tools:
+			print("beast rises: %s at %s (boat %s)" % [_rule.rise_cause, Engine.get_physics_frames(), _boat.global_position])
 	else:
 		_stop_loop()
 

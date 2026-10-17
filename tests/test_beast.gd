@@ -57,6 +57,9 @@ const PAUSE_TICKS: int = 96
 const DIVE_TICKS: int = 128
 ## The puke's chance of drawing the beast in these tests: one in fifty, as the GDD has it.
 const PUKE_CHANCE: float = 0.02
+## The warning band's width in the tests (T69): the band runs from |x| 180 to the edge's line at 220,
+## and from y -2060 to the island's line at -2100.
+const WARN_MARGIN: float = 40.0
 
 var tuning: LakeTuning
 var beast: Beast
@@ -96,6 +99,7 @@ func own_tuning() -> LakeTuning:
 	lake.beast_ram_timeout = 6.0
 	lake.beast_random_rate = 0.0
 	lake.beast_puke_chance = PUKE_CHANCE
+	lake.beast_warn_margin = WARN_MARGIN
 	return lake
 
 
@@ -156,7 +160,8 @@ func test_out_of_bounds_on_both_edges_and_beyond_the_island() -> void:
 ## B5 regression: the corridor Hazards plans keeps clear of the beast's edge zone, so a boat
 ## following it, on its centre or either edge, never summons the beast. Before the fix the
 ## corridor's centre could sit lake_width / 2 - path_width / 2 out, with its edge at the lake's
-## edge, well inside beast_edge_margin.
+## edge, well inside beast_edge_margin. T69: nor is a boat on it ever in the warning band
+## (near_bounds), beast_warn_margin inside the out-of-bounds line, so the path never warns the guys.
 func test_a_boat_anywhere_on_the_guaranteed_path_is_never_out_of_bounds() -> void:
 	tuning.band_length = 160.0
 	tuning.path_width = 120.0
@@ -170,10 +175,12 @@ func test_a_boat_anywhere_on_the_guaranteed_path_is_never_out_of_bounds() -> voi
 			var centre: float = Hazards.corridor_x(tuning, lake_seed, y)
 			for x: float in [centre - half_path, centre, centre + half_path]:
 				expect_false(beast.out_of_bounds(Vector2(x, y)), "seed %d y %.0f: a boat on the path at x %.1f is inside the bounds" % [lake_seed, y, x])
+				expect_false(beast.near_bounds(Vector2(x, y)), "seed %d y %.0f: a boat on the path at x %.1f is outside the warning band" % [lake_seed, y, x])
 			furthest = maxf(furthest, absf(centre) + half_path)
 			y -= 4.0
-	expect(furthest > bound - HIT_RADIUS - 1.0, "the path does wander out to its reach (%.1f), a beast's half-width short of the bound (%.1f)" % [furthest, bound])
-	expect(furthest <= bound - HIT_RADIUS + 0.0001, "and no further")
+	var reach_edge: float = bound - WARN_MARGIN - HIT_RADIUS
+	expect(furthest > reach_edge - 1.0, "the path does wander out to its reach (%.1f), a beast's half-width and warning margin short of the bound (%.1f)" % [furthest, bound])
+	expect(furthest <= reach_edge + 0.0001, "and no further")
 
 
 func test_it_stays_under_while_the_boat_is_inside() -> void:
@@ -186,6 +193,7 @@ func test_it_rises_and_circles_for_beast_warning_then_rams_from_the_far_side() -
 	run(RISE_TICK, LEFT_OUT)
 	expect_eq(beast.state, Beast.State.CIRCLING, "out past the left edge: the fin rises")
 	expect_false(beast.random_visit, "a boundary visit")
+	expect_eq(beast.rise_cause, &"edge_left", "the rise is named for the left edge it is past")
 	expect_near(beast.time_left, WARNING, 0.0001, "beast_warning to go")
 	expect_eq(beast.toward_middle, Vector2.RIGHT, "the middle is to the right")
 	expect_near(beast.position.distance_to(LEFT_OUT), Beast.CIRCLE_RADIUS, 0.0001, "the fin at the circle's radius")
@@ -218,7 +226,9 @@ func test_it_rises_and_circles_for_beast_warning_then_rams_from_the_far_side() -
 
 
 func test_the_right_edge_mirrors() -> void:
-	var hits: Array[int] = run(HIT_TICK, RIGHT_OUT)
+	run(RISE_TICK, RIGHT_OUT)
+	expect_eq(beast.rise_cause, &"edge_right", "the rise is named for the right edge")
+	var hits: Array[int] = run(HIT_TICK - RISE_TICK, RIGHT_OUT)
 	expect_eq(hits, [HIT_TICK] as Array[int], "one hit on the same tick")
 	expect_eq(last_hit.shove, Vector2.LEFT * SHOVE, "shoved leftward, toward x = 0")
 	expect_eq(last_hit.hull, Rescue.Hull.RIGHT, "the right hull faces the right edge")
@@ -227,6 +237,7 @@ func test_the_right_edge_mirrors() -> void:
 func test_beyond_the_island_it_rams_back_toward_the_islands_near_side() -> void:
 	run(RAM_TICK, BEYOND_ISLAND, PI * 0.5)
 	expect_eq(beast.state, Beast.State.RAMMING, "ramming")
+	expect_eq(beast.rise_cause, &"beyond_island", "the rise is named for the island's far side")
 	expect_eq(beast.position, BEYOND_ISLAND + Vector2.UP * RAM_DISTANCE, "from further beyond the island")
 	var hits: Array[int] = run(RAM_MOVES, BEYOND_ISLAND, PI * 0.5)
 	expect_eq(hits, [HIT_TICK] as Array[int], "one hit")
@@ -286,6 +297,7 @@ func test_a_random_visit_from_the_seeded_rng_is_one_grab_then_a_dive() -> void:
 	run(1, INSIDE)
 	expect_eq(beast.state, Beast.State.CIRCLING, "the roll at one second: a certain rate rises")
 	expect(beast.random_visit, "a random visit")
+	expect_eq(beast.rise_cause, &"random", "the rise is named for the random roll")
 	expect_eq(beast.toward_middle, Vector2.LEFT, "on x = 0 the middle counts as leftward")
 	run(128, INSIDE)
 	expect_eq(beast.state, Beast.State.RAMMING, "the warning over, it rams")
@@ -299,6 +311,7 @@ func test_a_random_visit_from_the_seeded_rng_is_one_grab_then_a_dive() -> void:
 	run(DIVE_TICKS, INSIDE)
 	expect_eq(beast.state, Beast.State.SUBMERGED, "under water")
 	expect_false(beast.random_visit, "the visit is over")
+	expect_eq(beast.rise_cause, &"", "and the cause cleared with the dive")
 	hits = run(63, INSIDE)
 	expect_eq(hits.size(), 0, "no second grab: the next roll is a full second after it submerged")
 	expect_eq(beast.state, Beast.State.SUBMERGED, "still under")
@@ -469,6 +482,7 @@ func test_a_puke_heard_in_open_water_that_rolls_under_beast_puke_chance_starts_a
 	expect_eq(lucky.state, after_one, "one roll taken, no more")
 	expect_eq(beast.state, Beast.State.CIRCLING, "the fin is up")
 	expect(beast.random_visit, "a random visit")
+	expect_eq(beast.rise_cause, &"puke", "the rise is named for the puke")
 	expect_near(beast.time_left, WARNING, 0.0001, "beast_warning to go")
 	expect_eq(beast.toward_middle, Vector2.LEFT, "on x = 0 the middle counts as leftward")
 	expect_near(beast.position.distance_to(INSIDE), Beast.CIRCLE_RADIUS, 0.0001, "the fin at the circle's radius")
@@ -535,3 +549,57 @@ func test_a_puke_is_not_heard_out_of_open_water_and_the_rng_is_left_alone() -> v
 	expect_eq(beast.state, Beast.State.SUBMERGED, "still under")
 	expect_eq(lucky.state, untouched, "and the RNG was never rolled")
 	expect(beast.hear_puke(INSIDE, lucky), "the same roll in open water rises")
+
+
+## T69 · A guy warns when the boat approaches the beast's water: near_bounds is true within
+## beast_warn_margin inside the out-of-bounds line at either edge or beyond the island's far side
+## (and out of bounds too), false inside; check_approach fires once as the boat comes into that band
+## from inside, not again while it stays in, and again after it has gone back inside.
+func test_near_bounds_is_true_in_the_warning_band_at_both_edges_and_beyond_the_island() -> void:
+	expect(beast.near_bounds(Vector2(-200.0, -1000.0)), "in the band at the left edge")
+	expect(beast.near_bounds(Vector2(200.0, -1000.0)), "in the band at the right edge")
+	expect(beast.near_bounds(Vector2(0.0, -2070.0)), "in the band beyond the island")
+	expect(beast.near_bounds(Vector2(-220.0, -1000.0)), "on the out-of-bounds line itself")
+	expect(beast.near_bounds(LEFT_OUT), "out of bounds counts as near")
+	expect(beast.near_bounds(BEYOND_ISLAND), "beyond the island counts as near")
+
+
+func test_near_bounds_is_false_inside_the_band() -> void:
+	expect_false(beast.near_bounds(INSIDE), "the deep middle")
+	expect_false(beast.near_bounds(LAUNCH), "the launch")
+	expect_false(beast.near_bounds(Vector2(-180.0, -1000.0)), "exactly beast_warn_margin in from the edge line is still inside")
+	expect(beast.near_bounds(Vector2(-180.5, -1000.0)), "a pixel further out is in the band")
+	expect_false(beast.near_bounds(Vector2(0.0, -2060.0)), "exactly beast_warn_margin short of the island's line is still inside")
+	expect(beast.near_bounds(Vector2(0.0, -2060.5)), "a pixel further is in the band")
+
+
+func test_edge_side_is_the_edge_the_boat_is_in_and_zero_for_the_island_side() -> void:
+	expect_eq(beast.edge_side(Vector2(-200.0, -1000.0)), -1, "the left edge's band")
+	expect_eq(beast.edge_side(Vector2(200.0, -1000.0)), 1, "the right edge's band")
+	expect_eq(beast.edge_side(Vector2(0.0, -2070.0)), 0, "beyond the island: the island side")
+	expect_eq(beast.edge_side(Vector2(-170.0, -1000.0)), 0, "inside the band: no side")
+	expect_eq(beast.edge_side(Vector2(-250.0, -2070.0)), -1, "in a corner, the edge wins")
+
+
+func test_the_approach_fires_once_on_coming_into_the_band_and_not_again_while_in_it() -> void:
+	expect_false(beast.check_approach(INSIDE), "inside: nothing")
+	expect(beast.check_approach(Vector2(-200.0, -1000.0)), "coming into the band from inside warns")
+	expect_false(beast.check_approach(Vector2(-210.0, -1000.0)), "still in the band: no second warning")
+	expect_false(beast.check_approach(Vector2(-215.0, -1000.0)), "nearer the line: no second warning")
+	expect_false(beast.check_approach(LEFT_OUT), "past the line: still no warning")
+	expect_false(beast.check_approach(Vector2(-200.0, -1000.0)), "back in the band, not fully inside: not re-armed")
+	expect_false(beast.check_approach(INSIDE), "fully inside again: nothing, but re-armed")
+	expect(beast.check_approach(Vector2(-200.0, -1000.0)), "the next approach warns again")
+
+
+func test_the_approach_fires_once_when_the_boat_goes_straight_past_the_band() -> void:
+	expect(beast.check_approach(RIGHT_OUT), "from inside straight out of bounds at the right edge: one warning")
+	expect_false(beast.check_approach(RIGHT_OUT), "and not again")
+	expect_false(beast.check_approach(Vector2(200.0, -1000.0)), "nor in the band on the way back")
+
+
+func test_the_approach_warns_beyond_the_island_and_a_reset_re_arms_it() -> void:
+	expect(beast.check_approach(Vector2(0.0, -2070.0)), "coming into the band beyond the island warns")
+	expect_false(beast.check_approach(BEYOND_ISLAND), "not again beyond it")
+	beast.reset()
+	expect(beast.check_approach(Vector2(0.0, -2070.0)), "a reset re-arms the warning")

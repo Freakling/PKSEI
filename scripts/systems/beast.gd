@@ -31,6 +31,9 @@ extends RefCounted
 ##              rises again if the boat is still out: circle → ram → pause → circle…),
 ##              beast_dive_time after the random visit's one grab, after a ram that gave up or
 ##              when the boat came back inside. Then SUBMERGED.
+## The warning (T69, check_approach): the band of beast_warn_margin just inside the out-of-bounds
+## line (near_bounds). The boat coming into it from inside makes one guy warn, once per approach,
+## before the beast rises; the latch re-arms once the boat is fully inside again.
 ## The only randomness is the random visit's rolls (the once-a-second one and the puke's), from
 ## the RNG the caller passes, so the same inputs and the same seed give the same visit. In the
 ## game that is the beast's own RNG,
@@ -75,6 +78,12 @@ var toward_middle: Vector2 = Vector2.LEFT
 var angle: float = 0.0
 ## Seconds until the next random visit's roll.
 var roll_left: float = ROLL_INTERVAL
+## Whether the guys have warned this approach (check_approach); cleared once the boat is fully inside.
+var warned: bool = false
+## Why the current visit's beast rose, for the debug print in the hazard: &"edge_left", &"edge_right"
+## or &"beyond_island" (a boundary visit, from the bounds check), &"random" (the random roll) or
+## &"puke" (hear_puke). Set on the rise, cleared on a dive and on reset; &"" while under.
+var rise_cause: StringName = &""
 
 
 func _init(lake_tuning: LakeTuning) -> void:
@@ -82,7 +91,7 @@ func _init(lake_tuning: LakeTuning) -> void:
 	reset()
 
 
-## Under water, nothing showing, the next roll a full interval away.
+## Under water, nothing showing, the next roll a full interval away, the warning re-armed.
 func reset() -> void:
 	state = State.SUBMERGED
 	random_visit = false
@@ -93,6 +102,8 @@ func reset() -> void:
 	toward_middle = Vector2.LEFT
 	angle = 0.0
 	roll_left = ROLL_INTERVAL
+	warned = false
+	rise_cause = &""
 
 
 ## The beast's own RNG for an attempt, seeded from the lake's seed on a stream of its own (not
@@ -125,6 +136,47 @@ func in_open_water(boat_position: Vector2) -> bool:
 			and boat_position.y > -(tuning.island_distance - tuning.island_radius)
 
 
+## Whether the boat is in the warning band (T69): within beast_warn_margin inside the out-of-bounds
+## line at either edge or beyond the island's far side, or out of bounds already. Inside it is false.
+func near_bounds(boat_position: Vector2) -> bool:
+	return out_of_bounds(boat_position) \
+			or absf(boat_position.x) > _edge_warn_x() \
+			or boat_position.y < _far_warn_y()
+
+
+## Which edge's warning band the boat is in, for the `edge` warning (T69): -1 the left edge, +1 the
+## right edge, 0 otherwise (the island's far side, or inside). An edge wins over the island side in
+## a corner.
+func edge_side(boat_position: Vector2) -> int:
+	if absf(boat_position.x) <= _edge_warn_x():
+		return 0
+	return -1 if boat_position.x < 0.0 else 1
+
+
+## Whether the boat has come into the warning band from inside since it was last fully inside
+## (T69): true only on the step it does, so the guys warn once per approach. Called each step with
+## the boat's position; the latch re-arms on a step the boat is back inside the band's inner edge.
+func check_approach(boat_position: Vector2) -> bool:
+	if not near_bounds(boat_position):
+		warned = false
+		return false
+	if warned:
+		return false
+	warned = true
+	return true
+
+
+## The |x| past which the boat is in an edge's warning band: the out-of-bounds line less
+## beast_warn_margin.
+func _edge_warn_x() -> float:
+	return tuning.lake_width * 0.5 - tuning.beast_edge_margin - tuning.beast_warn_margin
+
+
+## The y past which (further up-screen) the boat is in the warning band beyond the island.
+func _far_warn_y() -> float:
+	return -(tuning.island_distance + tuning.beast_beyond_island - tuning.beast_warn_margin)
+
+
 ## Unit direction from the boat toward the lake's middle: down-screen (toward the island's near
 ## side) beyond the island, else toward x = 0; a boat exactly on x = 0 is pushed left.
 func middle_direction(boat_position: Vector2) -> Vector2:
@@ -148,13 +200,13 @@ func step(delta: float, boat_position: Vector2, boat_rotation: float, rng: Rando
 	match state:
 		State.SUBMERGED:
 			if out_of_bounds(boat_position):
-				_rise(boat_position, false)
+				_rise(boat_position, false, _bounds_cause(boat_position))
 			elif in_open_water(boat_position):
 				roll_left -= delta
 				if roll_left <= 0.0:
 					roll_left += ROLL_INTERVAL
 					if rng.randf() < tuning.beast_random_rate:
-						_rise(boat_position, true)
+						_rise(boat_position, true, &"random")
 		State.CIRCLING:
 			if not random_visit and not out_of_bounds(boat_position):
 				_dive(tuning.beast_dive_time)
@@ -205,14 +257,23 @@ func hear_puke(boat_position: Vector2, rng: RandomNumberGenerator) -> bool:
 		return false
 	if rng.randf() >= tuning.beast_puke_chance:
 		return false
-	_rise(boat_position, true)
+	_rise(boat_position, true, &"puke")
 	return true
 
 
-## The fin surfaces on the side away from the middle and starts circling.
-func _rise(boat_position: Vector2, random: bool) -> void:
+## The rise's cause for a boat out of bounds (T-debug): beyond the island wins a corner, as it does
+## in middle_direction; else the edge the boat is past.
+func _bounds_cause(boat_position: Vector2) -> StringName:
+	if beyond_island(boat_position):
+		return &"beyond_island"
+	return &"edge_left" if boat_position.x < 0.0 else &"edge_right"
+
+
+## The fin surfaces on the side away from the middle and starts circling. `cause` is rise_cause.
+func _rise(boat_position: Vector2, random: bool, cause: StringName) -> void:
 	state = State.CIRCLING
 	random_visit = random
+	rise_cause = cause
 	time_left = tuning.beast_warning
 	toward_middle = middle_direction(boat_position)
 	angle = (-toward_middle).angle()
@@ -236,3 +297,4 @@ func _dive(seconds: float) -> void:
 	state = State.DIVING
 	time_left = seconds
 	ram_left = 0.0
+	rise_cause = &""

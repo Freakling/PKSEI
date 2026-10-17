@@ -58,6 +58,7 @@ line_length = 200.0
 snag_time = 3.0
 beast_edge_margin = 120.0
 beast_beyond_island = 200.0
+beast_warn_margin = 200.0
 beast_warning = 2.5
 beast_speed = 200.0
 beast_ram_distance = 160.0

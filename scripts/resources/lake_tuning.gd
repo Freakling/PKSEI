@@ -105,6 +105,10 @@ extends Resource
 @export var beast_edge_margin: float = 120.0 ## PLACEHOLDER
 ## Pixels past the island's centre (up-screen, beyond its far side) at which the beast rises.
 @export var beast_beyond_island: float = 200.0 ## PLACEHOLDER
+## Pixels inside the out-of-bounds line (beast_edge_margin in from either edge, beast_beyond_island
+## past the island) where the warning band starts: a guy calls out `edge` when the boat comes into
+## it from inside (T69; read by Beast, scripts/systems/beast.gd).
+@export var beast_warn_margin: float = 200.0 ## PLACEHOLDER
 ## Seconds the fin circles the boat before the ram: the warning.
 @export var beast_warning: float = 2.5 ## PLACEHOLDER
 ## Pixels per second the beast closes on the boat at while it rams.

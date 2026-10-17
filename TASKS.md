@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (115 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (116 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -317,9 +317,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each new attempt gives the four seats distinct names drawn from data/names.tres with the attempt's RNG (test) · the HUD shows each guy's name instead of the seat and key labels (play) · the list is a Resource the human can edit, with a test that it holds at least four names (test)
 - GDD: Characters and Units
 
-### T69 · A guy warns when the boat approaches the beast's water · in-progress 2026-10-17 · S · agent
+### T69 · A guy warns when the boat approaches the beast's water · done · S · agent
 - Depends on: T50, T56
-- Touches: scripts/systems/beast.gd (near_bounds), scripts/hazards/beast.gd, scripts/resources/lake_tuning.gd (+beast_warn_margin), data/lake_tuning.tres, scripts/resources/lines.gd, data/lines.tres (edge lines), tests/test_beast.gd
+- Touches: scripts/systems/beast.gd (near_bounds, check_approach, rise_cause), scripts/hazards/beast.gd (debug print of the rise cause), scripts/systems/hazards.gd (path_reach also clears the warning band), scripts/resources/lake_tuning.gd (+beast_warn_margin), data/lake_tuning.tres, scripts/resources/lines.gd, data/lines.tres (edge lines), tests/test_beast.gd, tests/test_hazards.gd
 - Done when: near_bounds(position) is true within beast_warn_margin of the out-of-bounds line at either edge or beyond the island's far side, and false inside (test) · entering that zone from inside telegraphs `edge` on the hull facing the edge once per approach, re-armed when the boat is back inside (test) · a Swedish line shows over the hull's guy (play)
 - GDD: Systems › Hazards
 

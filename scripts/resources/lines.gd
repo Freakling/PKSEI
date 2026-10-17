@@ -11,12 +11,12 @@ extends Resource
 
 ## Every telegraph that gets a bubble, in one list so the test can walk it. The guys' wind-ups:
 ## the break warning, the five antics' wind-ups (the puke at the top of the meter, T63), the
-## timing bar's wind-up and the jump after a beer; then the hazards' warnings, and the log and
-## the rock ahead on the path.
+## timing bar's wind-up and the jump after a beer; then the hazards' warnings, the log and the
+## rock ahead on the path, and the beast's edge warning as the boat nears its water (T69).
 const KINDS: Array[StringName] = [
 	&"stamina_warning", &"antic_stand", &"antic_paddle", &"antic_nap", &"antic_pee",
 	&"antic_puke", &"bar_windup", &"jump_windup",
-	&"geese", &"gust", &"headwind", &"wake", &"jetski", &"beast", &"log", &"rock",
+	&"geese", &"gust", &"headwind", &"wake", &"jetski", &"beast", &"edge", &"log", &"rock",
 ]
 
 ## The lines per kind (a KINDS entry): a bubble shows one of them, drawn at random.

@@ -78,3 +78,4 @@ Format: `- YYYY-MM-DD · <decision> · why: <reason> · from: <Q<n> | conversati
 - 2026-10-17 · The guys are named per attempt from the crew's list of nicknames; the HUD shows names, never the keys · why: the human's call; the names are the friends on the trip · from: conversation
 - 2026-10-17 · The sand text is drawn at twice the scale · why: the human's play; too small at 1× · from: conversation
 - 2026-10-17 · A guy warns in Swedish when the boat approaches the beast's water, once per approach · why: the human's call; the beast's bounds must be readable before they bite (Hard but fair) · from: conversation
+- 2026-10-17 · The guaranteed path also stays out of the beast's warning band, so the warning is never heard on the path · why: a warning on the safe route would be a false alarm (Hard but fair); extends the rule that the path never leads into the beast's water · from: conversation (agent reading, recorded)
