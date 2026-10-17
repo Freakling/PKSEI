@@ -256,9 +256,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play)
 - GDD: Systems › Hazards
 
-### T29 · Shared curve helper replaces the duplicate ramp() in DrinkTuning and StaminaTuning · todo · S · agent
+### T29 · Shared curve helper replaces the duplicate ramp() in DrinkTuning and StaminaTuning · done · S · agent
 - Depends on: T14
-- Touches: scripts/resources/curves.gd (new), scripts/resources/drink_tuning.gd, scripts/resources/stamina_tuning.gd, tests/test_drunkenness.gd, tests/test_stamina.gd
+- Touches: scripts/resources/curves.gd (new), scripts/resources/drink_tuning.gd, scripts/resources/stamina_tuning.gd, scripts/resources/lake_tuning.gd, tests/test_drunkenness.gd, tests/test_stamina.gd, tests/test_hazards.gd, tests/test_run_state.gd
 - Done when: one `ramp()` helper exists and both tunings use it, with the existing tests still passing (check)
 - GDD: —
 

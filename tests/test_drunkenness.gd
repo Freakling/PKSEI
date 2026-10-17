@@ -16,8 +16,8 @@ func before_each() -> void:
 	tuning.drink_rate = 0.01
 	tuning.break_drink_multiplier = 3.0
 	tuning.water_drink_multiplier = 5.0
-	tuning.lag_curve = DrinkTuning.ramp(0.0, 0.5)
-	tuning.miss_curve = DrinkTuning.ramp(0.0, 0.4)
+	tuning.lag_curve = Curves.ramp(0.0, 0.5)
+	tuning.miss_curve = Curves.ramp(0.0, 0.4)
 	tuning.bar_level = 0.8
 	tuning.bar_period = 2.0
 	tuning.green_width = 0.2
@@ -83,7 +83,7 @@ func test_miss_chance_rises_with_level_per_miss_curve() -> void:
 		var chance: float = drunkenness.miss_chance(i / 10.0)
 		expect(chance >= previous, "chance never drops as the level rises (%d)" % i)
 		previous = chance
-	tuning.miss_curve = DrinkTuning.ramp(0.0, 3.0)
+	tuning.miss_curve = Curves.ramp(0.0, 3.0)
 	expect_near(drunkenness.miss_chance(1.0), 1.0, 0.0001, "chance is capped at certain")
 
 
@@ -92,11 +92,11 @@ func test_misses_are_rolled_from_the_given_rng() -> void:
 	rng.seed = 1234
 	for i: int in 200:
 		expect_false(drunkenness.misses(0.0, rng), "no chance, no miss (%d)" % i)
-	tuning.miss_curve = DrinkTuning.ramp(1.0, 1.0)
+	tuning.miss_curve = Curves.ramp(1.0, 1.0)
 	for i: int in 200:
 		expect(drunkenness.misses(0.5, rng), "certain chance always misses (%d)" % i)
 
-	tuning.miss_curve = DrinkTuning.ramp(0.0, 0.6)
+	tuning.miss_curve = Curves.ramp(0.0, 0.6)
 	var first: RandomNumberGenerator = RandomNumberGenerator.new()
 	var second: RandomNumberGenerator = RandomNumberGenerator.new()
 	first.seed = 99

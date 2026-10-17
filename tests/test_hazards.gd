@@ -47,7 +47,7 @@ func before_each() -> void:
 	tuning.launch_margin = MARGIN
 	tuning.band_length = BAND
 	tuning.lake_width = WIDTH
-	tuning.density_curve = DrinkTuning.ramp(1.0, 3.0)
+	tuning.density_curve = Curves.ramp(1.0, 3.0)
 	tuning.path_width = PATH_WIDTH
 	tuning.path_wander = WANDER
 	tuning.hazards = [spec(1.0, 0), spec(3.0, 2)]

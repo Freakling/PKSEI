@@ -17,7 +17,7 @@ func before_each() -> void:
 	tuning.break_recover_rate = 0.25
 	tuning.break_duration = 3.0
 	tuning.break_warning = 1.5
-	tuning.random_break_curve = StaminaTuning.ramp(0.0, 0.0)
+	tuning.random_break_curve = Curves.ramp(0.0, 0.0)
 	stamina = Stamina.new(tuning)
 	rng = RandomNumberGenerator.new()
 	rng.seed = 7
@@ -103,7 +103,7 @@ func test_call_break_telegraphs_once_and_reset_restores_full_and_paddling() -> v
 
 
 func test_random_break_chance_rises_with_burnt_stamina_per_curve() -> void:
-	tuning.random_break_curve = StaminaTuning.ramp(0.0, 0.5)
+	tuning.random_break_curve = Curves.ramp(0.0, 0.5)
 	expect_near(stamina.random_break_chance(1.0), 0.0, 0.001, "nothing burnt, no random breaks")
 	expect_near(stamina.random_break_chance(0.5), 0.25, 0.001, "half burnt is halfway along the ramp")
 	expect_near(stamina.random_break_chance(0.0), 0.5, 0.001, "burnt out is the end of the ramp")
@@ -113,14 +113,14 @@ func test_random_break_chance_rises_with_burnt_stamina_per_curve() -> void:
 		var chance: float = stamina.random_break_chance(1.0 - i / 10.0)
 		expect(chance >= previous, "chance never drops as more is burnt (%d)" % i)
 		previous = chance
-	tuning.random_break_curve = StaminaTuning.ramp(0.0, 3.0)
+	tuning.random_break_curve = Curves.ramp(0.0, 3.0)
 	expect_near(stamina.random_break_chance(0.0), 1.0, 0.0001, "chance is capped at certain")
 	tuning.random_break_curve = null
 	expect_near(stamina.random_break_chance(0.0), 0.0, 0.0001, "no curve means no random breaks")
 
 
 func test_random_breaks_come_from_the_seeded_rng_likelier_when_burnt_and_get_the_same_warning() -> void:
-	tuning.random_break_curve = StaminaTuning.ramp(0.0, 0.5)
+	tuning.random_break_curve = Curves.ramp(0.0, 0.5)
 	for i: int in 500:
 		expect_eq(stamina.step(0, 0.1, rng), Stamina.State.PADDLING, "a full guy never breaks at random (%d)" % i)
 
@@ -137,7 +137,7 @@ func test_random_breaks_come_from_the_seeded_rng_likelier_when_burnt_and_get_the
 	expect(tired_breaks > fresh_breaks * 3, "more burnt, many more breaks: %d vs %d" % [tired_breaks, fresh_breaks])
 
 	stamina.reset()
-	tuning.random_break_curve = StaminaTuning.ramp(1.0, 1.0)
+	tuning.random_break_curve = Curves.ramp(1.0, 1.0)
 	stamina.set_level(0, 0.5)
 	expect_eq(stamina.step(0, 1.0, first), Stamina.State.WARNING, "a certain chance breaks on the step")
 	expect_near(stamina.time_left(0), 1.5, 0.0001, "a random break gets the same break_warning")

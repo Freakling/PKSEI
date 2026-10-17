@@ -44,8 +44,8 @@ func sober_state() -> Node:
 func drunk_state(lag: float, miss: float, level: float) -> Node:
 	var tuning: DrinkTuning = DrinkTuning.new()
 	tuning.start_level = level
-	tuning.lag_curve = DrinkTuning.ramp(lag, lag)
-	tuning.miss_curve = DrinkTuning.ramp(miss, miss)
+	tuning.lag_curve = Curves.ramp(lag, lag)
+	tuning.miss_curve = Curves.ramp(miss, miss)
 	var state: Node = RunStateScript.new()
 	state.rng.seed = 7
 	state.paddling = Paddling.new(own_boat_tuning())

@@ -6,7 +6,7 @@ extends Resource
 ## Schema only. The instance the human tunes is data/lake_tuning.tres; the lake scene
 ## (scripts/lake.gd) reads the island, Hazards.plan() the bands and the path. The curve maps a
 ## band's place in the lake (x: 0 the first band, 1 the island band) to hazards per band (y);
-## DrinkTuning.ramp() builds a straight one.
+## Curves.ramp() builds a straight one.
 
 ## Pixels from the shore line (y = 0) to the island's centre.
 @export var island_distance: float = 800.0 ## PLACEHOLDER
@@ -20,7 +20,7 @@ extends Resource
 ## is ceil(span / band_length) bands, the last one possibly shorter.
 @export var band_length: float = 160.0 ## PLACEHOLDER
 ## Hazards per band (y, rounded) against the band's place in the lake (x), rising toward the island.
-@export var density_curve: Curve = DrinkTuning.ramp(1.0, 3.0) ## PLACEHOLDER
+@export var density_curve: Curve = Curves.ramp(1.0, 3.0) ## PLACEHOLDER
 ## Width in pixels of the guaranteed path: the corridor no object is placed in, measured across
 ## the lake. A corridor as wide as the lake leaves nowhere to place anything.
 @export var path_width: float = 120.0 ## PLACEHOLDER
