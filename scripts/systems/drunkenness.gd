@@ -18,7 +18,7 @@ extends RefCounted
 ## backwards one (RunState applies that). Crossing bar_level is announced with a wind-up of
 ## BAR_WINDUP seconds, tracked here as the levels change: bar_winding_up() is true and uses_bar()
 ## still false until it is over; the bar then holds until his level drops below bar_level. The
-## boat scene draws the bar and the wind-up. Antics (the middle tier) are T13's.
+## boat scene draws the bar and the wind-up. Antics (the middle tier) are run by the Antics class.
 
 ## Seconds between a guy crossing bar_level and the bar applying to his strokes: the tier's
 ## wind-up (GDD › Drunkenness: "announced with a wind-up"). Cosmetic timing, not a tunable.

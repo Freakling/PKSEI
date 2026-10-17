@@ -25,3 +25,23 @@ extends Resource
 @export var bar_period: float = 1.0 ## PLACEHOLDER
 ## Width of the bar's green zone as a fraction 0..1 of the bar, centred on its middle.
 @export var green_width: float = 0.2 ## PLACEHOLDER
+## Antics (the middle tier, Antics): levels at which a guy does something stupid, each once per
+## attempt the first time his level reaches it; rising order.
+@export var antic_thresholds: Array[float] = [0.4, 0.55, 0.7] ## PLACEHOLDER
+## Seconds between a guy crossing a threshold and his antic starting: the visible wind-up.
+@export var windup_time: float = 1.5 ## PLACEHOLDER
+## Seconds a guy who stands up rocks the boat before he sits down.
+@export var stand_time: float = 3.0 ## PLACEHOLDER
+## Yaw impulse per second (the scale of Paddling.Motion.turn) a standing guy's rock puts on the
+## boat at the peak of each swing; it swings side to side.
+@export var stand_rock: float = 60.0 ## PLACEHOLDER
+## Seconds for one full side-to-side rock of a standing guy: the boat's yaw swings once per this.
+@export var stand_rock_period: float = 1.0 ## PLACEHOLDER
+## Seconds a guy who drops his paddle takes to fish it out; his seat gives no strokes meanwhile.
+@export var fish_time: float = 4.0 ## PLACEHOLDER
+## Seconds a guy who nods off is dead weight; his seat gives no strokes meanwhile.
+@export var nap_time: float = 5.0 ## PLACEHOLDER
+## Seconds a guy pees at the hull's edge; his seat gives no strokes meanwhile.
+@export var pee_time: float = 6.0 ## PLACEHOLDER
+## A shove (lake pixels per second, RunState.shove) of this or more while he pees knocks him in.
+@export var pee_fall_shove: float = 100.0 ## PLACEHOLDER

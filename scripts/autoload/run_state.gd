@@ -3,8 +3,12 @@ extends Node
 ## GDD › Win and Loss).
 ##
 ## Holds the state and owns the rule classes that change it: four guys, progress along the
-## crossing, elapsed time and the phase, plus one Paddling, Drunkenness, Stamina and Rescue (with
-## their data/*.tres tunings) and one RandomNumberGenerator for their rolls. The boat scene calls
+## crossing, elapsed time and the phase, plus one Paddling, Drunkenness, Antics, Stamina and
+## Rescue (with their data/*.tres tunings) and one RandomNumberGenerator for their rolls.
+## Antics (GDD › Drunkenness, the middle tier) is stepped per guy aboard with his drunkenness
+## level in step(); a seat busy with one gives no strokes (can_paddle), a standing guy's rock
+## goes into the Motion's turn, and a shove() of DrinkTuning.pee_fall_shove or more while a guy
+## pees knocks him in through guy_overboard() at the boat's last stepped position. The boat scene calls
 ## stroke() on each key release and step() once per physics frame with its position (where a guy
 ## whose wind-up ends jumps from, T34), and applies the Motion it gets back; the lake sets
 ## progress from the boat's position, calls arrive() at the island,
@@ -77,6 +81,8 @@ var phase: Phase = Phase.LAUNCH
 var paddling: Paddling = Paddling.new(preload("res://data/boat_tuning.tres") as BoatTuning)
 var drunkenness: Drunkenness = Drunkenness.new(preload("res://data/drink_tuning.tres") as DrinkTuning)
 var stamina: Stamina = Stamina.new(preload("res://data/stamina_tuning.tres") as StaminaTuning)
+## The stupid things the guys do at drunkenness thresholds; shares drunkenness's DrinkTuning.
+var antics: Antics = Antics.new(preload("res://data/drink_tuning.tres") as DrinkTuning)
 ## The guys in the water and their beers; reads its tunables from paddling's BoatTuning.
 var rescue: Rescue = Rescue.new()
 ## Rolls the misses and the random breaks, and each attempt's lake_seed; tests seed it.
@@ -99,6 +105,8 @@ var _extra_drift: float = 0.0
 var _snag_left: Array[float] = []
 ## Water aboard per hull (Rescue.Hull order); the hull's guy bails it at BoatTuning.bail_rate.
 var _water: Array[float] = []
+## Where the boat was at the last step(): where a guy knocked in by a shove() goes in.
+var _boat_at: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -121,6 +129,7 @@ func new_attempt() -> void:
 func reset() -> void:
 	drunkenness.reset()
 	stamina.reset()
+	antics.reset()
 	rescue.reset()
 	_pending.clear()
 	_shove = Vector2.ZERO
@@ -166,15 +175,17 @@ func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	return seat
 
 
-## A guy fell in some other way than a jump (GDD › Drunkenness: the pee antic, T13): he is off
-## the boat and his strokes still waiting to land are dropped. With no beer loose for him he
-## floats from the start and doesn't drink; caught winding up, he swims for his beer anyway
-## (Rescue.guy_overboard). Nothing happens if he is already in the water.
+## A guy fell in some other way than a jump (GDD › Drunkenness: the pee antic): he is off the
+## boat, whatever antic he was busy with is over, and his strokes still waiting to land are
+## dropped. With no beer loose for him he floats from the start and doesn't drink; caught
+## winding up, he swims for his beer anyway (Rescue.guy_overboard). Nothing happens if he is
+## already in the water.
 func guy_overboard(seat: int, at_position: Vector2) -> void:
 	if not guys[seat].aboard:
 		return
 	rescue.guy_overboard(seat, at_position)
 	guys[seat].aboard = false
+	antics.interrupt(seat)
 	_drop_pending(seat)
 
 
@@ -187,9 +198,14 @@ func pickup(seat: int) -> bool:
 
 
 ## A hazard pushes the boat (GDD › Systems › Hazards, Shove): `impulse` in lake pixels per
-## second, which the boat adds to its speed next frame. Shoves in the same frame add up.
+## second, which the boat adds to its speed next frame. Shoves in the same frame add up. A guy
+## peeing at the edge loses his balance to a shove of DrinkTuning.pee_fall_shove or more
+## (Antics.knocked_in) and goes in without his beer where the boat last stepped.
 func shove(impulse: Vector2) -> void:
 	_shove += impulse
+	for seat: int in GUY_COUNT:
+		if guys[seat].aboard and antics.knocked_in(seat, impulse.length()):
+			guy_overboard(seat, _boat_at)
 
 
 ## The shove waiting for the boat, once: cleared when taken.
@@ -288,9 +304,11 @@ func is_bailing(seat: int) -> bool:
 	return false
 
 
-## Whether this seat gives strokes now: aboard, not on a break, not snagged and not bailing.
+## Whether this seat gives strokes now: aboard, not on a break, not busy with an antic that
+## takes his paddle, not snagged and not bailing.
 func can_paddle(seat: int) -> bool:
-	return guys[seat].aboard and stamina.can_stroke(seat) and not is_snagged(seat) and not is_bailing(seat)
+	return guys[seat].aboard and stamina.can_stroke(seat) and antics.can_stroke(seat) \
+			and not is_snagged(seat) and not is_bailing(seat)
 
 
 ## One key released: `seat` is the key's owner, `hold_time` how long it was held. Nothing
@@ -322,15 +340,17 @@ func stroke(seat: int, hold_time: float) -> void:
 ## at the shoreline climbs back aboard with whatever beer he has); every guy drinks (a floating
 ## guy with his beer at the water rate; one without a beer not at all) and every guy aboard
 ## recovers or breaks (a guy in the water keeps his stamina, state and time left until he is
-## picked up, GDD › Systems › Stamina), the levels are mirrored into the guys, the snags count
-## down and the bailers bail, elapsed advances, and the strokes that land this frame become the
-## boat's Motion, its drift the current's plus any headwind set for this step
-## (set_extra_drift). With nobody aboard the Motion is only the drift. Nothing moves once the
-## attempt is won.
+## picked up, GDD › Systems › Stamina), every guy aboard runs his antics at his drunkenness
+## level (a jump ends one; a swimmer's crossings wait until he is back aboard), the levels are
+## mirrored into the guys, the snags count down and the bailers bail, elapsed advances, and the
+## strokes that land this frame become the boat's Motion, its turn plus the rock of any guy
+## standing up, its drift the current's plus any headwind set for this step (set_extra_drift).
+## With nobody aboard the Motion is only the drift. Nothing moves once the attempt is won.
 func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	if phase == Phase.WON:
 		return Paddling.Motion.new()
 	elapsed += delta
+	_boat_at = boat_at
 	for seat: int in GUY_COUNT:
 		_snag_left[seat] = maxf(_snag_left[seat] - delta, 0.0)
 	for side: int in Rescue.Hull.size():
@@ -340,6 +360,7 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	var loose_drift: Vector2 = Vector2.DOWN * paddling.tuning.loose_drift_speed
 	for seat: int in rescue.step(delta, loose_drift, paddling.tuning, boat_at):
 		guys[seat].aboard = false
+		antics.interrupt(seat)
 		_drop_pending(seat)
 		guy_jumped.emit(seat)
 	if phase == Phase.LAUNCH:
@@ -355,9 +376,13 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 			stamina.step(seat, delta, rng)
 		var drinking: bool = not in_water or swimmer.has_beer
 		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
+		if guy.aboard:
+			antics.step(seat, delta, drunkenness.level_of(seat), rng)
 		guy.stamina = stamina.level_of(seat)
 		guy.drunkenness = drunkenness.level_of(seat)
 	var motion: Paddling.Motion = paddling.step(_land_strokes(delta), delta)
+	for seat: int in GUY_COUNT:
+		motion.turn += antics.rock(seat) * delta
 	motion.drift_to_shore += _extra_drift * delta
 	_extra_drift = 0.0
 	return motion

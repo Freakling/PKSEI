@@ -11,7 +11,10 @@ extends CharacterBody2D
 ## guys' sprites show the break telegraph from RunState's Stamina state (a flashing
 ## marker during the warning, dimmed on the break) and the timing bar from its Drunkenness (it
 ## blinks beside a guy while his tier is announced, then shows beside him while his key is held,
-## the marker sweeping over the green band); a guy winding up to jump after a beer (Rescue's
+## the marker sweeping over the green band) and his antics from its Antics (an orange marker
+## flashes over him through the wind-up; standing he is scaled up and bobbing, his dropped
+## paddle floats beside the hull, nodded off he is tilted and dim under a "z", peeing he faces
+## the hull's edge with a blue dash); a guy winding up to jump after a beer (Rescue's
 ## winding_up, T34) rocks in his seat; a guy in the water has no sprite here (the lake draws
 ## him), and once the attempt is won nobody is drawn here (the win cutscene, T28, draws the boys
 ## stepping ashore from guy_global_position). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
@@ -46,6 +49,17 @@ const BAR_MARKER_WIDTH: float = 2.0
 const BAR_TRACK_COLOUR: Color = Color(0.15, 0.15, 0.15, 1.0)
 const BAR_GREEN_COLOUR: Color = Color(0.2, 0.9, 0.3, 1.0)
 const BAR_MARKER_COLOUR: Color = Color(1.0, 1.0, 1.0, 1.0)
+## The antics (cosmetic): a standing guy's sprite is scaled up by STAND_SCALE and bobs by
+## STAND_BOB once per WIND_UP_ROCK_PERIOD; a nodded-off guy tilts outboard by NAP_TILT radians
+## and dims to NAP_DIM; a peeing guy turns to face the hull's edge.
+const STAND_SCALE: float = 1.2
+const STAND_BOB: float = 0.08
+const NAP_TILT: float = 0.5
+const NAP_DIM: Color = Color(0.55, 0.55, 0.75, 1.0)
+const PEE_TURN: float = PI * 0.5
+## The antic markers under each guy's sprite in the scene: the wind-up mark, the dropped paddle,
+## the "z" and the pee dash.
+const ANTIC_MARK_NAMES: Array[String] = ["AnticMark", "Paddle", "Zee", "Pee"]
 
 ## Speed from strokes, kept apart from `velocity` so a shore collision never feeds the current
 ## back into it.
@@ -58,6 +72,8 @@ var _guys: Array[Sprite2D] = []
 var _warnings: Array[Node2D] = []
 var _bars: Array[Node2D] = []
 var _bar_markers: Array[Node2D] = []
+## Per seat, the antic markers in ANTIC_MARK_NAMES order.
+var _antic_marks: Array[Array] = []
 
 
 func _ready() -> void:
@@ -66,6 +82,10 @@ func _ready() -> void:
 		_guys.append(guy)
 		_warnings.append(guy.get_node("Warning") as Node2D)
 		_bars.append(_build_bar(guy, seat))
+		var marks: Array[Node2D] = []
+		for mark_name: String in ANTIC_MARK_NAMES:
+			marks.append(guy.get_node(mark_name) as Node2D)
+		_antic_marks.append(marks)
 
 
 func _physics_process(delta: float) -> void:
@@ -126,19 +146,63 @@ func place(at: Vector2) -> void:
 
 
 ## Visual only: a swimmer's sprite is hidden, a warned guy's marker flashes, a guy on a break is
-## dim, a guy winding up to jump rocks in his seat, and the timing bar shows beside a guy on the
-## top tier.
+## dim, a guy winding up to jump rocks in his seat, each antic shows on the guy, and the timing
+## bar shows beside a guy on the top tier.
 func _show_telegraphs(delta: float) -> void:
 	_flash_clock = fmod(_flash_clock + delta, WARNING_FLASH_PERIOD)
 	_rock_clock = fmod(_rock_clock + delta, WIND_UP_ROCK_PERIOD)
 	var flash_on: bool = _flash_clock < WARNING_FLASH_PERIOD * 0.5
 	for seat: int in _guys.size():
 		var state: Stamina.State = RunState.stamina.state_of(seat)
+		var antic: Antics.State = RunState.antics.state_of(seat)
 		_guys[seat].visible = RunState.guys[seat].aboard and RunState.phase != RunState.Phase.WON
-		_guys[seat].modulate = BREAK_DIM if state == Stamina.State.BREAK else Color.WHITE
-		_guys[seat].rotation = _wind_up_rock(seat)
+		_guys[seat].modulate = _dimming(state, antic)
+		_guys[seat].rotation = _wind_up_rock(seat) + _antic_turn(seat, antic)
+		_guys[seat].scale = _antic_scale(antic)
 		_warnings[seat].visible = state == Stamina.State.WARNING and flash_on
+		_show_antic_marks(seat, antic, flash_on)
 		_show_bar(seat, flash_on)
+
+
+## Visual only: dim on a break (the stamina telegraph wins), a sleepy tint nodded off.
+static func _dimming(state: Stamina.State, antic: Antics.State) -> Color:
+	if state == Stamina.State.BREAK:
+		return BREAK_DIM
+	if antic == Antics.State.NODDED_OFF:
+		return NAP_DIM
+	return Color.WHITE
+
+
+## Visual only: a nodded-off guy slumps outboard, a peeing guy faces the hull's edge; 0 else.
+static func _antic_turn(seat: int, antic: Antics.State) -> float:
+	var outboard: float = -Paddling.seat_side(seat)
+	match antic:
+		Antics.State.NODDED_OFF:
+			return outboard * NAP_TILT
+		Antics.State.PEEING:
+			return outboard * PEE_TURN
+	return 0.0
+
+
+## Visual only: a standing guy is bigger and bobs; everyone else is drawn at size.
+func _antic_scale(antic: Antics.State) -> Vector2:
+	if antic != Antics.State.STANDING:
+		return Vector2.ONE
+	return Vector2.ONE * (STAND_SCALE + STAND_BOB * sin(TAU * _rock_clock / WIND_UP_ROCK_PERIOD))
+
+
+## Visual only: the wind-up mark flashes through the announcement; the paddle, the "z" and the
+## dash show for their antic.
+func _show_antic_marks(seat: int, antic: Antics.State, flash_on: bool) -> void:
+	var marks: Array = _antic_marks[seat]
+	var mark: Node2D = marks[0]
+	mark.visible = antic == Antics.State.WINDING_UP and flash_on
+	var paddle: Node2D = marks[1]
+	paddle.visible = antic == Antics.State.PADDLE_DROPPED
+	var zee: Node2D = marks[2]
+	zee.visible = antic == Antics.State.NODDED_OFF
+	var pee: Node2D = marks[3]
+	pee.visible = antic == Antics.State.PEEING
 
 
 ## Visual only: the rock of a guy's sprite while Rescue has him winding up to jump, growing as

@@ -685,3 +685,89 @@ func test_rescue_signals_beer_jump_and_pickup() -> void:
 	state.beer_overboard(Rescue.Hull.LEFT, BOAT)
 	expect_eq(beers.size(), 1, "nobody aboard to jump: no beer went over, no signal")
 	state.free()
+
+
+## T13: a RunState whose guys are sober with no antic thresholds (nothing fires on its own), its
+## own DrinkTuning (windup_time 1, pee_time 5, pee_fall_shove 100, stand_rock 60) shared by its
+## Drunkenness and Antics, so a test starts an antic by hand.
+func antic_state() -> Node:
+	var tuning: DrinkTuning = DrinkTuning.new()
+	tuning.start_level = 0.0
+	tuning.drink_rate = 0.0
+	tuning.lag_curve = Curves.ramp(0.0, 0.0)
+	tuning.miss_curve = Curves.ramp(0.0, 0.0)
+	tuning.antic_thresholds = []
+	tuning.windup_time = 1.0
+	tuning.stand_time = 3.0
+	tuning.stand_rock = 60.0
+	tuning.pee_time = 5.0
+	tuning.pee_fall_shove = 100.0
+	var state: Node = sober_state()
+	state.drunkenness = Drunkenness.new(tuning)
+	state.antics = Antics.new(tuning)
+	state.reset()
+	return state
+
+
+## T13: while a guy pees his seat gives no strokes; a shove under pee_fall_shove leaves him at
+## the edge, one of pee_fall_shove or more puts him in the water without a beer (he doesn't drink
+## there) and ends the antic; the shove still reaches the boat.
+func test_a_shove_of_pee_fall_shove_during_a_pee_puts_him_in_without_a_beer_and_ends_the_antic() -> void:
+	var state: Node = antic_state()
+	state.antics.start(0, Antics.Kind.PEE)
+	expect(state.can_paddle(0), "he paddles through the wind-up")
+	state.step(1.0, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.PEEING, "after windup_time he pees")
+	expect_false(state.can_paddle(0), "his seat gives no strokes while he pees")
+	state.stroke(0, 1.0)
+	expect_near(state.guys[0].stamina, 1.0, 0.0001, "his key does nothing")
+	expect(state.can_paddle(1), "the other seats still stroke")
+	state.shove(Vector2(99.0, 0.0))
+	expect(state.guys[0].aboard, "a shove under pee_fall_shove leaves him aboard")
+	expect_eq(state.antics.state_of(0), Antics.State.PEEING, "still peeing")
+	expect_eq(state.take_shove(), Vector2(99.0, 0.0), "the shove reaches the boat")
+	# A drinking rate only from here on: until he is in, nothing drinks, so his level is 0.0 at the
+	# knock-in and any rise after it is the water's doing. Without a rate the check below is vacuous.
+	state.drunkenness.tuning.drink_rate = 0.1
+	state.shove(Vector2(0.0, 100.0))
+	expect_false(state.guys[0].aboard, "pee_fall_shove exactly puts him in")
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "and the antic is over")
+	var swimmer: Rescue.Swimmer = state.rescue.swimmer_of(0)
+	expect(swimmer != null, "he is a swimmer")
+	expect_false(swimmer.has_beer, "without a beer")
+	expect_eq(swimmer.state, Rescue.State.FLOATING, "floating from the start")
+	expect_eq(state.rescue.loose_beers().size(), 0, "no beer went over with him")
+	expect_eq(state.take_shove(), Vector2(0.0, 100.0), "that shove reaches the boat too")
+	expect(state.guys[1].aboard, "the others are untouched")
+	expect_false(state.can_paddle(0), "his seat gives no strokes from the water")
+	state.step(1.0, BOAT)
+	expect_near(state.guys[0].drunkenness, 0.0, 0.0001, "with no beer he doesn't drink in the water")
+	expect(state.guys[1].drunkenness > 0.0, "while the paddler aboard drinks at the rate")
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "a swimmer runs no antics")
+	state.shove(Vector2(0.0, 500.0))
+	expect_eq(state.rescue.swimmers().size(), 1, "a shove on a swimmer does nothing more")
+	state.free()
+
+
+## T13: a standing guy's rock goes into the Motion's turn, swinging side to side; a dropped
+## paddle, a nap and the shore reset go through can_paddle and reset.
+func test_a_standing_guy_rocks_the_boat_through_the_motion_and_the_reset_clears_antics() -> void:
+	var state: Node = antic_state()
+	state.antics.start(0, Antics.Kind.STAND)
+	state.step(1.0, BOAT)
+	expect_eq(state.antics.state_of(0), Antics.State.STANDING, "standing")
+	expect(state.can_paddle(0), "a standing guy still swings")
+	var motion: Paddling.Motion = state.step(0.25, BOAT)
+	expect_near(motion.turn, 15.0, 0.0001, "a quarter swing in, stand_rock times the step turns the boat right")
+	motion = state.step(0.5, BOAT)
+	expect_near(motion.turn, -30.0, 0.0001, "three quarters in, it turns left")
+	state.antics.start(1, Antics.Kind.DROP_PADDLE)
+	state.step(1.0, BOAT)
+	expect_false(state.can_paddle(1), "a dropped paddle gives no strokes")
+	state.set_progress(0.4)
+	state.shore_touched()
+	expect_eq(state.antics.state_of(0), Antics.State.IDLE, "the shore reset ends the stand")
+	expect_eq(state.antics.state_of(1), Antics.State.IDLE, "and the fishing")
+	expect(state.can_paddle(1), "his seat strokes again")
+	expect_near(state.step(TICK, BOAT).turn, 0.0, 0.0001, "nobody rocks the boat")
+	state.free()

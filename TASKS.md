@@ -2,18 +2,18 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T44 · B5
+**Next IDs:** T45 · B5
 
 ## Milestones
 | Milestone | Status |
 |---|---|
 | Design: pitch, pillars and core loop decided | ✅ done (Q5, co-op timing, still open) |
 | Foundation: project settings, first system with a test, check passing | ✅ done |
-| Core loop playable (grey-box): T6, T8, T9, T13, T28 | 🟨 in progress (T13 left) |
+| Core loop playable (grey-box): T6, T8, T9, T13, T28 | ✅ done |
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | 🟨 in progress (T25 done) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (78 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (87 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -160,6 +160,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: in debug builds (`OS.is_debug_build() or OS.has_feature("dev_tools")`) a translucent strip shows the corridor from `Hazards.corridor_x` so path_width and path_wander can be tuned by eye, toggled with a debug key (check: the gate is quoted) · the strip follows the planned path (play)
 - GDD: —
 
+### T44 · A swimmer without a beer looks different from one drinking · todo · S · agent
+- Depends on: T13, T22
+- Touches: scripts/lake.gd, tools/gen_sprites.gd, assets/sprites/
+- Done when: a floating swimmer shows a beer at his mouth only while `has_beer` is true, so the pee-antic victim reads as beerless (play)
+- GDD: Systems › Drunkenness
+
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
 - Touches: scripts/systems/geese.gd (new), scripts/hazards/geese.gd (new), scenes/hazards/geese.tscn (new), data/hazards/geese.tres (new), scripts/resources/lake_tuning.gd, data/lake_tuning.tres (+geese_radius, +geese_warning, +geese_attack_time, +geese_speed, +geese_peck_interval, +geese_peck_range, +geese_cooldown), tests/test_geese.gd (new)
@@ -253,7 +259,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 ### T26 · Audio telegraphs: engine before the wake, jet-ski offscreen, geese hiss, wind rising · todo · M · agent
 - Depends on: T25, T15, T16, T17, T21
 - Touches: assets/audio/hazards/ (new), scenes/hazards/wake.tscn, scenes/hazards/jetski.tscn, scenes/hazards/geese.tscn, scenes/hazards/gust.tscn, scenes/hazards/headwind.tscn
-- Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play)
+- Done when: each audio telegraph in GDD › Presentation and Platforms › Audio sounds before its hazard is visible, or at its wind-up (play) · a guy knocked in during a pee splashes like a jumper (RunState emits a signal for `guy_overboard`) (test)
 - GDD: Systems › Hazards
 
 ### T29 · Shared curve helper replaces the duplicate ramp() in DrinkTuning and StaminaTuning · done · S · agent
@@ -281,9 +287,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Found in: T28
 - GDD: Win and Loss
 
-### T13 · Antics: stand up, drop the paddle, nod off, pee, each with a wind-up · todo · M · agent
+### T13 · Antics: stand up, drop the paddle, nod off, pee, each with a wind-up · done · M · agent
 - Depends on: T5, T6, T9
-- Touches: scripts/systems/antics.gd (new), scripts/resources/drink_tuning.gd (+antic_thresholds, +windup_time, +pee_time, +pee_fall_shove), scenes/catamaran.tscn, tests/test_antics.gd (new)
+- Touches: scripts/systems/antics.gd (new), scripts/resources/drink_tuning.gd (+antic_thresholds, +windup_time, +stand_time, +stand_rock, +fish_time, +nap_time, +pee_time, +pee_fall_shove, +stand_rock_period), data/drink_tuning.tres, scripts/autoload/run_state.gd, scripts/systems/drunkenness.gd (comment), scripts/catamaran.gd, scenes/catamaran.tscn, tests/test_antics.gd (new), tests/test_run_state.gd
 - Done when: crossing an antic threshold starts a wind-up of windup_time before the antic fires (test) · standing up rocks the boat, dropping the paddle disables that seat until it is fished out, nodding off makes the seat dead weight, peeing disables the seat for pee_time; each recovers on its own (test) · a shove of pee_fall_shove or more during a pee puts that guy in the water without a beer, handled by Rescue (test) · each antic reads at a glance on the guy (play)
 - GDD: Systems › Drunkenness
 
