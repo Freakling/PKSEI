@@ -5,9 +5,10 @@ extends Node2D
 ## lake_width and island_distance. It reports the boat's progress to RunState every physics
 ## frame, and calls RunState.arrive() when the boat enters the island's area. Once RunState's
 ## phase is WON it puts the win cutscene (scenes/win.tscn, GDD › Win and Loss) at the island
-## and hands it the boat and the camera (the camera's follow is off while it plays); when the
+## and hands it the boat and the camera (the camera's follow is off while it plays), and the
+## hazards stop for it (their processing is disabled and their telegraph loops end, B4); when the
 ## cutscene asks to go again it is taken down, RunState.new_attempt() starts the next attempt,
-## and the boat and the hazards are placed as after a shore reset.
+## and the boat and the hazards are placed as after a shore reset, the hazards running again.
 ##
 ## The art is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the water and the
 ## shore are tiles repeated over their polygons, the island a sprite scaled to its radius.
@@ -148,9 +149,10 @@ func _on_shore_reset_done() -> void:
 
 
 ## The boat back at its start and this attempt's hazards placed: after a shore reset, and for
-## a new attempt after the win.
+## a new attempt after the win. The hazards run again first (the win cutscene quiets them).
 func _restart() -> void:
 	_boat.place(_start)
+	_hazards.process_mode = Node.PROCESS_MODE_INHERIT
 	_spawn_hazards()
 
 
@@ -161,8 +163,22 @@ func _start_win() -> void:
 	_win.position = _island.position
 	_win.again.connect(_on_win_again)
 	_camera.set_physics_process(false)
+	_quiet_hazards()
 	add_child(_win)
 	_win.begin(_boat, _camera, TUNING.island_radius, _island_visual.scale.x)
+
+
+## The hazards stop for the win cutscene (B4): the Hazards node is disabled, so no hazard steps,
+## calls RunState's effects or plays on; each telegraph loop is ended here, since a disabled
+## node would never end its own. The Area2D hazards (log, rock) also stop watching for the boat,
+## as their contact calls RunState's effects directly. _restart() turns the node back on.
+func _quiet_hazards() -> void:
+	_hazards.process_mode = Node.PROCESS_MODE_DISABLED
+	for hazard: Node in _hazards.get_children():
+		if hazard is HazardBase:
+			(hazard as HazardBase).stop_telegraph()
+		elif hazard is Area2D:
+			hazard.set_deferred(&"monitoring", false)
 
 
 ## The player goes again: the cutscene leaves at once, the camera follows the boat again, and

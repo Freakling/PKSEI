@@ -22,8 +22,9 @@ extends CharacterBody2D
 ## here (the win cutscene, T28, draws the boys stepping ashore from guy_global_position). Hazard
 ## effects come through RunState too: take_stop() zeroes the boat's speed and yaw, take_shove()
 ## is added to its speed, and take_push() (a gust's sustained wind) is a velocity the boat moves
-## at this frame like the drift, undamped and stopped by the shore. In debug builds F5/F6 knock
-## a beer over on the left/right without a hazard. No rules live here.
+## at this frame like the drift, undamped and stopped by the shore. Once the attempt is won they
+## are taken and dropped (B4). In debug builds F5/F6 knock a beer over on the left/right without
+## a hazard. No rules live here.
 
 ## The forward-stroke action per seat, in Paddling.Seat order (Q, W, I, O).
 const ACTIONS: Array[StringName] = [
@@ -129,15 +130,24 @@ func _physics_process(delta: float) -> void:
 	var motion: Paddling.Motion = RunState.step(delta, position)
 	_stroke_velocity += Vector2.UP.rotated(rotation) * motion.thrust * tuning.thrust_scale
 	_yaw_rate += motion.turn * tuning.turn_scale
-	if RunState.take_stop():
+	# The hazards' effects are taken every frame, so none is left for the next attempt. Once the
+	# attempt is won (B4) they are dropped: the boat is not stopped, shoved or pushed by them.
+	var stopped: bool = RunState.take_stop()
+	var shove: Vector2 = RunState.take_shove()
+	var push: Vector2 = RunState.take_push()
+	if RunState.phase == RunState.Phase.WON:
+		stopped = false
+		shove = Vector2.ZERO
+		push = Vector2.ZERO
+	if stopped:
 		_stroke_velocity = Vector2.ZERO
 		_yaw_rate = 0.0
-	_stroke_velocity += RunState.take_shove()
+	_stroke_velocity += shove
 	_stroke_velocity *= exp(-tuning.linear_damping * delta)
 	_yaw_rate *= exp(-tuning.angular_damping * delta)
 	rotation += _yaw_rate * delta
 	# The drift and the wind's push go through velocity so the shore collision stops them.
-	velocity = _stroke_velocity + RunState.take_push() + Vector2.DOWN * motion.drift_to_shore / delta
+	velocity = _stroke_velocity + push + Vector2.DOWN * motion.drift_to_shore / delta
 	move_and_slide()
 	_show_telegraphs(delta)
 

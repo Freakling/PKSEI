@@ -334,9 +334,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: when RunState's phase becomes `WON` (already set by `arrive()`, T6) the cutscene plays: the boys step onto the island, set up camp and drink, then the crossing ends (play) · the check loads the scene (check)
 - GDD: Win and Loss
 
-### B4 · Hazards keep acting during the win cutscene · todo · S · agent · low
+### B4 · Hazards keep acting during the win cutscene · done · S · agent · low
 - Depends on: T28, T50
-- Touches: scripts/lake.gd (disable the Hazards node's processing while the cutscene runs), scripts/catamaran.gd
+- Touches: scripts/lake.gd (disable the Hazards node's processing while the cutscene runs), scripts/catamaran.gd, scripts/hazards/hazard_base.gd (stop_telegraph), tests/test_catamaran.gd (new)
 - Repro: win while a gust, wake, jet-ski or geese charge is active near the island → expected: nothing touches the boat or the guys through the cutscene / actual: take_shove/take_push still move the boat and hits still land (the beast alone guards WON)
 - Found in: T28
 - GDD: Win and Loss

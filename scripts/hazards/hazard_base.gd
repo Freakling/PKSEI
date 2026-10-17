@@ -36,6 +36,13 @@ func _stop_loop() -> void:
 	_loop = 0
 
 
+## Ends the telegraph loop now, if one runs. The lake calls it when the win cutscene starts (B4):
+## it disables the Hazards node, so this hazard's _physics_process, which would end the loop on
+## its own, no longer runs.
+func stop_telegraph() -> void:
+	_stop_loop()
+
+
 ## Checks the lake's fields, then runs the hazard's _setup(). If one is missing, it says so and the
 ## node stays still.
 func _ready() -> void:
