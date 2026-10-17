@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T79 · B7 · R1
+**Next IDs:** T80 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -346,6 +346,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
+
+### T79 · The HUD says what each guy is doing whenever he can't paddle · done · S · agent
+- Depends on: T68, T74
+- Touches: scripts/ui/hud.gd (class_name Hud, a status line per guy, status_text), tests/test_hud.gd (new)
+- Done when: Hud.status_text() names the first that applies of the water (after the beer, drinking, fell in, swimming back, washed up), the antic's wind-up by kind and the antic itself ("taking a piss", "puking", "asleep", "standing up!", "dropped the paddle!"), the jump after a beer, a snag, the break and its warning, bailing and the timing bar, and is empty while he paddles (test) · the line sits under the name in a warning colour and reads at a glance in play (play)
+- GDD: Core Loop
 
 ### T78 · The devlog's claims hold: title, the framework's example page, what the upgrade really brought · done · XS · agent
 - Depends on: (none)
