@@ -128,17 +128,17 @@ extends Resource
 ## Pixels per second the ram shoves the boat back toward the lake's middle: hard.
 @export var beast_shove: float = 260.0 ## PLACEHOLDER
 ## Pixels back toward the shore (down-screen) from the boat the grabbed guy is spat out at.
-@export var beast_spit_distance: float = 450.0 ## PLACEHOLDER
+@export var beast_spit_distance: float = 150.0 ## PLACEHOLDER
 ## Seconds under water between rams while the boat stays out of bounds.
 @export var beast_pause: float = 1.5 ## PLACEHOLDER
 ## Seconds under water after the random visit's grab, after a ram that gave up, or after the boat
 ## came back inside.
 @export var beast_dive_time: float = 2.0 ## PLACEHOLDER
 ## Chance per roll, rolled once a second while the boat is inside the bounds and in open water,
-## that the beast rises anyway for one grab: the rare deep-water visit, less than once in a
-## typical crossing (GDD). A five-minute crossing is 300 rolls, so it expects rate × 300 visits:
-## at 0.0003 that is 0.09, about one crossing in eleven (T60).
-@export var beast_random_rate: float = 0.0003 ## PLACEHOLDER
+## that the beast rises anyway for one grab. Zero: the beast is never a random encounter; it
+## comes only out of bounds and when a puke calls it (beast_puke_chance). The roll stays so a
+## lake could turn it back on; a five-minute crossing is 300 rolls, expecting rate × 300 visits.
+@export var beast_random_rate: float = 0.0 ## PLACEHOLDER
 ## Chance that a guy's puke, heard while the beast is under and the boat is in open water, draws
 ## it up for one grab: the random visit again (T64; GDD › Drunkenness: "about one in fifty").
 @export var beast_puke_chance: float = 0.02 ## PLACEHOLDER
