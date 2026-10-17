@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T59 · B5
+**Next IDs:** T61 · B6
 
 ## Milestones
 | Milestone | Status |
@@ -232,7 +232,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: the game launches from the itch.io page on an Android phone and an iPhone in landscape, the canvas is neither cropped nor blurred, and the pads are reachable with thumbs (play)
 - GDD: Presentation and Platforms
 
-### T56 · Swedish speech bubbles: each guy says what he is about to do, and one calls out each hazard · todo · M · agent
+### T56 · Swedish speech bubbles: each guy says what he is about to do, and one calls out each hazard · in-progress 2026-10-17 · M · agent
 - Depends on: T23, T13, T14, T26
 - Touches: scripts/ui/speech_bubbles.gd (new), data/lines.tres (new, Swedish lines per telegraph), scripts/resources/lines.gd (new), scenes/lake.tscn (HUD), scripts/catamaran.gd, scripts/hazards/hazard_base.gd (a `telegraphed(kind)` signal or RunState call at each hazard's warning)
 - Done when: at each wind-up (stamina warning, antic wind-up, timing-bar wind-up, jump wind-up) a small bubble over the guy shows a Swedish line for that telegraph, drawn from a per-telegraph list in data (e.g. pee: "Jag måste pissa", break: "Fyfan va trött jag är!"), and goes away at the effect (play) · when a hazard telegraphs (geese hiss, gust or headwind warning, wake's motorboat, jet-ski warning, beast circling, a log or rock ahead on the path) one guy aboard, the one on the hull it comes from or else any, calls it out in a bubble ("Nu jävlar blåser det!", "Se upp för fåglarna!") (play) · the lines live in a Resource the human can edit, with a test that every telegraph and every hazard has at least one line (test)
@@ -249,6 +249,25 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/ui/touch_pads.gd, tests/test_touch_pads.gd
 - Done when: within a screen half, the outer part maps to the back seat and the inner part to the front seat, the whole height of the half counting (test) · the four pads sit outer/inner in each half with the same up/down hints (play)
 - GDD: Presentation and Platforms
+
+### T59 · After a few seconds adrift a swimmer swims slowly back toward the boat · todo · S · agent
+- Depends on: T9
+- Touches: scripts/systems/rescue.gd, scripts/resources/boat_tuning.gd (+swim_back_delay, +swim_back_speed), data/boat_tuning.tres, scripts/autoload/run_state.gd (pass the boat position to Rescue.step, already there), tests/test_rescue.gd
+- Done when: a FLOATING swimmer, after swim_back_delay seconds, moves toward the boat at swim_back_speed on top of the drift, with swim_back_speed a placeholder below loose_drift_speed (test) · a SWIMMING guy (after his beer) and a washed-up one are unaffected (test)
+- GDD: Systems › Setbacks
+
+### B5 · The guaranteed path can lead into the beast's edge zone · todo · S · agent · high
+- Depends on: T37, T50
+- Touches: scripts/systems/hazards.gd (path_reach), tests/test_hazards.gd, tests/test_beast.gd
+- Repro: follow the corridor where it wanders to the lake's side → expected: the beast never rises on the path / actual: path_reach allows corridor centres up to lake_width/2 − path_width/2 = 740 px while the beast rises beyond lake_width/2 − beast_edge_margin = 680 px, so the path summons it
+- Found in: ad hoc (the human's play)
+- GDD: Systems › Hazards
+
+### T60 · The beast's random visit is super rare · todo · S · agent
+- Depends on: T50
+- Touches: data/lake_tuning.tres (beast_random_rate)
+- Done when: beast_random_rate is set so the expected number of random visits in a five-minute crossing is well below one (the arithmetic quoted) (check)
+- GDD: Systems › Hazards
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
