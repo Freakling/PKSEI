@@ -18,8 +18,9 @@ const FLOAT_FRAMES: Array[Texture2D] = [
 ]
 ## Seconds each float frame shows (cosmetic): slow enough to read at 1×.
 const FRAME_PERIOD: float = 0.25
-## The rod's tip in the dinghy sprite, from its centre, for a line running right (cosmetic).
-const ROD_TIP: Vector2 = Vector2(7.0, -4.0)
+## The rod's tip in the 44×30 dinghy sprite (T61), from its centre, for a line running right
+## (cosmetic): the pixel past the rod's end at (42, 4), so the line carries on its diagonal.
+const ROD_TIP: Vector2 = Vector2(21.0, -11.0)
 ## The hit area's thickness across the line, in pixels: thin, so the line itself is what is crossed.
 const HIT_THICKNESS: float = 4.0
 

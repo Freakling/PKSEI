@@ -667,37 +667,96 @@ func _goose_fly(frame: int) -> Image:
 	return img
 
 
-## 12×24 the motorboat pointing up: a white hull with a pointed bow, a red stripe each side, a
-## windscreen and a driver amidships, an outboard at the stern.
+## 41×64 the motorboat pointing up, at the catamaran's scale (T61, GDD › Presentation and
+## Platforms: other boats at least as large as the catamaran): a white speedboat hull with a
+## pointed bow and a 29-px beam, a hatch on the foredeck, a red stripe down each side, a
+## windscreen across the deck with the driver at the wheel behind it, a passenger with a beer on
+## the rear bench, an outboard on the transom, and a white bow wave peeling off either side of
+## the bow (drawn over the outline, as spray is). The hull is centred on x 20.
 func _motorboat() -> Image:
-	var img: Image = _new(12, 24)
-	for y: int in range(2, 21):
-		var half: int = mini(4, (y - 1) / 2)
-		_rect(img, 6 - half, y, 2 * half + 1, 1, HULL_LIGHT)
-		if half >= 3:
-			_rect(img, 6 - half + 2, y, 2 * half - 3, 1, HULL_FLOOR)
-	for y: int in range(10, 19):
-		_px(img, 2, y, COOLER)
-		_px(img, 10, y, COOLER)
-	_rect(img, 4, 8, 5, 1, HULL_DARK)
-	_rect(img, 4, 9, 5, 5, HULL)
-	_head_back(img, 6, 12, HAIRS[0])
-	_rect(img, 5, 20, 3, 3, MOTOR)
+	var img: Image = _new(41, 64)
+	var cx: int = 20
+	for y: int in range(1, 60):
+		var half: int = _motorboat_half(y)
+		_rect(img, cx - half, y, 2 * half + 1, 1, HULL_LIGHT)
+		# The red stripe, one pixel in from the hull's edge once the bow has widened.
+		if y >= 14 and y <= 56:
+			_rect(img, cx - half + 1, y, 2, 1, COOLER)
+			_rect(img, cx + half - 2, y, 2, 1, COOLER)
+	# The foredeck hatch.
+	_rect(img, cx - 3, 14, 7, 7, HULL_DARK)
+	_rect(img, cx - 2, 15, 5, 5, HULL)
+	# The windscreen: a dark frame, two rows of glass, the dash under it.
+	_rect(img, cx - 10, 24, 21, 4, HULL_DARK)
+	_rect(img, cx - 9, 25, 19, 2, WATER_LIGHT)
+	# The cockpit well, the wheel and the rear bench.
+	_rect(img, cx - 10, 28, 21, 29, HULL_FLOOR)
+	_disc(img, cx - 5, 30, 2, OUTLINE)
+	_disc(img, cx - 5, 30, 1, HULL_FLOOR)
+	_rect(img, cx - 9, 47, 19, 4, HULL_DARK)
+	# The driver at the wheel, hands on it; the passenger on the bench with a beer.
+	_hands(img, Vector2i(cx - 7, 31), Vector2i(cx - 3, 31))
+	_seated(img, cx - 5, 34, GOOSE, HAIRS[0], HULL_FLOOR)
+	_hands(img, Vector2i(cx + 1, 45), Vector2i(cx + 9, 45))
+	_rect(img, cx + 9, 43, 2, 2, BEER_CAN)
+	_seated(img, cx + 5, 45, TENT_LIGHT, HAIRS[3], HULL_FLOOR)
+	# The outboard on the transom.
+	_rect(img, cx - 3, 58, 7, 5, MOTOR)
+	_rect(img, cx - 2, 58, 5, 1, HULL_DARK)
 	_outline(img, OUTLINE)
+	# The bow wave: a white line peeling off each side of the bow, light water between it and
+	# the hull, trailing off in drops down the sides.
+	for y: int in range(3, 25):
+		var gap: int = (y - 3) / 5
+		var colour: Color = SPLASH if y % 4 != 3 else WATER_LIGHT
+		var left: int = cx - _motorboat_half(y) - 2 - gap
+		var right: int = cx + _motorboat_half(y) + 2 + gap
+		_px(img, left, y, colour)
+		_px(img, right, y, colour)
+		if gap >= 1:
+			_px(img, left + 1, y, WATER_LIGHT)
+			_px(img, right - 1, y, WATER_LIGHT)
+	for drop: Vector2i in [Vector2i(0, 27), Vector2i(40, 27), Vector2i(1, 31), Vector2i(39, 31)]:
+		_px(img, drop.x, drop.y, WATER_LIGHT)
 	return img
 
 
-## 16×12 the motorboat's wake trail, placed astern: two white spray lines fanning out, with
-## foam between them near the stern; the gaps in the lines move on the second frame.
+## The motorboat hull's half-width on row y: 0 at the bow tip, widening two pixels every three
+## rows to 14, and tucked in over the last three rows for the transom.
+static func _motorboat_half(y: int) -> int:
+	if y > 56:
+		return 14 - (y - 56)
+	return mini(14, (y - 1) * 2 / 3)
+
+
+## A guy seated facing up, for the boats' crews: his 7×6 torso with its top at (cx - 3, cy)
+## and his head at (cx, cy), the torso's corners left in the deck's `floor` colour rather than
+## cleared, so no hole opens in the boat.
+func _seated(img: Image, cx: int, cy: int, shirt: Color, hair: Color, floor: Color) -> void:
+	_torso(img, cx - 3, cy, shirt)
+	for corner: Vector2i in [Vector2i(cx - 3, cy), Vector2i(cx + 3, cy), Vector2i(cx - 3, cy + 5),
+			Vector2i(cx + 3, cy + 5)]:
+		_px(img, corner.x, corner.y, floor)
+	_head(img, cx, cy, hair)
+
+
+## 40×32 the motorboat's wake trail, placed astern (wake.tscn puts its top row on the hull's
+## last): two white spray lines fanning out from the propeller, a short rooster tail between
+## them and foam near the stern; the gaps in the lines move on the second frame.
 func _motorboat_spray(frame: int) -> Image:
-	var img: Image = _new(16, 12)
-	for row: int in 12:
-		var spread: int = row * 7 / 11
+	var img: Image = _new(40, 32)
+	for row: int in 32:
+		var spread: int = 3 + row * 15 / 31
 		var colour: Color = SPLASH if (row + frame) % 3 != 2 else WATER_LIGHT
-		_px(img, 7 - spread, row, colour)
-		_px(img, 8 + spread, row, colour)
-	for foam: Vector2i in [Vector2i(7, 1 + frame), Vector2i(8, 3 - frame), Vector2i(6, 4 + frame),
-			Vector2i(9, 5)]:
+		_rect(img, 19 - spread - 1, row, 2, 1, colour)
+		_rect(img, 20 + spread, row, 2, 1, colour)
+	# The rooster tail straight behind the propeller, a row taller on the second frame.
+	_rect(img, 19, 0, 2, 6 + frame, SPLASH)
+	_rect(img, 18, 0, 1, 3, WATER_LIGHT)
+	_rect(img, 21, 0, 1, 3, WATER_LIGHT)
+	for foam: Vector2i in [Vector2i(16, 4 + frame), Vector2i(23, 7 - frame), Vector2i(14, 10 + frame),
+			Vector2i(25, 12), Vector2i(12, 16 - frame), Vector2i(27, 18 + frame), Vector2i(10, 22),
+			Vector2i(29, 24 - frame)]:
 		_px(img, foam.x, foam.y, WATER_LIGHT)
 	return img
 
@@ -742,38 +801,82 @@ func _current_arrow(frame: int) -> Image:
 	return img
 
 
-## 16×10 the jet-ski pointing right: a yellow hull with a pointed nose and a dark stripe, a
-## rider in red on it, spray thrown off the back; the spray dances between the two frames.
+## 36×20 the jet-ski pointing right, at the catamaran's scale (T61): a yellow hull 29 px long
+## with a pointed nose, a dark stripe on the nose and a dark skirt along its lower side, a grey
+## seat with the rider on it in a red vest, arms out to the handlebars across the deck, the jet's
+## white wash and spray thrown off the tail and the bow; the spray dances between the two
+## frames. Centred on row 10; the scene turns it along its course.
 func _jetski(frame: int) -> Image:
-	var img: Image = _new(16, 10)
-	_rect(img, 3, 4, 10, 3, JETSKI)
-	_rect(img, 13, 5, 2, 1, JETSKI)
-	_rect(img, 3, 6, 10, 1, JETSKI_DARK)
-	_rect(img, 10, 4, 1, 3, HULL_DARK)
-	_rect(img, 5, 3, 4, 4, RIDER)
-	_disc(img, 8, 5, 1, SKIN)
-	_px(img, 7, 5, HAIRS[0])
+	var img: Image = _new(36, 20)
+	var cy: int = 10
+	for x: int in range(7, 36):
+		# Half-height 5 along the body, narrowing to a point over the nose's last ten columns.
+		var half: int = mini(5, (35 - x) / 2)
+		_rect(img, x, cy - half, 1, 2 * half + 1, JETSKI)
+		if half >= 2:
+			_rect(img, x, cy + half - 1, 1, 2, JETSKI_DARK)
+	# The tail's corners rounded, the jet's outlet in it.
+	_clear(img, 7, cy - 5)
+	_clear(img, 7, cy + 5)
+	_rect(img, 7, cy - 1, 2, 3, MOTOR)
+	# The nose stripe, the seat, the handlebars.
+	_rect(img, 24, cy - 1, 8, 2, JETSKI_DARK)
+	_rect(img, 9, cy - 2, 12, 5, HULL_DARK)
+	_rect(img, 22, cy - 4, 1, 9, HULL_DARK)
+	# The rider: vest, arms forward to the grips, head looking ahead.
+	_rounded_rect(img, 10, cy - 3, 7, 7, 2, RIDER)
+	_rect(img, 17, cy - 2, 5, 1, SKIN)
+	_rect(img, 17, cy + 2, 5, 1, SKIN)
+	_head_turned(img, 15, cy, HAIRS[0], 1)
 	_outline(img, OUTLINE)
+	# The jet's wash straight out of the outlet, longer on the second frame, and the drops.
+	_rect(img, 2 - frame, cy - 1, 4 + frame, 3, SPLASH)
+	_px(img, 1 - frame, cy, WATER_LIGHT)
 	var spray: Array[Array] = [
-		[Vector2i(1, 3), Vector2i(0, 5), Vector2i(1, 7), Vector2i(2, 8)],
-		[Vector2i(2, 2), Vector2i(0, 4), Vector2i(1, 6), Vector2i(2, 9)],
+		[Vector2i(5, 2), Vector2i(2, 4), Vector2i(0, 6), Vector2i(4, 14), Vector2i(1, 16),
+			Vector2i(6, 18), Vector2i(32, 6), Vector2i(32, 14)],
+		[Vector2i(3, 1), Vector2i(0, 3), Vector2i(4, 6), Vector2i(1, 13), Vector2i(5, 15),
+			Vector2i(2, 18), Vector2i(30, 5), Vector2i(30, 15)],
 	]
 	for drop: Vector2i in spray[frame]:
 		_px(img, drop.x, drop.y, SPLASH)
 	return img
 
 
-## 16×12 the fisherman's dinghy, lying across the image with its fisherman amidships looking
-## right, his rod reaching out past the bow to the top-right corner, where the scene's Line2D
-## takes over (the scene flips it when the line runs left).
+## 44×30 the fisherman's dinghy, at the catamaran's scale (T61): a wooden rowing boat 40 px
+## long lying across the image, bow to the right and transom to the left, with a light gunwale,
+## three thwarts, the oars shipped along the sides and a red tackle box aft; the fisherman in
+## blue sits on the middle thwart under a bucket hat looking right, and his rod reaches out
+## past the bow to the top-right corner, its tip at pixel (42, 4), where the scene's Line2D
+## takes over (ROD_TIP in scripts/hazards/fishing_line.gd; the scene flips it when the line runs
+## left). The hull is centred on row 19.
 func _dinghy() -> Image:
-	var img: Image = _new(16, 12)
-	_ellipse(img, 7, 7, 7, 2, WOOD)
-	_ellipse(img, 7, 7, 5, 1, WOOD_LIGHT)
-	_rect(img, 5, 5, 5, 5, FISHER)
-	_disc(img, 7, 7, 1, SKIN)
-	_rect(img, 6, 6, 1, 3, HAIRS[0])
-	_line(img, Vector2i(9, 5), Vector2i(15, 1), WOOD_DARK)
+	var img: Image = _new(44, 30)
+	var cy: int = 19
+	for x: int in range(2, 42):
+		# Half-height 5 at the transom, 7 along the body, narrowing to a point over the bow's
+		# last twelve columns.
+		var half: int = mini(7, mini(5 + (x - 2) / 2, (41 - x) * 7 / 12))
+		_rect(img, x, cy - half, 1, 2 * half + 1, WOOD)
+		_px(img, x, cy - half, WOOD_LIGHT)
+		_px(img, x, cy + half, WOOD_LIGHT)
+	# The thwarts, the shipped oars (shafts along the sides, blades aft) and the tackle box.
+	for x: int in [9, 20]:
+		_rect(img, x, cy - 6, 3, 13, WOOD_LIGHT)
+	_rect(img, 33, cy - 4, 2, 9, WOOD_LIGHT)
+	_rect(img, 8, cy - 5, 24, 1, WOOD_DARK)
+	_rect(img, 8, cy + 5, 24, 1, WOOD_DARK)
+	_rect(img, 4, cy - 6, 5, 3, WOOD_DARK)
+	_rect(img, 4, cy + 4, 5, 3, WOOD_DARK)
+	_rect(img, 13, cy - 2, 5, 4, COOLER)
+	_rect(img, 13, cy - 2, 5, 1, COOLER_LID)
+	# The fisherman: his back to the transom, arms out to the rod, the hat over his head.
+	_rounded_rect(img, 19, cy - 3, 6, 7, 2, FISHER)
+	_rect(img, 25, cy - 2, 4, 1, SKIN)
+	_rect(img, 25, cy + 2, 4, 1, SKIN)
+	_line(img, Vector2i(27, cy), Vector2i(42, 4), WOOD_LIGHT)
+	_disc(img, 24, cy, 3, NEST)
+	_disc(img, 24, cy, 2, NEST_LIGHT)
 	_outline(img, OUTLINE)
 	return img
 

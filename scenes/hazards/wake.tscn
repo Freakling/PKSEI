@@ -14,7 +14,7 @@ script = ExtResource("1_wake")
 visible = false
 
 [node name="Spray" type="Sprite2D" parent="Visual/Motorboat"]
-position = Vector2(0, 17)
+position = Vector2(0, 47)
 texture = ExtResource("3_spray")
 
 [node name="Hull" type="Sprite2D" parent="Visual/Motorboat"]
