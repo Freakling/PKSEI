@@ -6,11 +6,13 @@ extends CharacterBody2D
 ## physics frame, and moves by the Motion it gets back: thrust along its facing, turn as yaw, and
 ## the current's drift down-screen toward the shore (the island is up-screen). Damping stands in
 ## for the water; the scales and damping are BoatTuning's, read through RunState.paddling. The
-## guys' squares under `Visual` show the break telegraph from RunState's Stamina state (a flashing
+## art under `Visual` is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the hull
+## sprite and one sprite per guy, in his seat's shirt colour. The telegraphs stay primitives. The
+## guys' sprites show the break telegraph from RunState's Stamina state (a flashing
 ## marker during the warning, dimmed on the break) and the timing bar from its Drunkenness (it
 ## blinks beside a guy while his tier is announced, then shows beside him while his key is held,
 ## the marker sweeping over the green band); a guy winding up to jump after a beer (Rescue's
-## winding_up, T34) rocks in his seat; a guy in the water has no square here (the lake draws
+## winding_up, T34) rocks in his seat; a guy in the water has no sprite here (the lake draws
 ## him). Hazard effects come through RunState too: take_stop() zeroes the boat's speed
 ## and yaw, take_shove() is added to its speed, and take_push() (a gust's sustained wind) is a
 ## velocity the boat moves at this frame like the drift, undamped and stopped by the shore. In
@@ -22,18 +24,18 @@ const ACTIONS: Array[StringName] = [
 ]
 ## Debug-only: a beer overboard on each side (F5, F6) without a hazard.
 const DEBUG_BEER_ACTIONS: Array[StringName] = [&"debug_beer_left", &"debug_beer_right"]
-## The guys' squares under Visual, in Paddling.Seat order.
+## The guys' sprites under Visual, in Paddling.Seat order.
 const GUY_PATHS: Array[String] = [
 	"Visual/LeftFront", "Visual/LeftBack", "Visual/RightFront", "Visual/RightBack",
 ]
 const BREAK_DIM: Color = Color(0.4, 0.4, 0.4, 1.0)
 ## Seconds per flash of the break warning marker and the bar's wind-up (cosmetic).
 const WARNING_FLASH_PERIOD: float = 0.3
-## The jump wind-up: a guy's square rocks this far (radians) each way, once per period
+## The jump wind-up: a guy's sprite rocks this far (radians) each way, once per period
 ## (cosmetic), quickening as his wind-up runs out.
 const WIND_UP_ROCK: float = 0.35
 const WIND_UP_ROCK_PERIOD: float = 0.4
-## The timing bar beside a guy's square (cosmetic sizes, in the square's pixels): a dark track
+## The timing bar beside a guy's sprite (cosmetic sizes, in canvas pixels): a dark track
 ## with a green band of DrinkTuning.green_width and a sweeping marker.
 const BAR_WIDTH: float = 16.0
 const BAR_HEIGHT: float = 3.0
@@ -51,7 +53,7 @@ var _yaw_rate: float = 0.0
 var _hold_times: Array[float] = [0.0, 0.0, 0.0, 0.0]
 var _flash_clock: float = 0.0
 var _rock_clock: float = 0.0
-var _guys: Array[Polygon2D] = []
+var _guys: Array[Sprite2D] = []
 var _warnings: Array[Node2D] = []
 var _bars: Array[Node2D] = []
 var _bar_markers: Array[Node2D] = []
@@ -59,7 +61,7 @@ var _bar_markers: Array[Node2D] = []
 
 func _ready() -> void:
 	for seat: int in GUY_PATHS.size():
-		var guy: Polygon2D = get_node(GUY_PATHS[seat]) as Polygon2D
+		var guy: Sprite2D = get_node(GUY_PATHS[seat]) as Sprite2D
 		_guys.append(guy)
 		_warnings.append(guy.get_node("Warning") as Node2D)
 		_bars.append(_build_bar(guy, seat))
@@ -116,12 +118,7 @@ func place(at: Vector2) -> void:
 	_hold_times.fill(0.0)
 
 
-## The colour of this guy's square, so the lake can draw him in the water in the same colour.
-func guy_colour(seat: int) -> Color:
-	return _guys[seat].color
-
-
-## Visual only: a swimmer's square is hidden, a warned guy's marker flashes, a guy on a break is
+## Visual only: a swimmer's sprite is hidden, a warned guy's marker flashes, a guy on a break is
 ## dim, a guy winding up to jump rocks in his seat, and the timing bar shows beside a guy on the
 ## top tier.
 func _show_telegraphs(delta: float) -> void:
@@ -137,7 +134,7 @@ func _show_telegraphs(delta: float) -> void:
 		_show_bar(seat, flash_on)
 
 
-## Visual only: the rock of a guy's square while Rescue has him winding up to jump, growing as
+## Visual only: the rock of a guy's sprite while Rescue has him winding up to jump, growing as
 ## the time left runs out so the jump reads as coming; 0 when he isn't.
 func _wind_up_rock(seat: int) -> float:
 	var rescue: Rescue = RunState.rescue
@@ -159,7 +156,7 @@ func _show_bar(seat: int, flash_on: bool) -> void:
 	_bar_markers[seat].position.x = (drunkenness.bar_position(_hold_times[seat]) - 0.5) * BAR_WIDTH
 
 
-## Builds one guy's bar under his square (placeholder art: flat primitives under Visual), out
+## Builds one guy's bar under his sprite (a telegraph: flat primitives under Visual), out
 ## past his hull: the track, the green band sized by DrinkTuning.green_width, and the marker.
 func _build_bar(guy: Node2D, seat: int) -> Node2D:
 	var bar: Node2D = Node2D.new()

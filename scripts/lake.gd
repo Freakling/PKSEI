@@ -5,10 +5,13 @@ extends Node2D
 ## lake_width and island_distance. It reports the boat's progress to RunState every physics
 ## frame, and calls RunState.arrive() when the boat enters the island's area.
 ##
+## The art is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the water and the
+## shore are tiles repeated over their polygons, the island a sprite scaled to its radius.
+##
 ## The rescue (GDD › Systems › Setbacks) shows here: a beer bobbing away while its guy winds up
-## aboard (T34) gets a tiny yellow beer marker under Visual/Swimmers, and each guy in the water a
-## marker there at Rescue's position for him, in his square's colour, with the beer while his is
-## still loose; a floating guy bobs and is tinted. When the boat comes within
+## aboard (T34) gets a beer sprite under Visual/Swimmers, and each guy in the water his seat's
+## swimming sprite there at Rescue's position for him, with the beer while his is still loose; a
+## floating guy bobs and is tinted. When the boat comes within
 ## BoatTuning.pickup_radius of a floating guy the lake calls RunState.pickup(); whenever the boat
 ## touches the shore it calls RunState.shore_touched(), and puts the boat back at its start when
 ## RunState answers with a shore reset. The hazards (GDD › Systems › Hazards) are fixed where
@@ -32,15 +35,20 @@ const PATH_OVERLAY_STEPS: int = 4
 ## centre to a corner, in this colour.
 const TRIGGER_MARKER_SIZE: float = 4.0
 const TRIGGER_MARKER_COLOUR: Color = Color(1.0, 0.0, 1.0, 0.8)
-const GUY_SIZE: float = 4.0
-const BEER_SIZE: float = 1.5
-const BEER_COLOUR: Color = Color(0.95, 0.85, 0.2, 1.0)
+const BEER_TEXTURE: Texture2D = preload("res://assets/sprites/beer.png")
+## A guy swimming, one per seat in Paddling.Seat order, in the shirt colour of his sprite on the
+## boat (both from tools/gen_sprites.gd).
+const SWIM_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/sprites/guy_swim_0.png"), preload("res://assets/sprites/guy_swim_1.png"),
+	preload("res://assets/sprites/guy_swim_2.png"), preload("res://assets/sprites/guy_swim_3.png"),
+]
 ## A floating guy, drinking: a little bluer and wetter than the one on the boat (cosmetic).
 const FLOATING_TINT: Color = Color(0.7, 0.8, 1.0, 1.0)
 ## Cosmetic bob of a floating guy: pixels and seconds per cycle.
 const BOB_HEIGHT: float = 1.0
 const BOB_PERIOD: float = 1.2
-## Radius the island's placeholder polygon is drawn at; it is scaled to LakeTuning.island_radius.
+## Radius the island sprite's beach reaches at its near edge; it is scaled to
+## LakeTuning.island_radius.
 const ISLAND_ART_RADIUS: float = 60.0
 ## Water and shore run this far past the lake's edges and past the island, in pixels, so the
 ## camera (a 640 by 360 view) never sees the end of the water.
@@ -66,10 +74,10 @@ var _debug_tools: bool = OS.is_debug_build() or OS.has_feature("dev_tools")
 ## Where the boat starts (progress 0) and the island's near edge (progress 1).
 var _start: Vector2 = Vector2.ZERO
 var _edge_y: float = 0.0
-## One marker per seat in the water: a Node2D holding a "Guy" and a "Beer" square.
+## One marker per seat in the water: a Node2D holding a "Guy" and a "Beer" sprite.
 var _markers: Dictionary[int, Node2D] = {}
-## One beer square per seat winding up, at the loose beer's position.
-var _loose_beers: Dictionary[int, Polygon2D] = {}
+## One beer sprite per seat winding up, at the loose beer's position.
+var _loose_beers: Dictionary[int, Sprite2D] = {}
 var _bob_clock: float = 0.0
 
 
@@ -102,7 +110,9 @@ func _physics_process(delta: float) -> void:
 
 
 ## Sizes the water and the shore to the lake: the water runs from the shore line up past the
-## island, and both run across lake_width plus WATER_MARGIN on each side of x = 0.
+## island, and both run across lake_width plus WATER_MARGIN on each side of x = 0. Their tiles
+## repeat over the polygons (Polygon2D maps an unset uv from the points, one tile per texture
+## size, and texture_repeat is on in the scene).
 func _size_water() -> void:
 	var half_width: float = TUNING.lake_width * 0.5 + WATER_MARGIN
 	var top: float = -(TUNING.island_distance + TUNING.island_radius + WATER_MARGIN)
@@ -203,7 +213,7 @@ func _show_swimmers(delta: float) -> void:
 		var floating: bool = swimmer.state == Rescue.State.FLOATING
 		var bob: float = BOB_HEIGHT * sin(TAU * _bob_clock / BOB_PERIOD) if floating else 0.0
 		marker.position = swimmer.position + Vector2(0.0, bob)
-		var guy: Polygon2D = marker.get_node("Guy") as Polygon2D
+		var guy: Sprite2D = marker.get_node("Guy") as Sprite2D
 		guy.modulate = FLOATING_TINT if floating else Color.WHITE
 		var beer: Node2D = marker.get_node("Beer") as Node2D
 		beer.visible = not floating
@@ -214,7 +224,7 @@ func _show_swimmers(delta: float) -> void:
 			_markers.erase(seat)
 
 
-## Visual only: one beer square per beer bobbing away while its guy winds up, where Rescue says
+## Visual only: one beer sprite per beer bobbing away while its guy winds up, where Rescue says
 ## it is; it bobs like a floating guy. Gone once he jumps (his swimmer marker shows it then).
 func _show_loose_beers() -> void:
 	var seen: Array[int] = []
@@ -222,12 +232,9 @@ func _show_loose_beers() -> void:
 	for beer: Rescue.LooseBeer in RunState.rescue.loose_beers():
 		seen.append(beer.seat)
 		if not _loose_beers.has(beer.seat):
-			var square: Polygon2D = Polygon2D.new()
-			square.name = "LooseBeer%d" % beer.seat
-			square.color = BEER_COLOUR
-			square.polygon = _square(BEER_SIZE)
-			_swimmers.add_child(square)
-			_loose_beers[beer.seat] = square
+			var can: Sprite2D = _sprite("LooseBeer%d" % beer.seat, BEER_TEXTURE)
+			_swimmers.add_child(can)
+			_loose_beers[beer.seat] = can
 		_loose_beers[beer.seat].position = beer.position + Vector2(0.0, bob)
 	for seat: int in _loose_beers.keys():
 		if not seen.has(seat):
@@ -237,18 +244,17 @@ func _show_loose_beers() -> void:
 
 func _make_marker(seat: int) -> Node2D:
 	var marker: Node2D = Node2D.new()
-	var guy: Polygon2D = Polygon2D.new()
-	guy.name = "Guy"
-	guy.color = _boat.guy_colour(seat)
-	guy.polygon = _square(GUY_SIZE)
-	var beer: Polygon2D = Polygon2D.new()
-	beer.name = "Beer"
-	beer.color = BEER_COLOUR
-	beer.polygon = _square(BEER_SIZE)
-	marker.add_child(guy)
-	marker.add_child(beer)
+	marker.add_child(_sprite("Guy", SWIM_TEXTURES[seat]))
+	marker.add_child(_sprite("Beer", BEER_TEXTURE))
 	_swimmers.add_child(marker)
 	return marker
+
+
+static func _sprite(sprite_name: String, texture: Texture2D) -> Sprite2D:
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.name = sprite_name
+	sprite.texture = texture
+	return sprite
 
 
 ## A rectangle centred on x = 0, from top to bottom in lake pixels.
@@ -256,12 +262,6 @@ static func _rect(half_width: float, top: float, bottom: float) -> PackedVector2
 	return PackedVector2Array([
 		Vector2(-half_width, top), Vector2(half_width, top),
 		Vector2(half_width, bottom), Vector2(-half_width, bottom),
-	])
-
-
-static func _square(half: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half),
 	])
 
 

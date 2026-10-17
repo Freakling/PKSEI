@@ -11,7 +11,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Foundation: project settings, first system with a test, check passing | ✅ done |
 | Core loop playable (grey-box): T6, T8, T9, T13, T28 | ⬜ |
 | Hazards complete: T10, T15–T21 | ✅ done |
-| Pixel art and animation, telegraphs first: T22–T24 | ⬜ |
+| Pixel art and animation, telegraphs first: T22–T24 | 🟨 in progress (T22 done, awaiting the human's sign-off) |
 | Audio, telegraphs first: T25–T26 | ⬜ |
 | Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (77 placeholders) |
 
@@ -226,9 +226,9 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a warning of jetski_warning sounds from offscreen, then the jet-ski crosses on a straight line at jetski_speed; a hit shoves the boat hard and knocks a beer overboard (test) · the warning is loud enough to react to (play)
 - GDD: Systems › Hazards
 
-### T22 · Pixel art pass 1: catamaran, four guys, water, shore and island · todo · M · agent
+### T22 · Pixel art pass 1: catamaran, four guys, water, shore and island · done · M · agent
 - Depends on: T6
-- Touches: assets/sprites/ (new), scenes/catamaran.tscn, scenes/lake.tscn
+- Touches: tools/gen_sprites.gd (new, the generator), assets/sprites/*.png (+.import), scenes/catamaran.tscn, scenes/lake.tscn, scenes/hazards/log.tscn, scripts/catamaran.gd, scripts/lake.gd
 - Done when: the `Visual` nodes show sprites drawn for the 640×360 canvas, nearest-filtered, in place of the primitives (play) · the human signs off the look (play)
 - GDD: Presentation and Platforms
 
