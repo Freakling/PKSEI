@@ -4,4 +4,4 @@
 
 [resource]
 script = ExtResource("1_names")
-names = PackedStringArray("Vajking", "Tåååny!!", "Ryggen", "Danne!", "Danne?", "Göras!", "Matte", "Bibbe", "NakenOlsson", "Skrattet", "Alkisen", "Meh-lajnen")
+names = PackedStringArray("Vajking", "Tåååny!!", "Ryggen", "Danne!", "Danne?", "Göras!", "Matte", "Bibbe", "NakenOlsson", "Skrattet", "Alkisen", "Meh-lajnen", "P-Erik")

@@ -91,7 +91,7 @@ There is no limit on how many guys can be in the water. The cascade is the point
 The lake is the level: a launch shore, a huge stretch of open water with hazards and the headwind, and the island on the far side. One lake.
 
 ## Characters and Units
-Four guys. They are the comedy: the bodies the player drives and the thing that goes wrong. Each attempt gives them four distinct names drawn from the crew's list of nicknames (Vajking, Tåååny!!, Ryggen, Danne!, Danne?, Göras!, Matte, Bibbe, NakenOlsson, Skrattet, Alkisen, Meh-lajnen; the list is data the human edits). The HUD shows the names, not the keys: the keys are taught by the sand text. Under each name it says what the guy is doing whenever he can't paddle (in the water, taking a piss, puking, asleep, on a break, snagged, bailing, seeing double), so a guy who doesn't respond is explained, never a mystery. Whether they differ from one another in weight, tolerance or personality is undecided.
+Four guys. They are the comedy: the bodies the player drives and the thing that goes wrong. Each attempt gives them four distinct names drawn from the crew's list of nicknames (Vajking, Tåååny!!, Ryggen, Danne!, Danne?, Göras!, Matte, Bibbe, NakenOlsson, Skrattet, Alkisen, Meh-lajnen, P-Erik; the list is data the human edits). The HUD shows the names, not the keys: the keys are taught by the sand text. Under each name it says what the guy is doing whenever he can't paddle (in the water, taking a piss, puking, asleep, on a break, snagged, bailing, seeing double), so a guy who doesn't respond is explained, never a mystery. Whether they differ from one another in weight, tolerance or personality is undecided.
 
 ## Progression and Meta
 None planned for the first version. The crossing is the whole game.

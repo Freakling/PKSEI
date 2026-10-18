@@ -29,7 +29,7 @@ Comments. The page is a tech demo collecting feedback, so a comment thread at th
 
 ### Fyra idioter. Två kanoter. En ö.
 
-Vajking, Tåååny!!, Ryggen, Danne!, Danne?, Göras!, Matte, Bibbe, NakenOlsson, Skrattet, Alkisen and Meh-lajnen: four of them turn up each attempt, lash two aluminium canoes into a catamaran, and set off for an island on the far side of a very long lake. You paddle for all four at once. They drink the whole way, so the boat gets harder to steer the longer the crossing takes, and they never stop talking.
+Vajking, Tåååny!!, Ryggen, Danne!, Danne?, Göras!, Matte, Bibbe, NakenOlsson, Skrattet, Alkisen, Meh-lajnen and P-Erik: four of them turn up each attempt, lash two aluminium canoes into a catamaran, and set off for an island on the far side of a very long lake. You paddle for all four at once. They drink the whole way, so the boat gets harder to steer the longer the crossing takes, and they never stop talking.
 
 The lake does not help. Logs and rocks crowd the only safe line, geese charge from their nests, motorboat wakes roll in sideways, gusts shove you off course, a jet-ski idiot cuts across your bow, and if you stray toward the edges the Loch-Brez beast comes up and swallows whoever is nearest, spitting him out far behind you. A guy who gets too drunk stands up, drops his paddle, nods off, pees over the side or, at the top of the meter, pukes. A beer knocked overboard means someone jumps in after it, drinks it where he lands ("Ska bara dricka sen kommer jag") and then nags you to come and get him.
 
