@@ -18,7 +18,7 @@ point_count = 2
 
 [resource]
 script = ExtResource("1_lake")
-island_distance = 24000.0
+island_distance = 8000.0
 island_radius = 60.0
 launch_margin = 96.0
 lake_width = 1600.0

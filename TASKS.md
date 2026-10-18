@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T85 · B7 · R1
+**Next IDs:** T87 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -364,6 +364,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (new_attempt continues the run under autoplay instead of beginning a new one, or logs the reset as a step of the same run), tools/autoplay_adapter.gd (the reset action's weight above 0 once it is safe), tests/test_play_log.gd
 - Done when: a scripted scenario step through the `reset` ui action leaves one `.log`/`.jsonl` pair in the run folder and `bash tools/log_review.sh` reviews the autoplay lines, not a "played by a person" log (check) · the reset action gets a random weight above 0 in the adapter (check)
 - GDD: (none)
+
+### T85 · The lake is a third of the length · done · XS · agent
+- Depends on: T33
+- Touches: data/lake_tuning.tres (island_distance 24000 → 8000), design/gdd.md
+- Done when: island_distance is 8000, a third of before, and the GDD's session length says about two minutes clean (check: the values quoted)
+- GDD: Core Loop › Session
+
+### T86 · Run stats, shown on the win screen · todo · M · agent
+- Depends on: T28, T68, T70
+- Touches: scripts/systems/stats.gd (new, RefCounted: counters and `rows()`), scripts/autoload/run_state.gd (owns a Stats, counts where it logs: strokes, beers overboard, jumps, falls, grabs, pickups, pukes, pisses, naps, stand-ups, paddles dropped, breaks, snags, water, hazard hits, shore resets, drunkenness gained, max level; reset at new_attempt), scripts/resources/drink_tuning.gd (+level_per_beer), data/drink_tuning.tres, scripts/win_cutscene.gd, scenes/win.tscn (a stats block under the time), tests/test_stats.gd (new), tests/test_run_state.gd
+- Done when: Stats counts every event RunState logs, with a test per counter driven through RunState (strokes landed/fumbled/reverse, beers overboard and rescued, jumps, falls, grabs, pickups, pukes, pisses, naps, stand-ups, paddles dropped, breaks, snags, water aboard, hazard hits by kind, shore resets, max drunkenness) and beers drunk = drunkenness gained / level_per_beer rounded (test) · `Stats.rows()` gives label/value pairs in a stable order with zero rows kept, and the win title lists them under the time in two columns that fit the 640×360 canvas (play) · a new attempt starts the stats over; a shore reset keeps them (test)
+- GDD: Win and Loss
 
 ### T84 · The dev menu gets a Beast tab: the lake registers its beast on spawn · done · XS · agent
 - Depends on: T72

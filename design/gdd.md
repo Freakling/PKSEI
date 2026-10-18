@@ -29,10 +29,10 @@ Genre: action/arcade. Feelings to hit: rage and mastery, with comedy throughout.
 Charge-and-release paddling against a constant current. Each guy has two keys, forward and reverse: hold to wind up, release to stroke, with no on-screen meter; the power of the stroke comes from how long the key was held. The boat gains speed, turns and wobbles from the mix of who strokes when and how hard. Strong strokes burn a guy's stamina, so the player balances power against stamina for each guy. The player juggles four wind-ups at once while drunkenness makes each guy less reliable, and the current pulls the boat back toward the shore whenever the strokes stop.
 
 ### Session
-A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. A clean crossing with no incidents at a steady pace takes five minutes or more; with incidents a real crossing is far longer. The lake length is a tunable.
+A sitting is one continuous attempt at the crossing, since there is no restart: the player pushes forward, gets set back, pushes forward again until they reach the island or quit. A clean crossing with no incidents at a steady pace takes about two minutes; with incidents a real crossing is far longer. The lake length is a tunable (it was three times longer at first, and cut to a third after play).
 
 ### Run / campaign
-One lake, one crossing, from the launch shore to the island on the far side. The lake is huge; hazards are randomised per attempt along a guaranteed path.
+One lake, one crossing, from the launch shore to the island on the far side. The lake is long; hazards are randomised per attempt along a guaranteed path.
 
 ### Starting conditions
 Four guys, mildly tipsy, on a calm stretch of water at the shore, with a crate of beer aboard. Drunkenness climbs with time, faster while a guy is on a break or floating in the water, so the first stretch teaches control before it degrades.
@@ -105,7 +105,7 @@ The guys speak Swedish. Every telegraph gets a speech bubble: a guy says what he
 Difficulty comes from drunkenness, which only rises over the attempt, from the constant current, from stamina breaks that get likelier the harder the player pushes, from the rescue cascade (each swimmer makes the next rescue harder), and from the hazards getting denser toward the island. Numbers for all of these are tunables.
 
 ## Win and Loss
-- **Win:** the catamaran reaches the island with all four guys aboard. A cutscene follows: the boys step onto the island, make camp and drink more. The crossing ends there.
+- **Win:** the catamaran reaches the island with all four guys aboard. A cutscene follows: the boys step onto the island, make camp and drink more. The crossing ends there, and the title shows the crossing's stats: time taken, shore resets, strokes (and fumbles and reverse ones), beers drunk (estimated from the drunkenness gained, a beer per `level_per_beer`), beers overboard and rescued, times in the water (jumps, falls, beast grabs), pukes, pisses, naps, stand-ups, paddles dropped, breaks, snags, water bailed, hazard hits and the drunkest moment: everything the run counted, so the crew can argue about it.
 - **Loss:** none. Setbacks replace losing (see Setbacks).
 
 ## Presentation and Platforms
