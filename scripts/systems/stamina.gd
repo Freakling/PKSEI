@@ -148,3 +148,12 @@ func _tick(seat: int, delta: float) -> bool:
 func _enter(seat: int, state: State, duration: float) -> void:
 	states[seat] = state
 	times_left[seat] = maxf(duration, 0.0)
+
+
+## The dev menu's inspector (T72, tools/dev_menu.gd): per seat, the level, the state and its time left.
+func debug_inspect() -> Dictionary:
+	var values: Dictionary = {}
+	for seat: int in levels.size():
+		values["seat %d" % seat] = "level %.2f, %s, %.1fs left" % [levels[seat],
+				str(State.keys()[states[seat]]).to_lower(), times_left[seat]]
+	return values

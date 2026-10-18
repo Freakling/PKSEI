@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T84 · B7 · R1
+**Next IDs:** T85 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -335,7 +335,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `bash tools/autoplay.sh --all` exits 0 and `bash tools/log_review.sh --latest` writes a review (check) · the check plays smoke with `check_in_check=true` and `enforce=["smoke"]` (check)
 - GDD: (none)
 
-### T72 · Wire the dev menu: register the systems with their debug hooks · todo · S · agent
+### T72 · Wire the dev menu: register the systems with their debug hooks · done · S · agent
 - Depends on: (none)
 - Touches: tools/dev_menu.gd (register_system for RunState, Rescue, Beast, Antics, Stamina, Drunkenness), scripts/autoload/run_state.gd (debug_* actions: beer overboard per hull, force an antic, set a level; debug_inspect())
 - Done when: F12 in a debug build opens tabs for the systems with their actions and inspectors and a Log tab, and the menu is absent in a release build (play) · `inspect_text("Run")` lists progress, phase and the four guys (test)
@@ -363,6 +363,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T71
 - Touches: scripts/autoload/run_state.gd (new_attempt continues the run under autoplay instead of beginning a new one, or logs the reset as a step of the same run), tools/autoplay_adapter.gd (the reset action's weight above 0 once it is safe), tests/test_play_log.gd
 - Done when: a scripted scenario step through the `reset` ui action leaves one `.log`/`.jsonl` pair in the run folder and `bash tools/log_review.sh` reviews the autoplay lines, not a "played by a person" log (check) · the reset action gets a random weight above 0 in the adapter (check)
+- GDD: (none)
+
+### T84 · The dev menu gets a Beast tab: the lake registers its beast on spawn · todo · XS · agent
+- Depends on: T72
+- Touches: scripts/lake.gd (DevMenu.register_system("Beast", ...) when the beast scene spawns, unregister on a new lake), scripts/systems/beast.gd or scripts/hazards/beast.gd (debug_inspect: state, rise cause, bounds), tests/test_beast.gd
+- Done when: with a lake up, `DevMenu.systems()` has Beast and `inspect_text("Beast")` names its state and rise cause (test) · a new attempt replaces the registration rather than leaving a stale one (test)
 - GDD: (none)
 
 ### T80 · Decouple: the swim kind moves from the speech bubbles into Rescue · todo · S · agent

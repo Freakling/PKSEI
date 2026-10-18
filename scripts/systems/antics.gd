@@ -222,3 +222,15 @@ func _tick(seat: int, delta: float) -> bool:
 func _enter(seat: int, state: State, duration: float) -> void:
 	states[seat] = state
 	times_left[seat] = maxf(duration, 0.0)
+
+
+## The dev menu's inspector (T72, tools/dev_menu.gd): per seat, the state and the antic it is in,
+## its time left, and how many thresholds it has crossed and antics it has fired.
+func debug_inspect() -> Dictionary:
+	var values: Dictionary = {}
+	for seat: int in states.size():
+		var state_name: String = str(State.keys()[states[seat]]).to_lower()
+		var kind_name: String = str(Kind.keys()[kinds[seat]]).to_lower()
+		values["seat %d" % seat] = "%s (%s), %.2fs left, thresholds crossed %d, antics fired %d" % [
+				state_name, kind_name, times_left[seat], _crossed[seat], _fired[seat]]
+	return values

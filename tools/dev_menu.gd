@@ -25,10 +25,17 @@ func _init() -> void:
 
 func _ready() -> void:
 	super()
-	## PLACEHOLDER: one tab per system, such as:
-	##     register_system("Run", RunState, ["buy", "next_day"])
-	## Register what the game owns: its autoloads and systems, each through its public methods and
-	## its debug_* hooks.
+	# The attempt (RunState): its debug_* hooks, and the public actions a person wants as buttons.
+	# pickup is RunState's, not Rescue's: it puts the guy back aboard, where Rescue.pickup alone would
+	# leave him neither aboard nor in the water.
+	register_system("Run", RunState, PackedStringArray(["new_attempt", "shore_touched", "pickup"]))
+	# The rule instances RunState owns. Each shows its debug_inspect() and its public actions.
+	register_system("Rescue", RunState.rescue, PackedStringArray(), false)
+	register_system("Antics", RunState.antics, PackedStringArray(["interrupt"]), false)
+	register_system("Stamina", RunState.stamina, PackedStringArray(["call_break"]), false)
+	register_system("Drunkenness", RunState.drunkenness, PackedStringArray(["relieve"]), false)
+	# The Loch-Brez beast isn't registered: lake.gd spawns one per lake, not an autoload, and a
+	# registered node would go stale on the next lake.
 
 
 ## PLACEHOLDER: whether the game's own Settings turn the dev menu on, for the "setting" mode, such

@@ -243,3 +243,18 @@ func pickup(seat: int) -> bool:
 		return false
 	_swimmers.erase(swimmer)
 	return swimmer.has_beer
+
+
+## The dev menu's inspector (T72, tools/dev_menu.gd): each guy in the water with his state, beer and
+## time adrift, and each beer loose with the seat that will jump after it.
+func debug_inspect() -> Dictionary:
+	var values: Dictionary = {}
+	for swimmer: Swimmer in _swimmers:
+		values["in the water, seat %d" % swimmer.seat] = "%s, %s, adrift %.1fs" % [
+				str(State.keys()[swimmer.state]).to_lower(), "with his beer" if swimmer.has_beer else "no beer",
+				swimmer.adrift]
+	for beer: LooseBeer in _beers:
+		values["beer loose, seat %d" % beer.seat] = "jumps in after %.2fs" % beer.time_left
+	if values.is_empty():
+		values["in the water"] = "nobody"
+	return values

@@ -177,6 +177,15 @@ func _track_bar_tier(seat: int, delta: float) -> void:
 
 
 ## Starts one phase of the cycle with its full time: BAR_WINDUP, bar_duration or bar_cooldown.
+## The dev menu's inspector (T72, tools/dev_menu.gd): per seat, the level and the timing bar's tier.
+func debug_inspect() -> Dictionary:
+	var values: Dictionary = {}
+	for seat: int in levels.size():
+		var bar: String = "on" if uses_bar(seat) else ("winding up" if bar_winding_up(seat) else "off")
+		values["seat %d" % seat] = "level %.2f, timing bar %s" % [levels[seat], bar]
+	return values
+
+
 func _enter_bar_phase(seat: int, phase: BarPhase) -> void:
 	_bar_phase[seat] = phase
 	match phase:

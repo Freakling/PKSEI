@@ -43,6 +43,9 @@ extends Node
 ## (antics, breaks, the timing bar). snapshot() and block_reason() are what PlayLog's hooks
 ## report; a new attempt and a shore reset also log a snapshot. Nothing is logged per frame
 ## except where a state actually changes (_log_changes, once per step).
+##
+## The dev menu (T72, tools/dev_menu.gd) reads debug_inspect() and calls the debug_* hooks at the
+## end of this file; each is a one-liner over the API above and its effects log their own lines.
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
 ## step() mirrors the rule classes' levels into them so screens read one place.
@@ -841,3 +844,110 @@ func _log_changes() -> void:
 				var swim_name: String = ["", "", "floating", "swimming_back", "washed_up"][swim]
 				_log("rescue", "rescue.%s" % swim_name, "%s is %s" % [_who(seat), swim_name.replace("_", " ")],
 						{"seat": seat})
+
+
+# --- dev menu hooks (T72) -------------------------------------------------------------------------
+# Each debug_* method is a button on the dev menu's Run tab (tools/dev_menu.gd); debug_inspect() is
+# its inspector. They reach a state by hand for the assistant; the menu logs each call as
+# devmenu.action, and the effects they start log their own lines.
+
+## Seconds debug_snag() holds a paddle: the snag hazard's default (data/lake_tuning.tres, snag_time).
+const DEBUG_SNAG_SECONDS: float = 3.0
+## Water debug_water() puts in: the wake's water (data/lake_tuning.tres, wake_water).
+const DEBUG_WATER: float = 3.0
+
+
+## A beer overboard on the left hull at the boat's last stepped position.
+func debug_beer_left() -> void:
+	beer_overboard(Rescue.Hull.LEFT, _boat_at)
+
+
+## A beer overboard on the right hull at the boat's last stepped position.
+func debug_beer_right() -> void:
+	beer_overboard(Rescue.Hull.RIGHT, _boat_at)
+
+
+## Starts the antic of Antics.Kind `kind` on `seat` now: 0 stand, 1 drop the paddle, 2 nod off,
+## 3 pee, 4 puke. A wind-up as at a threshold; nothing happens while he is busy with another.
+func debug_force_antic(seat: int, kind: int) -> void:
+	if _is_seat(seat):
+		antics.start(seat, clampi(kind, 0, Antics.Kind.size() - 1) as Antics.Kind)
+
+
+## One guy's drunkenness set to `level` (0..1), mirrored into his Guy.
+func debug_set_drunkenness(seat: int, level: float) -> void:
+	if _is_seat(seat):
+		drunkenness.set_level(seat, level)
+		guys[seat].drunkenness = drunkenness.level_of(seat)
+
+
+## One guy's stamina set to `level` (0..1), mirrored into his Guy.
+func debug_set_stamina(seat: int, level: float) -> void:
+	if _is_seat(seat):
+		stamina.set_level(seat, level)
+		guys[seat].stamina = stamina.level_of(seat)
+
+
+## One guy's stamina break called now, its warning first as any break.
+func debug_force_break(seat: int) -> void:
+	if _is_seat(seat):
+		stamina.call_break(seat)
+
+
+## One guy's paddle snagged for DEBUG_SNAG_SECONDS. By seat, where snag() takes a hull, so it
+## holds the guy named rather than the hull's front guy.
+func debug_snag(seat: int) -> void:
+	if _is_seat(seat):
+		_snag_left[seat] = maxf(_snag_left[seat], DEBUG_SNAG_SECONDS)
+
+
+## Water comes in on hull `side` (0 left, 1 right): DEBUG_WATER, as the wake puts in.
+func debug_water(side: int) -> void:
+	if side >= 0 and side < Rescue.Hull.size():
+		water_aboard(side as Rescue.Hull, DEBUG_WATER)
+
+
+## The boat touches the island (arrive): the attempt is won only with all four aboard.
+func debug_win() -> void:
+	arrive()
+
+
+## The dev menu's Run inspector: the phase, progress, elapsed time, lake seed and block reason, then
+## one line per guy ("<name> (seat n)"): aboard or in the water, drunkenness, stamina and its state,
+## and his antic.
+func debug_inspect() -> Dictionary:
+	var reason: String = block_reason()
+	var values: Dictionary = {
+		"phase": str(Phase.keys()[phase]).to_lower(),
+		"progress": snappedf(progress, 0.001),
+		"elapsed": snappedf(elapsed, 0.1),
+		"lake_seed": lake_seed,
+		"block reason": reason if not reason.is_empty() else "none",
+	}
+	for guy: Guy in guys:
+		var label: String = name_of(guy.seat)
+		if label.is_empty():
+			label = "guy"
+		values["%s (seat %d)" % [label, guy.seat]] = _describe_guy(guy)
+	return values
+
+
+## One guy's line in debug_inspect().
+func _describe_guy(guy: Guy) -> String:
+	var swimmer: Rescue.Swimmer = rescue.swimmer_of(guy.seat)
+	var place: String = "aboard"
+	if swimmer != null:
+		place = "in the water, %s, %s" % [str(Rescue.State.keys()[swimmer.state]).to_lower(),
+				"with his beer" if swimmer.has_beer else "no beer"]
+	elif rescue.winding_up(guy.seat):
+		place = "aboard, winding up to jump"
+	var antic: String = str(Antics.State.keys()[antics.state_of(guy.seat)]).to_lower()
+	if antic != "idle":
+		antic += " " + str(Antics.Kind.keys()[antics.kind_of(guy.seat)]).to_lower()
+	return "%s, drunkenness %.2f, stamina %.2f (%s), antic %s" % [place, drunkenness.level_of(guy.seat),
+			stamina.level_of(guy.seat), str(Stamina.State.keys()[stamina.state_of(guy.seat)]).to_lower(), antic]
+
+
+## Whether `seat` is one of the four guys.
+func _is_seat(seat: int) -> bool:
+	return seat >= 0 and seat < GUY_COUNT
