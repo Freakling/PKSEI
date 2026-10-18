@@ -6,9 +6,10 @@ class_name ResetButton
 ## with the pads and, coming after them in the tree, takes its touches in _input before they
 ## do: a press inside its rect starts the hold and is marked handled, so it never charges a
 ## seat; a touch anywhere else is left to the pads. The hold counts up in _process while the
-## finger stays down inside the rect, and draws a ring filling around the icon (reset.png from
-## tools/gen_sprites.gd); lifting the finger or dragging it out before
-## BoatTuning.reset_hold_time cancels the hold and nothing happens; reaching it emits
+## finger stays down, and draws a ring filling around the icon (reset.png from
+## tools/gen_sprites.gd); lifting the finger, or dragging it further than DRAG_SLACK outside
+## the rect (a thumb wobbles; B7), before BoatTuning.reset_hold_time cancels the hold and
+## nothing happens; reaching it emits
 ## reset_requested, which the lake answers with a new attempt. Hidden with the HUD once the
 ## attempt is won, when the cutscene's "any touch" goes again instead. A screen: it only reads
 ## RunState's tuning. The hold is the pure ResetHold below, which tests/test_reset_button.gd
@@ -28,6 +29,9 @@ const IDLE_ALPHA: float = 0.7
 const HELD_ALPHA: float = 1.0
 ## No finger is holding the button.
 const NO_FINGER: int = -1
+## Pixels (at 1×) a holding finger may drift outside the rect before the hold is cancelled:
+## the rect is the target to press, not to stay inside (B7).
+const DRAG_SLACK: float = 24.0
 
 
 ## The hold-to-reset rule, pure: how far along a hold of `held_seconds` is toward `hold_time`,
@@ -42,6 +46,11 @@ class ResetHold extends RefCounted:
 	## True once the finger has been down for hold_time or longer.
 	static func fires(held_seconds: float, hold_time: float) -> bool:
 		return held_seconds >= hold_time
+
+	## True while a holding finger at `at` is still close enough to `rect` to keep the hold: on
+	## it, or within `slack` of it on every side (B7: a thumb drifts a few pixels during a hold).
+	static func keeps_hold(rect: Rect2, at: Vector2, slack: float) -> bool:
+		return rect.grow(maxf(slack, 0.0)).has_point(at)
 
 
 ## The index of the finger holding the button, NO_FINGER for none, and its seconds down.
@@ -84,7 +93,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		var drag: InputEventScreenDrag = event as InputEventScreenDrag
 		if drag.index == _finger:
-			if not get_global_rect().has_point(drag.position):
+			if not ResetHold.keeps_hold(get_global_rect(), drag.position, DRAG_SLACK):
 				_cancel()
 			get_viewport().set_input_as_handled()
 

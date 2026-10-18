@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T87 · B7 · R1
+**Next IDs:** T87 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -405,6 +405,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T58
 - Touches: scripts/ui/touch_pads.gd (is_reverse by press height, no drag tracking), scripts/resources/boat_tuning.gd (-touch_flick_distance), data/boat_tuning.tres, tools/gen_sprites.gd, assets/sprites/pad.png (a middle line), tests/test_touch_pads.gd
 - Done when: is_reverse(press, view_size) is true below the pads' line (LINE_OFFSET under PAD_Y of the view's height, the down arrow under it) and false on or above it, whatever the x (test) · a drag before the release changes nothing and touch_flick_distance is gone (check) · each pad shows the line low across it, and the pads sit low on the screen (play)
+- GDD: Presentation and Platforms
+
+### B7 · The reset button is hard to press on a phone · done · S · agent · med
+- Depends on: T62
+- Touches: scenes/lake.tscn (ResetButton rect 48×48 in the corner), scripts/ui/reset_button.gd (DRAG_SLACK, ResetHold.keeps_hold), tests/test_reset_button.gd
+- Repro: on an iPhone, press and hold the corner button: the 28 px target is about 30 screen pixels, and a thumb that drifts a few pixels off it cancels the hold, so the reset rarely fires
+- Done when: the button's touch target is 48×48 canvas pixels (about 44 pt on a phone) with the icon centred (check: the scene quoted) · a holding finger keeps the hold while within DRAG_SLACK of the rect and loses it further out (test) · the hold fires on a phone with a normal thumb (play)
 - GDD: Presentation and Platforms
 
 ### B6 · On a phone the game shows at 1× with huge black bands · done · S · agent · high
