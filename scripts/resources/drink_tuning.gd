@@ -9,6 +9,9 @@ extends Resource
 
 ## Level every guy starts the crossing with: "mildly tipsy".
 @export var start_level: float = 0.15 ## PLACEHOLDER
+## A beer's worth of drunkenness: the win title estimates the beers drunk as the level gained
+## over this (T86).
+@export var level_per_beer: float = 0.15 ## PLACEHOLDER
 ## Level a guy gains per second while he paddles.
 @export var drink_rate: float = 0.004 ## PLACEHOLDER
 ## drink_rate is multiplied by this while a guy is on a stamina break.

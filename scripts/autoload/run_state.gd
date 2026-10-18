@@ -119,6 +119,10 @@ var stamina: Stamina = Stamina.new(preload("res://data/stamina_tuning.tres") as 
 var antics: Antics = Antics.new(preload("res://data/drink_tuning.tres") as DrinkTuning)
 ## The guys in the water and their beers; reads its tunables from paddling's BoatTuning.
 var rescue: Rescue = Rescue.new()
+## The crossing's counters for the win title (T86): every play-log event _log() writes is handed
+## to it, and step() adds the drunkenness the guys gain. new_attempt() starts it over; a shore
+## reset keeps it (the same attempt).
+var stats: Stats = Stats.new()
 ## What the guys say at each telegraph (T56), per kind; pick_line() draws from it.
 var lines: Lines = preload("res://data/lines.tres") as Lines
 ## The crew's nicknames (T68, GDD › Characters and Units); new_attempt() draws four.
@@ -201,6 +205,7 @@ func new_attempt() -> void:
 		_counted_run = open_run
 		attempt = 0
 	attempt += 1
+	stats.reset()
 	reset()
 	_log("run", "run.attempt_started", "attempt %d: %s" % [attempt, ", ".join(guy_names)],
 			{"lake_seed": lake_seed, "names": Array(guy_names), "attempt": attempt})
@@ -570,7 +575,9 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 		if not in_water:
 			stamina.step(seat, delta, rng)
 		var drinking: bool = not in_water or swimmer.has_beer
+		var before_drinking: float = drunkenness.level_of(seat)
 		drunkenness.drink(seat, delta, guy.aboard and stamina.on_break(seat), in_water, drinking)
+		stats.add_drunk(drunkenness.level_of(seat) - before_drinking, drunkenness.level_of(seat))
 		if guy.aboard:
 			antics.step(seat, delta, drunkenness.level_of(seat), rng)
 			_relieve_after_antic(seat)
@@ -754,6 +761,7 @@ func _log_node() -> Node:
 ## One play-log line (category, a stable snake_case event id, a sentence and its data); a no-op
 ## without the PlayLog autoload.
 func _log(category: String, event: String, text: String, data: Dictionary = {}) -> void:
+	stats.count(StringName(event), data)
 	var play_log: Node = _log_node()
 	if play_log != null:
 		play_log.log_event(category, event, text, data)

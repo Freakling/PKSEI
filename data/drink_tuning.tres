@@ -13,6 +13,7 @@ point_count = 2
 [resource]
 script = ExtResource("1_drink")
 start_level = 0.15
+level_per_beer = 0.15
 drink_rate = 0.004
 break_drink_multiplier = 3.0
 water_drink_multiplier = 5.0

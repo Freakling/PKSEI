@@ -66,6 +66,12 @@ const BEER_TILT: float = -0.8
 const TITLE_FADE: float = 0.6
 const PROMPT_BLINK: float = 0.7
 const PROMPT_DIM: float = 0.35
+## The stats block's font size (T86) and the gap between its two column pairs, in pixels.
+const STATS_FONT_SIZE: int = 8
+const STATS_PAIR_GAP: int = 16
+## The block's dark outline, so the figures read over the island's pale sand.
+const STATS_OUTLINE_COLOR: Color = Color(0.05, 0.1, 0.2, 0.9)
+const STATS_OUTLINE_SIZE: int = 3
 
 @onready var _guys_node: Node2D = $Visual/Guys
 @onready var _tent: Sprite2D = $Visual/Tent
@@ -73,6 +79,7 @@ const PROMPT_DIM: float = 0.35
 @onready var _title: CanvasLayer = $Title
 @onready var _title_box: Control = %TitleBox
 @onready var _time_label: Label = %Time
+@onready var _stats_grid: GridContainer = %Stats
 @onready var _crew_label: Label = %Crew
 @onready var _prompt: Label = %Prompt
 
@@ -131,9 +138,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## The crossing time as m:ss.
 static func format_time(seconds: float) -> String:
-	var whole: int = int(floorf(maxf(seconds, 0.0)))
-	@warning_ignore("integer_division")
-	return "%d:%02d" % [whole / 60, whole % 60]
+	return Stats.format_time(seconds)
 
 
 ## One boy hops from his seat onto the beach at `landing` (he grows and shrinks as he jumps),
@@ -233,11 +238,55 @@ func _flicker() -> void:
 func _show_title() -> void:
 	_time_label.text = "Crossing time %s" % format_time(RunState.elapsed)
 	_crew_label.text = ", ".join(RunState.guy_names)
+	_fill_stats()
 	_title_box.modulate.a = 0.0
 	_title.visible = true
 	var fade: Tween = create_tween()
 	fade.tween_property(_title_box, "modulate:a", 1.0, TITLE_FADE)
 	fade.tween_callback(_arm_prompt)
+
+
+## The crossing's stats (T86) under the time, in two columns of label and value pairs: the first
+## half of RunState.stats.rows() down the left, the rest down the right. The Time row is left out,
+## the time label above shows it.
+func _fill_stats() -> void:
+	for child: Node in _stats_grid.get_children():
+		_stats_grid.remove_child(child)
+		child.queue_free()
+	var level_per_beer: float = RunState.drunkenness.tuning.level_per_beer
+	var rows: Array[Dictionary] = RunState.stats.rows(RunState.elapsed, level_per_beer).slice(1)
+	var half: int = ceili(rows.size() / 2.0)
+	for i: int in half:
+		_add_stat(rows[i], false)
+		if i + half < rows.size():
+			_add_stat(rows[i + half], true)
+		else:
+			_add_stat({"label": "", "value": ""}, true)
+
+
+## One label and value pair of the grid; the right column's label is set off by STATS_PAIR_GAP.
+func _add_stat(row: Dictionary, right_column: bool) -> void:
+	var label: Label = Label.new()
+	label.text = str(row["label"])
+	_style_stat(label)
+	if right_column:
+		var margin: MarginContainer = MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", STATS_PAIR_GAP)
+		margin.add_child(label)
+		_stats_grid.add_child(margin)
+	else:
+		_stats_grid.add_child(label)
+	var value: Label = Label.new()
+	value.text = str(row["value"])
+	_style_stat(value)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_stats_grid.add_child(value)
+
+
+func _style_stat(label: Label) -> void:
+	label.add_theme_font_size_override("font_size", STATS_FONT_SIZE)
+	label.add_theme_color_override("font_outline_color", STATS_OUTLINE_COLOR)
+	label.add_theme_constant_override("outline_size", STATS_OUTLINE_SIZE)
 
 
 func _arm_prompt() -> void:

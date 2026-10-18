@@ -371,7 +371,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: island_distance is 8000, a third of before, and the GDD's session length says about two minutes clean (check: the values quoted)
 - GDD: Core Loop › Session
 
-### T86 · Run stats, shown on the win screen · todo · M · agent
+### T86 · Run stats, shown on the win screen · done · M · agent
 - Depends on: T28, T68, T70
 - Touches: scripts/systems/stats.gd (new, RefCounted: counters and `rows()`), scripts/autoload/run_state.gd (owns a Stats, counts where it logs: strokes, beers overboard, jumps, falls, grabs, pickups, pukes, pisses, naps, stand-ups, paddles dropped, breaks, snags, water, hazard hits, shore resets, drunkenness gained, max level; reset at new_attempt), scripts/resources/drink_tuning.gd (+level_per_beer), data/drink_tuning.tres, scripts/win_cutscene.gd, scenes/win.tscn (a stats block under the time), tests/test_stats.gd (new), tests/test_run_state.gd
 - Done when: Stats counts every event RunState logs, with a test per counter driven through RunState (strokes landed/fumbled/reverse, beers overboard and rescued, jumps, falls, grabs, pickups, pukes, pisses, naps, stand-ups, paddles dropped, breaks, snags, water aboard, hazard hits by kind, shore resets, max drunkenness) and beers drunk = drunkenness gained / level_per_beer rounded (test) · `Stats.rows()` gives label/value pairs in a stable order with zero rows kept, and the win title lists them under the time in two columns that fit the 640×360 canvas (play) · a new attempt starts the stats over; a shore reset keeps them (test)
