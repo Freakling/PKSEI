@@ -34,8 +34,8 @@ func _ready() -> void:
 	register_system("Antics", RunState.antics, PackedStringArray(["interrupt"]), false)
 	register_system("Stamina", RunState.stamina, PackedStringArray(["call_break"]), false)
 	register_system("Drunkenness", RunState.drunkenness, PackedStringArray(["relieve"]), false)
-	# The Loch-Brez beast isn't registered: lake.gd spawns one per lake, not an autoload, and a
-	# registered node would go stale on the next lake.
+	# The Loch-Brez beast isn't registered here: lake.gd spawns one per lake and registers it as the
+	# Beast tab (LakeScript.register_beast, T84), replacing the last lake's registration.
 
 
 ## PLACEHOLDER: whether the game's own Settings turn the dev menu on, for the "setting" mode, such

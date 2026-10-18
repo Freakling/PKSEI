@@ -365,7 +365,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a scripted scenario step through the `reset` ui action leaves one `.log`/`.jsonl` pair in the run folder and `bash tools/log_review.sh` reviews the autoplay lines, not a "played by a person" log (check) · the reset action gets a random weight above 0 in the adapter (check)
 - GDD: (none)
 
-### T84 · The dev menu gets a Beast tab: the lake registers its beast on spawn · todo · XS · agent
+### T84 · The dev menu gets a Beast tab: the lake registers its beast on spawn · done · XS · agent
 - Depends on: T72
 - Touches: scripts/lake.gd (DevMenu.register_system("Beast", ...) when the beast scene spawns, unregister on a new lake), scripts/systems/beast.gd or scripts/hazards/beast.gd (debug_inspect: state, rise cause, bounds), tests/test_beast.gd
 - Done when: with a lake up, `DevMenu.systems()` has Beast and `inspect_text("Beast")` names its state and rise cause (test) · a new attempt replaces the registration rather than leaving a stale one (test)

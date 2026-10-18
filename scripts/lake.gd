@@ -44,6 +44,9 @@ const TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
 const WIN_SCENE: PackedScene = preload("res://scenes/win.tscn")
 ## The one beast per attempt (T50), spawned with the plan, not by it.
 const BEAST_SCENE: PackedScene = preload("res://scenes/hazards/beast.tscn")
+## The dev menu's name for the beast (T84) and where its autoload sits.
+const BEAST_SYSTEM: String = "Beast"
+const DEV_MENU_PATH: NodePath = ^"/root/DevMenu"
 const DEBUG_PATH_ACTION: StringName = &"debug_toggle_path"
 const RESET_ACTION: StringName = &"reset"
 ## Points the debug overlay samples per band of the corridor (the band's edges are among them).
@@ -231,6 +234,7 @@ func _new_attempt() -> void:
 ## time, so only the new ones are in it. Debug builds print the seed, so a lake can be had
 ## again, and fill the path overlay and its trigger markers.
 func _spawn_hazards() -> void:
+	unregister_beast()
 	for child: Node in _hazards.get_children():
 		_hazards.remove_child(child)
 		child.queue_free()
@@ -253,6 +257,31 @@ func _spawn_hazards() -> void:
 	var beast: Node2D = BEAST_SCENE.instantiate() as Node2D
 	beast.set(&"tuning", TUNING)
 	_hazards.add_child(beast)
+	register_beast(beast)
+
+
+## The dev menu's Beast tab (T84) shows the beast this lake spawned. It replaces the last lake's
+## registration: the old one is unregistered first, so a new lake never leaves a stale node.
+## Harmless where the dev menu isn't there (a release build), as it is looked up, not named.
+static func register_beast(beast: Node2D) -> void:
+	var menu: Node = _dev_menu()
+	if menu != null:
+		menu.unregister_system(BEAST_SYSTEM)
+		menu.register_system(BEAST_SYSTEM, beast)
+
+
+## Takes the Beast tab down, if the dev menu is there.
+static func unregister_beast() -> void:
+	var menu: Node = _dev_menu()
+	if menu != null:
+		menu.unregister_system(BEAST_SYSTEM)
+
+
+## The DevMenu autoload (tools/dev_menu.gd), or null where it isn't there. Looked up through the
+## main loop, as RunState looks up PlayLog, so the lake works without it.
+static func _dev_menu() -> Node:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	return tree.root.get_node_or_null(DEV_MENU_PATH) if tree != null else null
 
 
 ## Debug only: the overlay's centre line, from the launch margin to the island's near edge, with

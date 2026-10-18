@@ -140,3 +140,13 @@ func _show_state(delta: float) -> void:
 	sprite.texture = FIN_FRAMES[frame] if circling else HEAD_FRAMES[frame]
 	sprite.position = to_local(_rule.position)
 	sprite.rotation = _rule.direction.angle() + PI * 0.5
+
+
+## The dev menu's inspector (T84, tools/dev_menu.gd): the rule's values, then the node's own position.
+## Before _setup (no tuning from the lake) there is no rule yet, and it says so.
+func debug_inspect() -> Dictionary:
+	if _rule == null:
+		return {"state": "(not set up: the lake sets the tuning first)"}
+	var values: Dictionary = _rule.debug_inspect()
+	values["node at"] = global_position
+	return values

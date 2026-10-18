@@ -20,6 +20,9 @@ extends "res://tools/test_case.gd"
 ## the ram timeout (1 s here) 64 ticks.
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
+## T84: the lake's registration of its beast with the dev menu, and the beast scene it spawns.
+const LakeScript: GDScript = preload("res://scripts/lake.gd")
+const BeastScene: PackedScene = preload("res://scenes/hazards/beast.tscn")
 const TICK: float = 1.0 / 64.0
 const LAKE_WIDTH: float = 640.0
 const EDGE_MARGIN: float = 100.0
@@ -603,3 +606,113 @@ func test_the_approach_warns_beyond_the_island_and_a_reset_re_arms_it() -> void:
 	expect_false(beast.check_approach(BEYOND_ISLAND), "not again beyond it")
 	beast.reset()
 	expect(beast.check_approach(Vector2(0.0, -2070.0)), "a reset re-arms the warning")
+
+
+## T84 · The dev menu's Beast tab: the rule's inspector names its state, why it rose and the lines it
+## judges the boat by; the scene's adds its node position; the lake registers the beast it spawns and a
+## new registration replaces the old one (rules.md › Agent-visible state).
+
+
+## The DevMenu autoload from the tree (null if it isn't there).
+func _menu() -> Node:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	return tree.root.get_node_or_null("/root/DevMenu") if tree != null else null
+
+
+## A beast scene in the test's tree, set up as the lake sets it (its tuning before it enters the tree),
+## at `at`.
+func _beast_in_tree(at: Vector2) -> Node2D:
+	var scene: Node2D = BeastScene.instantiate() as Node2D
+	scene.set(&"tuning", own_tuning())
+	scene.position = at
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	tree.root.add_child(scene)
+	return scene
+
+
+func _free_beast(scene: Node2D) -> void:
+	scene.get_parent().remove_child(scene)
+	scene.free()
+
+
+func test_the_rule_inspector_names_the_state_the_rise_cause_and_the_bounds() -> void:
+	var values: Dictionary = beast.debug_inspect()
+	expect_eq(values["state"], "submerged", "under water to begin with")
+	expect_eq(values["rise cause"], "none", "no cause while under")
+	expect_eq(values["position"], "(under water)", "no fin position while under")
+	expect_near(float(values["edge line |x|"]), 220.0, 0.0001, "the edge line: lake_width / 2 less the edge margin")
+	expect_near(float(values["beyond island line y"]), -2100.0, 0.0001, "the far line: the island's distance and beyond")
+	expect_near(float(values["warn line |x|"]), 180.0, 0.0001, "the warning band's inner edge at the sides")
+	expect_near(float(values["warn line y"]), -2060.0, 0.0001, "and beyond the island")
+	run(1, RIGHT_OUT)
+	values = beast.debug_inspect()
+	expect_eq(values["state"], "circling", "a boat out of bounds makes it rise")
+	expect_eq(values["rise cause"], "edge_right", "the rise is named for the edge the boat is past")
+	expect_eq(values["visit"], "boundary", "a boundary visit")
+	expect(values["position"] is Vector2, "the fin's position while up")
+
+
+func test_the_rule_inspector_names_a_puke_rise_and_clears_the_cause_on_the_dive() -> void:
+	expect(beast.hear_puke(INSIDE, rng_rolling(true)), "a puke that rolls under the chance rises")
+	var values: Dictionary = beast.debug_inspect()
+	expect_eq(values["state"], "circling", "the puke's visit circles")
+	expect_eq(values["rise cause"], "puke", "the rise is named for the puke")
+	expect_eq(values["visit"], "random", "a random visit")
+	run(200, INSIDE)
+	values = beast.debug_inspect()
+	expect_eq(values["state"], "diving", "after its one grab it is under for a while")
+	expect_eq(values["rise cause"], "none", "the cause is cleared on the dive")
+
+
+func test_the_rule_inspector_names_a_random_visit() -> void:
+	tuning.beast_random_rate = 1.0
+	run(64, INSIDE)
+	var values: Dictionary = beast.debug_inspect()
+	expect_eq(values["state"], "circling", "the roll at one second rises")
+	expect_eq(values["rise cause"], "random", "the rise is named for the random roll")
+
+
+func test_the_beast_scene_inspector_is_the_rules_plus_its_node_position() -> void:
+	var scene: Node2D = _beast_in_tree(Vector2(0.0, 300.0))
+	var values: Dictionary = scene.call(&"debug_inspect")
+	expect_eq(values["state"], "submerged", "the rule's state")
+	expect_eq(values["node at"], Vector2(0.0, 300.0), "the node's own position")
+	expect(values.has("edge line |x|"), "the rule's bounds")
+	_free_beast(scene)
+
+
+func test_the_lake_registers_its_beast_and_a_new_registration_replaces_the_old() -> void:
+	var menu: Node = _menu()
+	if menu == null:
+		fail("the DevMenu autoload is in the tree")
+		return
+	var first: Node2D = _beast_in_tree(Vector2(0.0, 0.0))
+	LakeScript.register_beast(first)
+	var registered: PackedStringArray = menu.systems()
+	expect(registered.has("Beast"), "the Beast tab is registered")
+	var text: String = menu.inspect_text("Beast")
+	expect(text.contains("state: submerged"), "the tab names its state (got %s)" % text)
+	expect(text.contains("node at: %s" % str(Vector2.ZERO)), "and its position (got %s)" % text)
+	var second: Node2D = _beast_in_tree(Vector2(0.0, 300.0))
+	LakeScript.register_beast(second)
+	var names: PackedStringArray = menu.systems()
+	expect_eq(names.count("Beast"), 1, "one Beast tab, not two")
+	text = menu.inspect_text("Beast")
+	expect(text.contains("node at: %s" % str(Vector2(0.0, 300.0))), "the tab is the new beast's (got %s)" % text)
+	_free_beast(first)
+	_free_beast(second)
+	LakeScript.unregister_beast()
+	var left: PackedStringArray = menu.systems()
+	expect(not left.has("Beast"), "a lake with no beast leaves no Beast tab")
+
+
+func test_the_beast_tab_says_so_once_its_beast_is_freed() -> void:
+	var menu: Node = _menu()
+	if menu == null:
+		fail("the DevMenu autoload is in the tree")
+		return
+	var scene: Node2D = _beast_in_tree(Vector2.ZERO)
+	LakeScript.register_beast(scene)
+	_free_beast(scene)
+	expect_eq(str(menu.inspect_text("Beast")), "(this system was freed)", "a freed beast's tab says so")
+	LakeScript.unregister_beast()

@@ -298,3 +298,31 @@ func _dive(seconds: float) -> void:
 	time_left = seconds
 	ram_left = 0.0
 	rise_cause = &""
+
+
+## The dev menu's inspector (T84, tools/dev_menu.gd): the state and why it rose, the visit's kind
+## and the timers, and the lines it judges the boat by. `position` and `toward_middle` are only
+## meaningful while it is up (stale under water, so shown as such).
+func debug_inspect() -> Dictionary:
+	var values: Dictionary = {}
+	values["state"] = str(State.keys()[state]).to_lower()
+	values["rise cause"] = str(rise_cause) if rise_cause != &"" else "none"
+	values["visit"] = "random" if random_visit else "boundary"
+	values["time left"] = snappedf(time_left, 0.01)
+	values["ram left"] = snappedf(ram_left, 0.01)
+	values["roll left"] = snappedf(roll_left, 0.01)
+	values["warned"] = warned
+	if state == State.SUBMERGED:
+		values["position"] = "(under water)"
+		values["toward middle"] = "(under water)"
+	else:
+		values["position"] = position
+		values["toward middle"] = toward_middle
+	if tuning != null:
+		values["edge margin"] = tuning.beast_edge_margin
+		values["edge line |x|"] = tuning.lake_width * 0.5 - tuning.beast_edge_margin
+		values["beyond island line y"] = -(tuning.island_distance + tuning.beast_beyond_island)
+		values["warn margin"] = tuning.beast_warn_margin
+		values["warn line |x|"] = _edge_warn_x()
+		values["warn line y"] = _far_warn_y()
+	return values
