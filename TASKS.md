@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T80 · B7 · R1
+**Next IDs:** T81 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -13,7 +13,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 | Hazards complete: T10, T15–T21 | ✅ done |
 | Pixel art and animation, telegraphs first: T22–T24 | ✅ done (awaiting the human's sign-off on the look) |
 | Audio, telegraphs first: T25–T26 | ✅ done (sounds await the human's ear) |
-| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (116 placeholders) |
+| Content & balance: no `## PLACEHOLDER` left (human) | ⬜ (134 placeholders) |
 
 ✅ done · 🟨 in progress · ⬜ not started
 
@@ -347,6 +347,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
 
+### T80 · Decouple: the swim kind moves from the speech bubbles into Rescue · todo · S · agent
+- Depends on: T79
+- Touches: scripts/systems/rescue.gd (Swimmer.kind(swim_back_delay) or Rescue.swim_kind, with the four kinds as constants), scripts/ui/speech_bubbles.gd (reads it), scripts/ui/hud.gd (reads it; no SpeechBubbles reference), tests/test_rescue.gd, tests/test_speech_bubbles.gd, tests/test_hud.gd
+- Done when: the swim kind (fetching, drinking, fallen in, swimming back, washed up) is a Rescue rule with its own test, and neither screen script references the other (check: `grep -n SpeechBubbles scripts/ui/hud.gd` is empty) · the bubbles and the HUD show what they did before (test)
+- GDD: Systems › Setbacks
+
 ### T79 · The HUD says what each guy is doing whenever he can't paddle · done · S · agent
 - Depends on: T68, T74
 - Touches: scripts/ui/hud.gd (class_name Hud, a status line per guy, status_text), tests/test_hud.gd (new)
@@ -387,7 +393,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: T56, T59
 - Touches: scripts/ui/speech_bubbles.gd (bubbles over swimmers; swim_kind), scripts/resources/lines.gd (+swim_fetch, +swim_drink, +swim_fell, +swim_back in KINDS), data/lines.tres (the Swedish lines), scripts/resources/boat_tuning.gd (+swim_talk_interval), data/boat_tuning.tres, tests/test_speech_bubbles.gd, tests/test_lines.gd
 - Done when: swim_kind(state, has_beer, adrift, swim_back_delay, washed_up) is `swim_fetch` while he swims for his beer, `swim_drink` while he floats with it before swim_back_delay, `swim_fell` while he floats without a beer before it, `swim_back` once he is swimming back, and empty when washed up (test) · a swimmer's bubble sits over his lake position and shows a freshly drawn line of his kind at once when the kind changes and again every swim_talk_interval seconds, each for call_out_time (test on the pure cadence helper) · each kind has at least three Swedish lines, among them "Ska bara dricka sen kommer jag" (swim_drink) and "Kom och hämta mig dåååå!" (swim_back) (test) · the lines read over the swimmers in play and go away at the pickup (play)
-- GDD: Systems › Setbacks and Rescue · World and Narrative
+- GDD: Systems › Setbacks · World and Narrative
 
 ### T15 · Angry geese guarding goslings · done · M · agent
 - Depends on: T10
