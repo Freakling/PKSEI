@@ -34,8 +34,8 @@ func _build_snapshot() -> Dictionary:
 	return RunState.snapshot()
 
 
-## Why the player can't act right now, or "" while crossing with someone aboard: "launch" before
-## the boat has left the shore, "nobody aboard" with all four in the water, "won" at the island.
+## Why the player can't act right now, or "" while someone is aboard (the launch shore included):
+## "nobody aboard" with all four in the water, "won" at the island.
 func progress_block_reason() -> String:
 	return RunState.block_reason()
 

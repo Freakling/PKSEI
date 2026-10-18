@@ -267,7 +267,7 @@ func test_the_play_logs_snapshot_is_the_run_states() -> void:
 
 func test_the_progress_block_reason_follows_the_phase_and_the_crew() -> void:
 	RunState.reset()
-	expect_eq(PlayLog.progress_block_reason(), "launch", "before the boat has left")
+	expect_eq(PlayLog.progress_block_reason(), "", "at the launch shore, before the boat has left")
 	RunState.set_progress(0.4)
 	expect_eq(PlayLog.progress_block_reason(), "", "while crossing")
 	for seat: int in 4:

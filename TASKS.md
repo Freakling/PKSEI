@@ -353,7 +353,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `bash tools/log_review.sh --latest` after `bash tools/autoplay.sh smoke` reports the lake as a catalog view that smoke opened, and the stub "main" entry is gone (check) · `bash tools/ui_capture.sh --list` lists lake and win (check)
 - GDD: (none)
 
-### T82 · The play log's block reason is empty at the launch shore · todo · XS · agent
+### T82 · The play log's block reason is empty at the launch shore · done · XS · agent
 - Depends on: T70
 - Touches: tools/play_log.gd (progress_block_reason), scripts/autoload/run_state.gd (block_reason), tests/test_play_log.gd
 - Done when: block_reason() is "" in LAUNCH as in CROSSING, since strokes are allowed at the shore, and still "nobody aboard" and "won" (test) · a person's log no longer starts with `progress.blocked: launch` (check: the signature sig-7a33327f no longer appears in a fresh run's review)

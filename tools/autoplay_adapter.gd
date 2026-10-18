@@ -87,11 +87,10 @@ func state() -> Dictionary:
 	return RunState.snapshot()
 
 
-## The launch isn't a block here: the strokes are what leave the shore. What blocks is nobody aboard
-## (all four swimming) and, at the end, the island.
+## What blocks progress: nobody aboard (all four swimming) and, at the end, the island. RunState's
+## answer as it is.
 func progress_block_reason() -> String:
-	var reason: String = RunState.block_reason()
-	return "" if reason == "launch" else reason
+	return RunState.block_reason()
 
 
 func is_run_over() -> bool:

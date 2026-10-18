@@ -715,14 +715,12 @@ func snapshot() -> Dictionary:
 	}
 
 
-## Why the player can't act now, for PlayLog's progress_block_reason(): "" while crossing with
-## someone aboard, "won" once the island is reached, "launch" before the boat has left the shore,
+## Why the player can't act now, for PlayLog's progress_block_reason(): "" while someone is aboard
+## (at the launch shore too: the strokes are what leave it), "won" once the island is reached,
 ## "nobody aboard" when all four are in the water.
 func block_reason() -> String:
 	if phase == Phase.WON:
 		return "won"
-	if phase == Phase.LAUNCH:
-		return "launch"
 	if _seats_aboard().is_empty():
 		return "nobody aboard"
 	return ""
