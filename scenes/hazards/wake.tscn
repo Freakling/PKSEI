@@ -23,7 +23,13 @@ texture = ExtResource("2_motorboat")
 [node name="Front" type="Node2D" parent="Visual"]
 visible = false
 
-[node name="Crest" type="Sprite2D" parent="Visual/Front"]
+[node name="CrestShore" type="Sprite2D" parent="Visual/Front"]
+texture_repeat = 2
+texture = ExtResource("4_crest")
+region_enabled = true
+region_rect = Rect2(0, 0, 480, 8)
+
+[node name="CrestIsland" type="Sprite2D" parent="Visual/Front"]
 texture_repeat = 2
 texture = ExtResource("4_crest")
 region_enabled = true

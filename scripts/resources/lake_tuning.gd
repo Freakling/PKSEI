@@ -51,14 +51,18 @@ extends Resource
 @export var wake_trigger_radius: float = 240.0 ## PLACEHOLDER
 ## Pixels per second the motorboat crosses the lake at, from one edge of lake_width to the other.
 @export var wake_boat_speed: float = 320.0 ## PLACEHOLDER
-## Pixels ahead of the trigger (toward the island) the motorboat's course runs; the wave front
-## starts there once it has crossed.
+## Pixels ahead of the trigger (toward the island) the motorboat's course runs; the wake's V
+## trails it along that line.
 @export var wake_lead: float = 160.0 ## PLACEHOLDER
-## Pixels per second the wave front rolls toward the shore.
+## Pixels per second the two wake fronts spread outward (away from the course) once the motorboat
+## has crossed.
 @export var wake_speed: float = 60.0 ## PLACEHOLDER
-## Degrees either side of straight into or straight away from the wave within which the front
-## passes under the boat harmlessly; any other heading is broadside.
-@export var wake_head_on_angle: float = 30.0 ## PLACEHOLDER
+## Degrees either side of the motorboat's course at which the two wake fronts trail behind it
+## (the half-angle of the V).
+@export var wake_angle: float = 30.0 ## PLACEHOLDER
+## Degrees either side of straight into or straight away from a front's normal within which the
+## front passes under the boat harmlessly; any other heading is broadside.
+@export var wake_head_on_angle: float = 20.0 ## PLACEHOLDER
 ## Pixels per second a broadside hit shoves the boat sideways, away from the wave.
 @export var wake_shove: float = 120.0 ## PLACEHOLDER
 ## Water a broadside hit puts aboard the high hull, bailed at BoatTuning.bail_rate per second.

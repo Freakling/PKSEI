@@ -377,7 +377,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
 
-### T88 · The motorboat's wake is a V: two fronts at wake_angle either side of its course · todo · M · agent
+### T88 · The motorboat's wake is a V: two fronts at wake_angle either side of its course · done · M · agent
 - Depends on: T19
 - Touches: scripts/systems/wake.gd (two fronts behind the motorboat, each a line at ±wake_angle from its travel, spreading as it crosses and rolling on after; the hit is the front that crosses the boat, head-on judged against that front's normal), scripts/resources/lake_tuning.gd (+wake_angle, the old front_y/wake_speed kept for the roll), data/lake_tuning.tres, scripts/hazards/wake.gd (two crest lines drawn along the fronts), scenes/hazards/wake.tscn, tests/test_wake.gd
 - Done when: each front is a line through the motorboat's position at ±wake_angle (30° placeholder) from its travel, extending behind it, and after the crossing both keep spreading at wake_speed (test) · a boat sitting on the course behind the motorboat is hit by whichever front reaches it first, at most once per event, with the shove and the water of before (test) · a boat heading into a front within wake_head_on_angle of its normal takes no hit, so the boat can cross from one side of the V to the other at an angle (test) · the two crests are drawn as diagonal lines in play (play)
