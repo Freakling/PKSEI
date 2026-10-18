@@ -323,6 +323,51 @@ func test_a_guy_swimming_for_his_beer_and_a_washed_up_one_dont_swim_back() -> vo
 	expect(swimmer.washed_up, "and lies there washed up")
 
 
+## T80: a swimmer's kind (what the bubbles and the HUD read) follows his state: fetching while he
+## swims for his beer, drinking with it or fallen in without one before he swims back, swimming
+## back once adrift is past swim_back_delay (exactly at it he still floats), washed up at the shore.
+func _swimmer(state: Rescue.State, has_beer: bool, adrift: float, washed: bool) -> Rescue.Swimmer:
+	var swimmer: Rescue.Swimmer = Rescue.Swimmer.new(Paddling.Seat.LEFT_FRONT, BOAT, BEER, state, has_beer)
+	swimmer.adrift = adrift
+	swimmer.washed_up = washed
+	return swimmer
+
+
+func test_a_swimmers_kind_follows_his_state() -> void:
+	expect_eq(_swimmer(Rescue.State.SWIMMING, true, 0.0, false).kind(SWIM_BACK_DELAY), Rescue.KIND_FETCH,
+			"swimming for his beer")
+	expect_eq(_swimmer(Rescue.State.FLOATING, true, 2.0, false).kind(SWIM_BACK_DELAY), Rescue.KIND_DRINK,
+			"floating with his beer before he swims back")
+	expect_eq(_swimmer(Rescue.State.FLOATING, false, 2.0, false).kind(SWIM_BACK_DELAY), Rescue.KIND_FELL,
+			"floating without a beer before he swims back")
+	expect_eq(_swimmer(Rescue.State.FLOATING, true, 6.0, false).kind(SWIM_BACK_DELAY), Rescue.KIND_BACK,
+			"swimming back, with a beer")
+	expect_eq(_swimmer(Rescue.State.FLOATING, false, 6.0, false).kind(SWIM_BACK_DELAY), Rescue.KIND_BACK,
+			"swimming back, without one")
+
+
+func test_exactly_at_the_delay_he_still_floats_with_his_beer() -> void:
+	expect_eq(_swimmer(Rescue.State.FLOATING, true, SWIM_BACK_DELAY, false).kind(SWIM_BACK_DELAY), Rescue.KIND_DRINK,
+			"not yet started back")
+	expect_eq(_swimmer(Rescue.State.FLOATING, false, SWIM_BACK_DELAY, false).kind(SWIM_BACK_DELAY), Rescue.KIND_FELL,
+			"and without one he has not started back either")
+
+
+func test_washed_up_is_its_own_kind_whatever_his_state() -> void:
+	expect_eq(_swimmer(Rescue.State.FLOATING, true, 9.0, true).kind(SWIM_BACK_DELAY), Rescue.KIND_WASHED_UP,
+			"washed up, past the delay")
+	expect_eq(_swimmer(Rescue.State.SWIMMING, true, 0.0, true).kind(SWIM_BACK_DELAY), Rescue.KIND_WASHED_UP,
+			"washed up while swimming too")
+
+
+func test_the_kinds_are_the_line_keys_the_bubbles_use() -> void:
+	expect_eq(Rescue.KIND_FETCH, &"swim_fetch")
+	expect_eq(Rescue.KIND_DRINK, &"swim_drink")
+	expect_eq(Rescue.KIND_FELL, &"swim_fell")
+	expect_eq(Rescue.KIND_BACK, &"swim_back")
+	expect_eq(Rescue.KIND_WASHED_UP, &"washed_up")
+
+
 ## T59: the data's swim-back is a placeholder slower than the wind carries him, so the boat still
 ## has to come for him.
 func test_the_data_swims_back_slower_than_the_drift() -> void:

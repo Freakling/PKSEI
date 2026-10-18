@@ -46,30 +46,21 @@ func test_every_wind_up_kind_the_screen_names_has_lines() -> void:
 	var named: Array[StringName] = [SpeechBubbles.STAMINA_KIND, SpeechBubbles.BAR_KIND, SpeechBubbles.JUMP_KIND]
 	for kind: StringName in SpeechBubbles.ANTIC_KINDS.values():
 		named.append(kind)
-	named.append_array([SpeechBubbles.SWIM_FETCH_KIND, SpeechBubbles.SWIM_DRINK_KIND,
-			SpeechBubbles.SWIM_FELL_KIND, SpeechBubbles.SWIM_BACK_KIND])
+	named.append_array([Rescue.KIND_FETCH, Rescue.KIND_DRINK, Rescue.KIND_FELL, Rescue.KIND_BACK])
 	for kind: StringName in named:
 		expect(Lines.KINDS.has(kind), "%s is a Lines.KINDS entry" % kind)
 		expect(lines.lines_of(kind).size() >= 1, "%s has a line" % kind)
 
 
-func test_a_swimmers_kind_follows_his_state() -> void:
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.SWIMMING, true, 0.0, 5.0, false), &"swim_fetch",
-			"swimming for his beer")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 2.0, 5.0, false), &"swim_drink",
-			"floating with his beer before he swims back")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, false, 2.0, 5.0, false), &"swim_fell",
-			"floating without a beer before he swims back")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 6.0, 5.0, false), &"swim_back",
-			"swimming back, with a beer")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, false, 6.0, 5.0, false), &"swim_back",
-			"swimming back, without one")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 5.0, 5.0, false), &"swim_drink",
-			"exactly at the delay he has not started back yet")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.FLOATING, true, 9.0, 5.0, true), &"",
-			"washed up: nothing")
-	expect_eq(SpeechBubbles.swim_kind(Rescue.State.SWIMMING, true, 0.0, 5.0, true), &"",
-			"washed up while swimming: nothing")
+## T80: a washed-up swimmer has nothing to say; every other swim kind talks as it is (the kind
+## itself is tested in test_rescue.gd).
+func test_a_washed_up_swimmer_does_not_talk_and_the_others_do() -> void:
+	expect_eq(SpeechBubbles.talk_kind(Rescue.KIND_WASHED_UP), &"", "washed up: no talk")
+	expect_eq(SpeechBubbles.talk_kind(Rescue.KIND_FETCH), Rescue.KIND_FETCH)
+	expect_eq(SpeechBubbles.talk_kind(Rescue.KIND_DRINK), Rescue.KIND_DRINK)
+	expect_eq(SpeechBubbles.talk_kind(Rescue.KIND_FELL), Rescue.KIND_FELL)
+	expect_eq(SpeechBubbles.talk_kind(Rescue.KIND_BACK), Rescue.KIND_BACK)
+	expect_eq(SpeechBubbles.talk_kind(&""), &"", "no swimmer: no talk")
 
 
 func test_a_swimmer_talks_at_once_then_goes_quiet_then_talks_again() -> void:

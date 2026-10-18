@@ -19,8 +19,8 @@ func test_a_paddling_guy_has_no_status() -> void:
 func test_every_state_has_words_and_they_differ() -> void:
 	var seen: Dictionary[String, bool] = {}
 	var texts: Array[String] = [
-		_idle(SpeechBubbles.SWIM_FETCH_KIND), _idle(SpeechBubbles.SWIM_DRINK_KIND),
-		_idle(SpeechBubbles.SWIM_FELL_KIND), _idle(SpeechBubbles.SWIM_BACK_KIND), _idle(Hud.WASHED_UP),
+		_idle(Rescue.KIND_FETCH), _idle(Rescue.KIND_DRINK),
+		_idle(Rescue.KIND_FELL), _idle(Rescue.KIND_BACK), _idle(Rescue.KIND_WASHED_UP),
 		_idle(&"", Antics.State.WINDING_UP, Antics.Kind.STAND),
 		_idle(&"", Antics.State.WINDING_UP, Antics.Kind.DROP_PADDLE),
 		_idle(&"", Antics.State.WINDING_UP, Antics.Kind.NOD_OFF),
@@ -42,12 +42,12 @@ func test_every_state_has_words_and_they_differ() -> void:
 		seen[text] = true
 	expect_eq(_idle(&"", Antics.State.PEEING), "taking a piss")
 	expect_eq(_idle(&"", Antics.State.PUKING), "puking")
-	expect_eq(_idle(SpeechBubbles.SWIM_DRINK_KIND), "drinking in the lake")
+	expect_eq(_idle(Rescue.KIND_DRINK), "drinking in the lake")
 
 
 func test_the_water_beats_everything_and_the_antic_beats_the_rest() -> void:
-	expect_eq(_idle(SpeechBubbles.SWIM_BACK_KIND, Antics.State.PEEING, Antics.Kind.PEE, true, true,
-			Stamina.State.BREAK, true, true), Hud.WATER_TEXT[SpeechBubbles.SWIM_BACK_KIND])
+	expect_eq(_idle(Rescue.KIND_BACK, Antics.State.PEEING, Antics.Kind.PEE, true, true,
+			Stamina.State.BREAK, true, true), Hud.WATER_TEXT[Rescue.KIND_BACK])
 	expect_eq(_idle(&"", Antics.State.PEEING, Antics.Kind.PEE, true, true, Stamina.State.BREAK, true, true),
 			"taking a piss")
 	expect_eq(_idle(&"", Antics.State.WINDING_UP, Antics.Kind.PUKE, true, true, Stamina.State.BREAK),
@@ -65,3 +65,14 @@ func test_then_the_jump_the_snag_the_break_its_warning_bailing_and_the_bar() -> 
 
 func test_an_unknown_swim_kind_still_says_he_is_in_the_water() -> void:
 	expect_eq(_idle(&"no_such_kind"), "in the water")
+
+
+## T80: the status line reads the swimmer's own kind (Rescue.Swimmer.kind), so a guy washed up
+## ashore and one swimming back say what they did before.
+func test_a_swimmers_own_kind_gives_his_status() -> void:
+	var swimmer: Rescue.Swimmer = Rescue.Swimmer.new(Paddling.Seat.LEFT_FRONT, Vector2.ZERO, Vector2.ZERO,
+			Rescue.State.FLOATING, true)
+	swimmer.adrift = 6.0
+	expect_eq(_idle(swimmer.kind(5.0)), "swimming back", "adrift past the delay")
+	swimmer.washed_up = true
+	expect_eq(_idle(swimmer.kind(5.0)), "washed up ashore", "and washed up at the shore")

@@ -371,7 +371,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: with a lake up, `DevMenu.systems()` has Beast and `inspect_text("Beast")` names its state and rise cause (test) · a new attempt replaces the registration rather than leaving a stale one (test)
 - GDD: (none)
 
-### T80 · Decouple: the swim kind moves from the speech bubbles into Rescue · todo · S · agent
+### T80 · Decouple: the swim kind moves from the speech bubbles into Rescue · done · S · agent
 - Depends on: T79
 - Touches: scripts/systems/rescue.gd (Swimmer.kind(swim_back_delay) or Rescue.swim_kind, with the four kinds as constants), scripts/ui/speech_bubbles.gd (reads it), scripts/ui/hud.gd (reads it; no SpeechBubbles reference), tests/test_rescue.gd, tests/test_speech_bubbles.gd, tests/test_hud.gd
 - Done when: the swim kind (fetching, drinking, fallen in, swimming back, washed up) is a Rescue rule with its own test, and neither screen script references the other (check: `grep -n SpeechBubbles scripts/ui/hud.gd` is empty) · the bubbles and the HUD show what they did before (test)

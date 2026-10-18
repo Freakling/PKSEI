@@ -13,12 +13,13 @@ class_name SpeechBubbles
 ## RunState.telegraphed and puts the line on the guy on that hull (front seat first; any aboard
 ## guy when the hull is empty or unknown: speaker_for, Rescue's jumper rule) for
 ## BoatTuning.call_out_time seconds, over his wind-up's bubble while it lasts. A guy in the water
-## (T74) talks from where he floats: a line of his swim_kind (fetching his beer, drinking it,
-## fallen in, swimming back) at once when the kind changes and again every
+## (T74) talks from where he floats: a line of his swim kind (Rescue.Swimmer.kind: fetching his
+## beer, drinking it, fallen in, swimming back) at once when the kind changes and again every
 ## BoatTuning.swim_talk_interval seconds, each for call_out_time (SwimTalk); the bubble goes away at
-## the pickup or when he is washed up. Nobody shows a bubble once the attempt is won; a reset
-## clears them all. A screen: it only reads RunState and calls its methods; it rolls nothing. The
-## pure parts are static, so tests/test_speech_bubbles.gd runs them without a tree.
+## the pickup or when he is washed up (no kind to talk about: talk_kind). Nobody shows a bubble once
+## the attempt is won; a reset clears them all. A screen: it only reads RunState and calls its
+## methods; it rolls nothing. The pure parts are static, so tests/test_speech_bubbles.gd runs them
+## without a tree.
 
 const FONT_SIZE: int = 8
 const BUBBLE_COLOUR: Color = Color(1.0, 1.0, 1.0, 1.0)
@@ -45,11 +46,6 @@ const ANTIC_KINDS: Dictionary[int, StringName] = {
 const STAMINA_KIND: StringName = &"stamina_warning"
 const BAR_KIND: StringName = &"bar_windup"
 const JUMP_KIND: StringName = &"jump_windup"
-## The line kinds for a guy in the water (T74).
-const SWIM_FETCH_KIND: StringName = &"swim_fetch"
-const SWIM_DRINK_KIND: StringName = &"swim_drink"
-const SWIM_FELL_KIND: StringName = &"swim_fell"
-const SWIM_BACK_KIND: StringName = &"swim_back"
 
 
 ## A swimmer's talking rhythm: a line shows for `show_time`, then nothing for `interval`, then a
@@ -165,8 +161,7 @@ func _swim_text_of(seat: int, swimmer: Rescue.Swimmer, delta: float) -> String:
 	var kind: StringName = &""
 	var tuning: BoatTuning = RunState.paddling.tuning
 	if swimmer != null:
-		kind = swim_kind(swimmer.state, swimmer.has_beer, swimmer.adrift, tuning.swim_back_delay,
-				swimmer.washed_up)
+		kind = talk_kind(swimmer.kind(tuning.swim_back_delay))
 	if talk.step(delta, kind, tuning.swim_talk_interval, tuning.call_out_time):
 		_swim_lines[seat] = RunState.pick_line(kind)
 	if kind.is_empty():
@@ -268,18 +263,10 @@ static func windup_kind(antic: Antics.State, antic_kind: Antics.Kind, jump_windi
 	return &""
 
 
-## The line kind for a guy in the water (T74): swimming for his beer, floating with it before he
-## swims back, floating without one (fallen in) before he swims back, swimming back once `adrift`
-## passes `swim_back_delay`; empty when he is washed up.
-static func swim_kind(state: Rescue.State, has_beer: bool, adrift: float, swim_back_delay: float,
-		washed_up: bool) -> StringName:
-	if washed_up:
-		return &""
-	if state == Rescue.State.SWIMMING:
-		return SWIM_FETCH_KIND
-	if adrift > swim_back_delay:
-		return SWIM_BACK_KIND
-	return SWIM_DRINK_KIND if has_beer else SWIM_FELL_KIND
+## The kind a guy in the water talks about (T74, T80): his swim kind from Rescue.Swimmer.kind(),
+## except washed up, where he has nothing to say; empty for no talk. Pure.
+static func talk_kind(swim: StringName) -> StringName:
+	return &"" if swim == Rescue.KIND_WASHED_UP else swim
 
 
 ## Who calls a hazard on `hull` out: the aboard guy on that hull, front first; any aboard guy

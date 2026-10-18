@@ -22,16 +22,13 @@ const STATUS_COLOUR: Color = Color(1.0, 0.9, 0.3, 1.0)
 const BAR_SIZE: Vector2 = Vector2(72, 5)
 const FONT_SIZE: int = 10
 const STATUS_FONT_SIZE: int = 9
-## A guy washed up on the shore: the swim kind SpeechBubbles.swim_kind() has no name for.
-const WASHED_UP: StringName = &"washed_up"
-
-## What the status line says for a guy in the water, by his swim kind.
+## What the status line says for a guy in the water, by his swim kind (Rescue.Swimmer.kind).
 const WATER_TEXT: Dictionary[StringName, String] = {
-	SpeechBubbles.SWIM_FETCH_KIND: "swimming after the beer",
-	SpeechBubbles.SWIM_DRINK_KIND: "drinking in the lake",
-	SpeechBubbles.SWIM_FELL_KIND: "fell in!",
-	SpeechBubbles.SWIM_BACK_KIND: "swimming back",
-	WASHED_UP: "washed up ashore",
+	Rescue.KIND_FETCH: "swimming after the beer",
+	Rescue.KIND_DRINK: "drinking in the lake",
+	Rescue.KIND_FELL: "fell in!",
+	Rescue.KIND_BACK: "swimming back",
+	Rescue.KIND_WASHED_UP: "washed up ashore",
 }
 ## What it says while an antic winds up, by kind, and while it runs, by state.
 const WINDUP_TEXT: Dictionary[Antics.Kind, String] = {
@@ -116,21 +113,18 @@ func _make_bar(fill: Color) -> ProgressBar:
 	return bar
 
 
-## The guy's swim kind when he is in the water (WASHED_UP ashore), empty aboard.
+## The guy's swim kind when he is in the water (Rescue.KIND_WASHED_UP ashore), empty aboard.
 func _swim_kind_of(seat: int) -> StringName:
 	var swimmer: Rescue.Swimmer = RunState.rescue.swimmer_of(seat)
 	if swimmer == null:
 		return &""
-	if swimmer.washed_up:
-		return WASHED_UP
-	return SpeechBubbles.swim_kind(swimmer.state, swimmer.has_beer, swimmer.adrift,
-			RunState.paddling.tuning.swim_back_delay, swimmer.washed_up)
+	return swimmer.kind(RunState.paddling.tuning.swim_back_delay)
 
 
 # --- the status line, pure ---------------------------------------------------------------------
 
 ## What a guy is doing, for the line under his name: the first that applies of being in the
-## water (`swim`, a SpeechBubbles swim kind or WASHED_UP; empty aboard), his antic (its wind-up
+## water (`swim`, a Rescue swim kind; empty aboard), his antic (its wind-up
 ## by `kind`, then its state), the jump after a beer, a snag, his break then its warning,
 ## bailing, and the timing bar; "" when he is simply paddling.
 static func status_text(swim: StringName, antic: Antics.State, kind: Antics.Kind,

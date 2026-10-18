@@ -24,6 +24,14 @@ enum Hull { LEFT, RIGHT }
 enum State { SWIMMING, FLOATING }
 ## No guy was aboard to jump.
 const NOBODY: int = -1
+## The swim kinds (T80): what a guy in the water is doing, named by Swimmer.kind(). The speech
+## bubbles read them (a Lines.KINDS key for the line they draw; the first four) and so does the
+## HUD's status line. Their values are the data keys in data/lines.tres, so they don't change.
+const KIND_FETCH: StringName = &"swim_fetch"
+const KIND_DRINK: StringName = &"swim_drink"
+const KIND_FELL: StringName = &"swim_fell"
+const KIND_BACK: StringName = &"swim_back"
+const KIND_WASHED_UP: StringName = &"washed_up"
 
 
 ## One guy in the water.
@@ -45,6 +53,19 @@ class Swimmer extends RefCounted:
 		beer_position = beer_at
 		state = swimmer_state
 		has_beer = beer
+
+	## What he is doing, for the speech bubbles and the HUD (the swim kinds above): washed up
+	## (KIND_WASHED_UP) at the shoreline; swimming for his beer (KIND_FETCH); floating with it
+	## (KIND_DRINK) or without one (KIND_FELL) until his adrift time is past `swim_back_delay`,
+	## when he swims back (KIND_BACK). Exactly at the delay he has not started back yet.
+	func kind(swim_back_delay: float) -> StringName:
+		if washed_up:
+			return KIND_WASHED_UP
+		if state == State.SWIMMING:
+			return KIND_FETCH
+		if adrift > swim_back_delay:
+			return KIND_BACK
+		return KIND_DRINK if has_beer else KIND_FELL
 
 
 ## A beer bobbing away while its guy winds up aboard (T34): he jumps when time_left runs out.
