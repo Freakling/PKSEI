@@ -24,6 +24,9 @@ var _turn: int = 0
 ## same seed draws the same lake (RunState.lake_seed) and crew.
 func start_run(run_seed: int) -> void:
 	RunState.rng.seed = run_seed
+	# The game's boot already began a run (RunState._ready), before the driver pointed the log at this
+	# run's folder: begin the run again here, so its files are in the folder.
+	play_log().call("begin_run")
 	var lake: Node = tree.current_scene.get_node_or_null("Lake") if tree.current_scene != null else null
 	if lake != null and lake.has_method("_new_attempt"):
 		lake.call("_new_attempt")
@@ -62,9 +65,7 @@ func list_actions() -> Array[Dictionary]:
 			"seat": index, "backwards": false, "progress": true, "unblocks": true})
 		actions.append({"id": "back_paddle_" + SEATS[index], "label": "Back-paddle " + SEATS[index], "kind": "api",
 			"seat": index, "backwards": true, "weight": 0.5})
-	# Weight 0: the random picks leave it out, since a reset starts a new attempt and so a new play-log file, and
-	# a review reads only the newest file. A scenario may still name it.
-	actions.append({"id": "reset", "label": "Reset to the shore", "kind": "ui", "input": "reset", "weight": 0.0})
+	actions.append({"id": "reset", "label": "Reset to the shore", "kind": "ui", "input": "reset", "weight": 0.25})
 	actions.append({"id": "wait", "label": "Let the boat drift", "kind": "api", "weight": 0.5})
 	return actions
 

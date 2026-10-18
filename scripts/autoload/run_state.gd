@@ -132,6 +132,12 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## attempts, stays the same across the attempt's shore resets, and is the same again for a logged
 ## seed.
 var lake_seed: int = 0
+## The attempts begun in the open play-log run (new_attempt()): 1 at its first attempt. Counted
+## again when the run changes, so a run begun after the boot's counts from 1 (T83).
+var attempt: int = 0
+
+## The play-log run id `attempt` is counted in (new_attempt() resets the count when it changes).
+var _counted_run: String = ""
 
 var _pending: Array[PendingStroke] = []
 ## Hazard effects waiting for the boat: a shove it adds to its speed, a sustained push it moves
@@ -179,15 +185,25 @@ func _ready() -> void:
 ## (T68: four distinct ones from data/names.tres), then the starting conditions are restored
 ## with reset(). Called at start, and by the win flow (T28) once there is one; a shore reset is
 ## not a new attempt and keeps the seed and the names.
+##
+## The play log keeps one run per process (T83): the first attempt begins the run's files, and a
+## later attempt (an R press, the touch hold, the autoplay's reset) is another attempt of that run,
+## so a person's session or an autoplay run stays one .log/.jsonl pair. `attempt` counts the
+## attempts of the open run (1 for its first) and is in run.attempt_started's data.
 func new_attempt() -> void:
 	lake_seed = rng.randi()
 	guy_names = names.pick_four(rng)
 	var play_log: Node = _log_node()
-	if play_log != null:
+	if play_log != null and play_log.run_id.is_empty():
 		play_log.begin_run()
+	var open_run: String = play_log.run_id if play_log != null else ""
+	if open_run != _counted_run:
+		_counted_run = open_run
+		attempt = 0
+	attempt += 1
 	reset()
-	_log("run", "run.attempt_started", "a new attempt: %s" % ", ".join(guy_names),
-			{"lake_seed": lake_seed, "names": Array(guy_names)})
+	_log("run", "run.attempt_started", "attempt %d: %s" % [attempt, ", ".join(guy_names)],
+			{"lake_seed": lake_seed, "names": Array(guy_names), "attempt": attempt})
 	_log_snapshot()
 
 

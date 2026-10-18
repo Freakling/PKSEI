@@ -27,8 +27,11 @@ func scenarios() -> Array[Dictionary]:
 			{"do": "paddle_right_back", "repeat": 3},
 			{"do": "wait", "repeat": 8, "expect": func(state: Dictionary) -> bool:
 				return float(state["progress"]) > 0.0 and str(state["phase"]) == "crossing"},
-			# Every stroke key the player has, as real input (a tap each). Not R: a reset starts a new play-log
-			# run (a new file), and the review reads only the newest file.
+			# A reset under way is another attempt of the same play-log run: back at the shore, then strokes again.
+			{"do": "reset", "expect": func(state: Dictionary) -> bool:
+				return str(state["phase"]) == "launch"},
+			{"do": "paddle_left_back", "repeat": 2}, {"do": "paddle_right_back", "repeat": 2},
+			# Every stroke key the player has, as real input (a tap each).
 			{"do": "stroke_left_front"}, {"do": "stroke_left_back"}, {"do": "stroke_right_front"}, {"do": "stroke_right_back"},
 			{"do": "reverse_left_front"}, {"do": "reverse_left_back"}, {"do": "reverse_right_front"}, {"do": "reverse_right_back"},
 			{"do": "back_paddle_left_back"},

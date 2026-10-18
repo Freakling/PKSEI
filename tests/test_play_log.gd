@@ -41,7 +41,14 @@ func _step(state: Node, seconds: float) -> void:
 		state.step(TICK, BOAT)
 
 
+## A fresh process has no run open: clears the PlayLog autoload's run id, so the next new_attempt()
+## begins one (its run.new line, as the boot's does).
+func _fresh_run() -> void:
+	PlayLog.run_id = ""
+
+
 func test_a_session_leaves_a_line_for_every_action_and_step() -> void:
+	_fresh_run()
 	PlayLog.start_capture()
 	var state: Node = _state()
 	state.new_attempt()
@@ -77,6 +84,7 @@ func test_a_session_leaves_a_line_for_every_action_and_step() -> void:
 
 
 func test_an_attempt_begins_a_run_with_its_lake_seed() -> void:
+	_fresh_run()
 	PlayLog.start_capture()
 	var state: Node = _state()
 	state.new_attempt()
@@ -86,10 +94,35 @@ func test_an_attempt_begins_a_run_with_its_lake_seed() -> void:
 	if not started.is_empty():
 		expect_eq((started["data"] as Dictionary)["lake_seed"], state.lake_seed, "the line carries the lake seed")
 		expect_eq(((started["data"] as Dictionary)["names"] as Array).size(), 4, "and the four names")
+		expect_eq((started["data"] as Dictionary)["attempt"], 1, "the first attempt of its run")
 	var events: PackedStringArray = _events(lines)
 	expect(events.find("run.new") < events.find("run.attempt_started"), "the run begins before its first line")
 	expect(events.find("run.attempt_started") < events.find("snapshot"), "a snapshot follows the start")
 	state.free()
+
+
+## T83: a reset is a second attempt of the open run, so one run.new (one file pair), two attempts.
+func test_a_reset_is_another_attempt_of_the_same_run() -> void:
+	_fresh_run()
+	PlayLog.start_capture()
+	var state: Node = _state()
+	state.new_attempt()
+	state.new_attempt()
+	var lines: Array[Dictionary] = PlayLog.stop_capture()
+	state.free()
+	var events: PackedStringArray = _events(lines)
+	expect_eq(events.count("run.new"), 1, "one run begins, so one log file pair")
+	var attempts: Array = []
+	for line: Dictionary in lines:
+		if str(line["event"]) == "run.attempt_started":
+			attempts.append((line["data"] as Dictionary)["attempt"])
+	expect_eq(attempts.size(), 2, "two attempts logged under one capture")
+	if attempts.size() == 2:
+		expect_eq(attempts[0], 1, "the first attempt of the run")
+		expect_eq(attempts[1], 2, "and the reset is the second")
+	var opened: Dictionary = _line(lines, "run.new")
+	if not opened.is_empty():
+		expect_eq((opened["data"] as Dictionary)["run"], PlayLog.run_id, "the run that is still open is the one begun")
 
 
 func test_a_stroke_is_one_line_with_its_outcome() -> void:

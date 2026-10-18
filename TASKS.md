@@ -359,7 +359,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: block_reason() is "" in LAUNCH as in CROSSING, since strokes are allowed at the shore, and still "nobody aboard" and "won" (test) · a person's log no longer starts with `progress.blocked: launch` (check: the signature sig-7a33327f no longer appears in a fresh run's review)
 - GDD: (none)
 
-### T83 · A reset during an autoplay run keeps one log file · todo · S · agent
+### T83 · A reset during an autoplay run keeps one log file · done · S · agent
 - Depends on: T71
 - Touches: scripts/autoload/run_state.gd (new_attempt continues the run under autoplay instead of beginning a new one, or logs the reset as a step of the same run), tools/autoplay_adapter.gd (the reset action's weight above 0 once it is safe), tests/test_play_log.gd
 - Done when: a scripted scenario step through the `reset` ui action leaves one `.log`/`.jsonl` pair in the run folder and `bash tools/log_review.sh` reviews the autoplay lines, not a "played by a person" log (check) · the reset action gets a random weight above 0 in the adapter (check)
