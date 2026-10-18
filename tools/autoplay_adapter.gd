@@ -3,52 +3,101 @@ extends "res://tools/autoplay_adapter_base.gd"
 ##
 ## How `bash tools/autoplay.sh` plays this game: tools/autoplay.gd talks to the game only through this
 ## file. The action format, and tree, views, play_log(), node(), unique() and wait_frames(), are in
-## tools/autoplay_adapter_base.gd. Every player action appears in list_actions() while it's legal,
-## with a ui route (rules.md › Every action is drivable). While start_run() below still calls super(),
-## autoplay skips the run and says what to wire; the check passes meanwhile.
+## tools/autoplay_adapter_base.gd.
 ##
-## Example actions:
-##	{"id": "end_turn", "label": "End turn", "kind": "ui", "node": "%EndTurn", "progress": true}
-##	{"id": "open_roster", "label": "Roster", "kind": "ui", "input": "open_roster", "opens": "roster"}
-##	{"id": "close", "label": "Close", "kind": "ui", "node": "%Close", "back": true}
-##	{"id": "hire_first", "label": "Hire the first applicant", "kind": "api"}
+## The game is real-time and has no turns. The driver presses a key for one frame, so a `ui` stroke is a
+## tap (the weakest stroke). Each stroke therefore has an `api` twin that calls RunState.stroke() with a
+## medium hold, which is what a player's charged stroke does; the twins are the ones that move the boat.
+## For the driver, one forward `api` stroke is a "turn": perform() advances the play log's turn counter.
+
+## The strokes in Paddling.Seat order (S, A, K, L): the seat's name for ids and labels.
+const SEATS: Array[String] = ["left_front", "left_back", "right_front", "right_back"]
+## The hold of an api stroke, in seconds (BoatTuning.charge_time is 1.0: a half-charged stroke).
+const MEDIUM_HOLD: float = 0.5
+## Frames the "wait" action lets the boat drift.
+const WAIT_FRAMES: int = 12
+
+var _turn: int = 0
 
 
-## PLACEHOLDER: start a new run with this seed, as New Game does (the run's RandomNumberGenerator
-## takes the seed: rules.md › Seeded randomness), and wait until the player may act. Such as
-## `node("/root/Run").call("start_run", run_seed)` or pressing %NewGame, then `await wait_frames(2)`.
-## Replace the super() call with the real start: it is what marks this adapter as not filled in yet.
+## Seeds the run's generator, then starts a new attempt the way R does (the lake's restart), so the
+## same seed draws the same lake (RunState.lake_seed) and crew.
 func start_run(run_seed: int) -> void:
-	super(run_seed)
+	RunState.rng.seed = run_seed
+	var lake: Node = tree.current_scene.get_node_or_null("Lake") if tree.current_scene != null else null
+	if lake != null and lake.has_method("_new_attempt"):
+		lake.call("_new_attempt")
+	else:
+		RunState.new_attempt()
+	_turn = 0
+	play_log().call("set_turn", _turn)
+	await wait_frames(2)
 
 
-## PLACEHOLDER: load a run from a save file through the game's save API, as Continue does.
+## The game has no saves.
 func load_save(_path: String) -> bool:
 	return false
 
 
-## PLACEHOLDER: write the current run to path through the game's save API, so a repro carries the
-## state before the step that failed. Return false while the game has no saves.
+## The game has no saves.
 func save_run(_path: String) -> bool:
 	return false
 
 
-## PLACEHOLDER: the player actions that are legal right now, in a stable order.
+## The strokes, then the reset, then the wait, in a stable order. Each stroke is a `ui` action on its
+## InputMap action (a tap) and an `api` twin with a medium hold (forward ones are the progress action).
+## The win screen offers only "again".
 func list_actions() -> Array[Dictionary]:
-	return []
+	var actions: Array[Dictionary] = []
+	if current_view() == "win":
+		actions.append({"id": "again", "label": "Go again", "kind": "ui", "input": "ui_accept", "progress": true})
+		return actions
+	for index: int in SEATS.size():
+		actions.append({"id": "stroke_" + SEATS[index], "label": "Tap-stroke " + SEATS[index], "kind": "ui",
+			"input": "stroke_" + SEATS[index], "weight": 0.5, "unblocks": true})
+		actions.append({"id": "reverse_" + SEATS[index], "label": "Tap-reverse " + SEATS[index], "kind": "ui",
+			"input": "reverse_" + SEATS[index], "weight": 0.25})
+	for index: int in SEATS.size():
+		actions.append({"id": "paddle_" + SEATS[index], "label": "Paddle " + SEATS[index], "kind": "api",
+			"seat": index, "backwards": false, "progress": true, "unblocks": true})
+		actions.append({"id": "back_paddle_" + SEATS[index], "label": "Back-paddle " + SEATS[index], "kind": "api",
+			"seat": index, "backwards": true, "weight": 0.5})
+	# Weight 0: the random picks leave it out, since a reset starts a new attempt and so a new play-log file, and
+	# a review reads only the newest file. A scenario may still name it.
+	actions.append({"id": "reset", "label": "Reset to the shore", "kind": "ui", "input": "reset", "weight": 0.0})
+	actions.append({"id": "wait", "label": "Let the boat drift", "kind": "api", "weight": 0.5})
+	return actions
 
 
-## PLACEHOLDER: perform an api action through the game's systems; true when it was done.
-func perform(_action: Dictionary) -> bool:
-	return false
+## The api actions: a medium-hold stroke (a forward one ends the driver's "turn") and the wait.
+func perform(action: Dictionary) -> bool:
+	if str(action.get("id", "")) == "wait":
+		await wait_frames(WAIT_FRAMES)
+		return true
+	if not action.has("seat"):
+		return false
+	RunState.stroke(int(action["seat"]), MEDIUM_HOLD, bool(action["backwards"]))
+	if bool(action.get("progress", false)):
+		_turn += 1
+		play_log().call("set_turn", _turn)
+	return true
 
 
-## PLACEHOLDER: a small summary of the run (resources, turn, what's queued); the play log's snapshot
-## will do: `return play_log().call("_build_snapshot")`.
 func state() -> Dictionary:
-	return {}
+	return RunState.snapshot()
 
 
-## PLACEHOLDER: true once the run has ended.
+## The launch isn't a block here: the strokes are what leave the shore. What blocks is nobody aboard
+## (all four swimming) and, at the end, the island.
+func progress_block_reason() -> String:
+	var reason: String = RunState.block_reason()
+	return "" if reason == "launch" else reason
+
+
 func is_run_over() -> bool:
-	return false
+	return RunState.phase == RunState.Phase.WON
+
+
+## "win" while the island cutscene is up, else "lake".
+func current_view() -> String:
+	return "win" if RunState.phase == RunState.Phase.WON else "lake"

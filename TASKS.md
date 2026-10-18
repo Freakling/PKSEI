@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T81 · B7 · R1
+**Next IDs:** T84 · B7 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -329,7 +329,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: a new attempt begins a run whose log holds a line with a stable event id for every player action, hazard effect, antic, rescue step, shore reset and win, asserted through `PlayLog.start_capture()` (test) · `_build_snapshot()` and `progress_block_reason()` are filled from RunState (test) · the log of a played session reads as what happened (play)
 - GDD: (none)
 
-### T71 · Wire autoplay · todo · M · agent
+### T71 · Wire autoplay · done · M · agent
 - Depends on: T70
 - Touches: tools/autoplay_adapter.gd (start_run with the seed, list_actions with the eight strokes and reset as `ui` actions, state, is_run_over), tools/autoplay_scenarios.gd (smoke plus a scripted crossing), tools/autoplay_invariants.gd (progress never below 0, four guys accounted for), tools/check.cfg ([autoplay] on)
 - Done when: `bash tools/autoplay.sh --all` exits 0 and `bash tools/log_review.sh --latest` writes a review (check) · the check plays smoke with `check_in_check=true` and `enforce=["smoke"]` (check)
@@ -345,6 +345,24 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Depends on: Q7
 - Touches: release.cfg (new), AGENTS.md, .github/workflows/release.yml (new, if the human uses GitHub Actions)
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
+- GDD: (none)
+
+### T81 · The screen catalog lists the lake and the win screen · todo · S · agent
+- Depends on: T71
+- Touches: tools/ui_screens.gd (entries lake and win with their overlays: HUD, pads, bubbles, arrows, reset button), tools/autoplay_scenarios.gd (smoke no longer skips "main")
+- Done when: `bash tools/log_review.sh --latest` after `bash tools/autoplay.sh smoke` reports the lake as a catalog view that smoke opened, and the stub "main" entry is gone (check) · `bash tools/ui_capture.sh --list` lists lake and win (check)
+- GDD: (none)
+
+### T82 · The play log's block reason is empty at the launch shore · todo · XS · agent
+- Depends on: T70
+- Touches: tools/play_log.gd (progress_block_reason), scripts/autoload/run_state.gd (block_reason), tests/test_play_log.gd
+- Done when: block_reason() is "" in LAUNCH as in CROSSING, since strokes are allowed at the shore, and still "nobody aboard" and "won" (test) · a person's log no longer starts with `progress.blocked: launch` (check: the signature sig-7a33327f no longer appears in a fresh run's review)
+- GDD: (none)
+
+### T83 · A reset during an autoplay run keeps one log file · todo · S · agent
+- Depends on: T71
+- Touches: scripts/autoload/run_state.gd (new_attempt continues the run under autoplay instead of beginning a new one, or logs the reset as a step of the same run), tools/autoplay_adapter.gd (the reset action's weight above 0 once it is safe), tests/test_play_log.gd
+- Done when: a scripted scenario step through the `reset` ui action leaves one `.log`/`.jsonl` pair in the run folder and `bash tools/log_review.sh` reviews the autoplay lines, not a "played by a person" log (check) · the reset action gets a random weight above 0 in the adapter (check)
 - GDD: (none)
 
 ### T80 · Decouple: the swim kind moves from the speech bubbles into Rescue · todo · S · agent
