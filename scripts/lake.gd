@@ -12,6 +12,8 @@ extends Node2D
 ## A reset (GDD › Presentation and Platforms, Reset: R on the keyboard, the `reset` action, or
 ## the touch button's hold, scripts/ui/reset_button.gd, under the HUD) takes the same path in
 ## any phase, taking the cutscene down first if it is up (T62).
+## The play log (T70) hears the views ("lake", "win") and the player's resets from here (action.reset,
+## action.again); RunState logs the rest.
 ##
 ## The art is pixel art from assets/sprites/ (drawn by tools/gen_sprites.gd): the water and the
 ## shore are tiles repeated over their polygons, the island a sprite scaled to its radius.
@@ -113,6 +115,7 @@ func _ready() -> void:
 	_edge_y = _island.position.y + TUNING.island_radius
 	RunState.shore_reset_done.connect(_on_shore_reset_done)
 	_spawn_hazards()
+	PlayLog.log_view("lake")
 
 
 func _physics_process(delta: float) -> void:
@@ -136,6 +139,8 @@ func _physics_process(delta: float) -> void:
 ## _unhandled_input, and marked handled, so its "any key" does not go again on top of it.
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed(RESET_ACTION):
+		PlayLog.log_event("action", "action.reset", "reset with R, back to the shore with a new lake",
+				{"phase": str(RunState.Phase.keys()[RunState.phase]).to_lower(), "progress": snappedf(RunState.progress, 0.001)})
 		_new_attempt()
 		get_viewport().set_input_as_handled()
 
@@ -174,6 +179,7 @@ func _start_win() -> void:
 	_win = WIN_SCENE.instantiate() as WinCutscene
 	_win.position = _island.position
 	_win.again.connect(_on_win_again)
+	PlayLog.log_view("win")
 	_camera.set_physics_process(false)
 	_quiet_hazards()
 	add_child(_win)
@@ -195,11 +201,14 @@ func _quiet_hazards() -> void:
 
 ## The player goes again from the win cutscene.
 func _on_win_again() -> void:
+	PlayLog.log_event("action", "action.again", "went again from the win screen")
 	_new_attempt()
 
 
 ## The touch button's hold reached reset_hold_time.
 func _on_reset_requested() -> void:
+	PlayLog.log_event("action", "action.reset", "reset with the touch button's hold, back to the shore with a new lake",
+			{"phase": str(RunState.Phase.keys()[RunState.phase]).to_lower(), "progress": snappedf(RunState.progress, 0.001)})
 	_new_attempt()
 
 
@@ -213,6 +222,7 @@ func _new_attempt() -> void:
 		_win = null
 		_camera.set_physics_process(true)
 	RunState.new_attempt()
+	PlayLog.log_view("lake")
 	_restart()
 
 

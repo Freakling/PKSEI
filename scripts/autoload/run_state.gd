@@ -36,6 +36,13 @@ extends Node
 ## one. The crew's names (T68, GDD › Characters and Units) live here too: new_attempt() draws four
 ## distinct ones from data/names.tres with the RNG (guy_names, name_of(seat)) and a shore reset
 ## keeps them. Screens only read. Reads and writes no player data.
+##
+## The play log (T70, tools/play_log.gd): every player action and every step of the run is one
+## PlayLog line with a stable event id, written from here by _log(): run.* (the attempt, the
+## crossing, a shore reset, the win), action.* (strokes), rescue.*, hazard.* (effects) and guy.*
+## (antics, breaks, the timing bar). snapshot() and block_reason() are what PlayLog's hooks
+## report; a new attempt and a shore reset also log a snapshot. Nothing is logged per frame
+## except where a state actually changes (_log_changes, once per step).
 
 ## One of the four guys. Each has his own drunkenness and stamina (GDD › Drunkenness, Stamina);
 ## step() mirrors the rule classes' levels into them so screens read one place.
@@ -56,6 +63,8 @@ class Guy extends RefCounted:
 class PendingStroke extends RefCounted:
 	var stroke: Paddling.Stroke
 	var time_left: float = 0.0
+	## Whether the timing bar flipped its direction (only for the play log).
+	var flipped: bool = false
 
 	func _init(pending: Paddling.Stroke, delay: float) -> void:
 		stroke = pending
@@ -143,6 +152,18 @@ var _boat_at: Vector2 = Vector2.ZERO
 ## start and whenever his level is below it, spent when his puke starts, so a guy still at the
 ## top after the drop waits for the next crossing instead of puking on a loop (T63).
 var _puke_armed: Array[bool] = []
+## The PlayLog autoload, found once by _log(); null where there is none.
+var _play_log: Node = null
+## What was last logged per seat (antic state, stamina state, timing-bar tier, swim state), so
+## _log_changes() writes a line only when one changes. Synced silently by reset().
+var _logged_antic: Array[int] = []
+var _logged_stamina: Array[int] = []
+var _logged_bar: Array[int] = []
+var _logged_swim: Array[int] = []
+## Whether a sustained push or a headwind is in progress, so each is logged once at its start
+## and once at its end, not every frame.
+var _push_on: bool = false
+var _headwind_on: bool = false
 
 
 func _ready() -> void:
@@ -158,7 +179,13 @@ func _ready() -> void:
 func new_attempt() -> void:
 	lake_seed = rng.randi()
 	guy_names = names.pick_four(rng)
+	var play_log: Node = _log_node()
+	if play_log != null:
+		play_log.begin_run()
 	reset()
+	_log("run", "run.attempt_started", "a new attempt: %s" % ", ".join(guy_names),
+			{"lake_seed": lake_seed, "names": Array(guy_names)})
+	_log_snapshot()
 
 
 ## Restores the starting conditions (also the shore reset, GDD › Setbacks): four guys at
@@ -188,6 +215,9 @@ func reset() -> void:
 	progress = 0.0
 	elapsed = 0.0
 	phase = Phase.LAUNCH
+	_push_on = false
+	_headwind_on = false
+	_sync_logged()
 	run_reset.emit()
 
 
@@ -198,7 +228,12 @@ func reset() -> void:
 func shore_touched() -> void:
 	if phase != Phase.CROSSING:
 		return
+	_log("run", "run.shore_reset", "the boat touched the shore at %d%% after %.1fs: back to the start" % [
+			roundi(progress * 100.0), elapsed],
+			{"progress": snappedf(progress, 0.001), "elapsed": snappedf(elapsed, 0.1),
+			"in_water": rescue.swimmers().size()})
 	reset()
+	_log_snapshot()
 	shore_reset_done.emit()
 
 
@@ -211,6 +246,8 @@ func shore_touched() -> void:
 ## and stop() are not held back by it.
 func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	if _beer_loss_left > 0.0:
+		_log("rescue", "rescue.beer_ignored", "a beer on the %s hull was held back by the cooldown" % _hull_name(side),
+				{"hull": _hull_name(side), "reason": "cooldown"})
 		return Rescue.NOBODY
 	var toss: float = paddling.tuning.beer_toss
 	var beer_at: Vector2 = at_position + Vector2(-toss if side == Rescue.Hull.LEFT else toss, 0.0)
@@ -218,6 +255,11 @@ func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 	if seat != Rescue.NOBODY:
 		_beer_loss_left = paddling.tuning.beer_loss_cooldown
 		beer_overboard_started.emit(side)
+		_log("rescue", "rescue.beer_overboard", "a beer went over on the %s hull, %s winds up to jump" % [
+				_hull_name(side), _who(seat)], {"hull": _hull_name(side), "seat": seat})
+	else:
+		_log("rescue", "rescue.beer_ignored", "a beer on the %s hull, but nobody was free to jump" % _hull_name(side),
+				{"hull": _hull_name(side), "reason": "nobody free"})
 	return seat
 
 
@@ -226,9 +268,10 @@ func beer_overboard(side: Rescue.Hull, at_position: Vector2) -> int:
 ## dropped. With no beer loose for him he floats from the start and doesn't drink; caught
 ## winding up, he swims for his beer anyway (Rescue.guy_overboard). Nothing happens if he is
 ## already in the water. Emits guy_fell_in: his splash.
-func guy_overboard(seat: int, at_position: Vector2) -> void:
+func guy_overboard(seat: int, at_position: Vector2, cause: String = "fell") -> void:
 	if _take_off(seat, at_position):
 		guy_fell_in.emit(seat)
+		_log("rescue", "rescue.fell_in", "%s fell in (%s)" % [_who(seat), cause], {"seat": seat, "cause": cause})
 
 
 ## The beast rammed `side` with the boat at `from_position` and grabbed that hull's guy (front
@@ -244,6 +287,8 @@ func beast_grab(side: Rescue.Hull, from_position: Vector2, spit_distance: float)
 		return Rescue.NOBODY
 	_take_off(seat, from_position + Vector2.DOWN * spit_distance)
 	guy_grabbed.emit(seat)
+	_log("rescue", "rescue.grabbed", "the beast grabbed %s on the %s hull" % [_who(seat), _hull_name(side)],
+			{"seat": seat, "hull": _hull_name(side)})
 	return seat
 
 
@@ -264,6 +309,8 @@ func pickup(seat: int) -> bool:
 	var had_beer: bool = rescue.pickup(seat)
 	guys[seat].aboard = true
 	guy_picked_up.emit(seat)
+	_log("rescue", "rescue.picked_up", "%s is back aboard%s" % [_who(seat), " with his beer" if had_beer else " without a beer"],
+			{"seat": seat, "had_beer": had_beer})
 	return had_beer
 
 
@@ -273,9 +320,11 @@ func pickup(seat: int) -> bool:
 ## (Antics.knocked_in) and goes in without his beer where the boat last stepped.
 func shove(impulse: Vector2) -> void:
 	_shove += impulse
+	_log("hazard", "hazard.shove", "a shove of %d" % roundi(impulse.length()),
+			{"x": snappedf(impulse.x, 0.1), "y": snappedf(impulse.y, 0.1), "strength": snappedf(impulse.length(), 0.1)})
 	for seat: int in GUY_COUNT:
 		if guys[seat].aboard and antics.knocked_in(seat, impulse.length()):
-			guy_overboard(seat, _boat_at)
+			guy_overboard(seat, _boat_at, "shove")
 
 
 ## The shove waiting for the boat, once: cleared when taken.
@@ -291,12 +340,19 @@ func take_shove() -> Vector2:
 ## every frame it blows; pushes in the same frame add up.
 func push(velocity: Vector2) -> void:
 	_push += velocity
+	if not _push_on:
+		_push_on = true
+		_log("hazard", "hazard.push", "the boat is pushed sideways at %d" % roundi(velocity.length()),
+				{"x": snappedf(velocity.x, 0.1), "y": snappedf(velocity.y, 0.1)})
 
 
 ## The push waiting for the boat this frame, once: cleared when taken.
 func take_push() -> Vector2:
 	var velocity: Vector2 = _push
 	_push = Vector2.ZERO
+	if _push_on and velocity == Vector2.ZERO:
+		_push_on = false
+		_log("hazard", "hazard.push_ended", "the push stopped")
 	return velocity
 
 
@@ -306,11 +362,16 @@ func take_push() -> Vector2:
 ## stretches don't stack: the strongest wins.
 func set_extra_drift(per_second: float) -> void:
 	_extra_drift = maxf(_extra_drift, per_second)
+	if not _headwind_on and per_second > 0.0:
+		_headwind_on = true
+		_log("hazard", "hazard.headwind", "a headwind drives the boat back at %d" % roundi(per_second),
+				{"per_second": snappedf(per_second, 0.1)})
 
 
 ## A hard hit stops the boat (Stop the boat): its speed goes to zero next frame.
 func stop() -> void:
 	_stop = true
+	_log("hazard", "hazard.stop", "the boat is stopped dead")
 
 
 ## Whether the boat has to stop this frame, once: cleared when taken.
@@ -327,6 +388,11 @@ func snag(side: Rescue.Hull, seconds: float) -> int:
 	var seat: int = _hull_guy(side)
 	if seat != Rescue.NOBODY:
 		_snag_left[seat] = maxf(_snag_left[seat], seconds)
+		_log("hazard", "hazard.snag", "%s's paddle is snagged for %.1fs" % [_who(seat), seconds],
+				{"seat": seat, "hull": _hull_name(side), "seconds": snappedf(seconds, 0.1)})
+	else:
+		_log("hazard", "hazard.snag", "a paddle snag on the %s hull found nobody" % _hull_name(side),
+				{"seat": Rescue.NOBODY, "hull": _hull_name(side), "seconds": snappedf(seconds, 0.1)})
 	return seat
 
 
@@ -345,6 +411,8 @@ func force_break(side: Rescue.Hull) -> int:
 	var seat: int = _hull_guy(side)
 	if seat != Rescue.NOBODY:
 		stamina.call_break(seat)
+		_log("hazard", "hazard.forced_break", "%s is forced to take a break" % _who(seat),
+				{"seat": seat, "hull": _hull_name(side)})
 	return seat
 
 
@@ -353,6 +421,8 @@ func force_break(side: Rescue.Hull) -> int:
 ## Rescue.NOBODY for none in particular. Only emits telegraphed; the bubbles do the rest.
 func telegraph(kind: StringName, hull: int = Rescue.NOBODY) -> void:
 	telegraphed.emit(kind, hull)
+	_log("hazard", "hazard.telegraphed", "warning: %s from %s" % [kind, _hull_name(hull)],
+			{"kind": str(kind), "hull": _hull_name(hull)})
 
 
 ## One of the Swedish lines for `kind` (GDD › World and Narrative), drawn with the RNG here so
@@ -374,6 +444,8 @@ func name_of(seat: int) -> String:
 ## water, longer bailing; with nobody aboard that hull it waits for him.
 func water_aboard(side: Rescue.Hull, amount: float) -> void:
 	_water[side] += maxf(amount, 0.0)
+	_log("hazard", "hazard.water_aboard", "water comes in on the %s hull" % _hull_name(side),
+			{"hull": _hull_name(side), "amount": snappedf(amount, 0.01)})
 
 
 ## Water still aboard this hull.
@@ -414,16 +486,23 @@ func stroke(seat: int, hold_time: float, backwards: bool = false) -> void:
 	if phase == Phase.WON:
 		return
 	if not can_paddle(seat):
+		var why: String = _block_of(seat)
+		_log("action", "action.stroke_blocked", "%s tried to paddle but is %s" % [_who(seat), why],
+				{"seat": seat, "hold_time": snappedf(hold_time, 0.01), "backwards": backwards, "reason": why})
 		return
 	var level: float = drunkenness.level_of(seat)
 	stamina.burn(seat, paddling.stroke_force(hold_time))
 	guys[seat].stamina = stamina.level_of(seat)
 	if drunkenness.misses(level, rng):
 		stroke_fumbled.emit(seat)
+		_log("action", "action.stroke", "%s fumbled his stroke" % _who(seat),
+				{"seat": seat, "hold_time": snappedf(hold_time, 0.01), "backwards": backwards, "outcome": "fumbled"})
 		return
 	var bar_missed: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
 	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards != bar_missed)
-	_pending.append(PendingStroke.new(pending, drunkenness.stroke_delay(level)))
+	var waiting: PendingStroke = PendingStroke.new(pending, drunkenness.stroke_delay(level))
+	waiting.flipped = bar_missed
+	_pending.append(waiting)
 
 
 ## One physics frame with the boat at `boat_at`: the loose beers, the swimmers and their beers
@@ -459,6 +538,7 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 		antics.interrupt(seat)
 		_drop_pending(seat)
 		guy_jumped.emit(seat)
+		_log("rescue", "rescue.jumped", "%s jumped in after his beer" % _who(seat), {"seat": seat})
 	if phase == Phase.LAUNCH:
 		# The boat rests at the shore, so the launch shore never traps the player (B2).
 		for seat: int in rescue.washed_up():
@@ -484,7 +564,11 @@ func step(delta: float, boat_at: Vector2) -> Paddling.Motion:
 	for seat: int in GUY_COUNT:
 		motion.turn += antics.rock(seat) * delta
 	motion.drift_to_shore += _extra_drift * delta
+	if _headwind_on and _extra_drift <= 0.0:
+		_headwind_on = false
+		_log("hazard", "hazard.headwind_ended", "the headwind died down")
 	_extra_drift = 0.0
+	_log_changes()
 	return motion
 
 
@@ -497,9 +581,11 @@ func _relieve_after_antic(seat: int) -> void:
 	match antics.kind_of(seat):
 		Antics.Kind.PEE:
 			drunkenness.relieve(seat, drunkenness.tuning.pee_relief)
+			_log("guy", "guy.peed", "%s finished peeing" % _who(seat), {"seat": seat})
 		Antics.Kind.PUKE:
 			drunkenness.relieve(seat, drunkenness.tuning.puke_relief)
 			puked.emit(seat)
+			_log("guy", "guy.puked", "%s puked" % _who(seat), {"seat": seat})
 
 
 ## At DrinkTuning.puke_level an idle guy aboard starts the puke's wind-up, once per crossing:
@@ -518,13 +604,25 @@ func set_progress(value: float) -> void:
 	progress = clampf(value, 0.0, 1.0)
 	if phase == Phase.LAUNCH and progress > 0.0:
 		phase = Phase.CROSSING
+		_log("run", "run.crossing_started", "the boat left the shore", {"elapsed": snappedf(elapsed, 0.1)})
 
 
 ## The boat has touched the island: the attempt is won if all four are aboard
 ## (GDD › Win and Loss); otherwise nothing happens and the boat can come back for them.
 func arrive() -> void:
-	if phase != Phase.WON and all_aboard():
+	if phase == Phase.WON:
+		return
+	if all_aboard():
 		phase = Phase.WON
+		_log("run", "run.won", "the boys reached the island in %.1fs" % elapsed,
+				{"elapsed": snappedf(elapsed, 0.1), "lake_seed": lake_seed})
+	else:
+		var missing: Array[int] = []
+		for guy: Guy in guys:
+			if not guy.aboard:
+				missing.append(guy.seat)
+		_log("run", "run.arrived_short", "the boat reached the island with %d in the water" % missing.size(),
+				{"missing": missing})
 
 
 func all_aboard() -> bool:
@@ -558,6 +656,8 @@ func _drop_pending(seat: int) -> void:
 	for pending: PendingStroke in _pending:
 		if pending.stroke.seat != seat:
 			waiting.append(pending)
+		else:
+			_log("action", "action.stroke_dropped", "%s's stroke never landed" % _who(seat), {"seat": seat})
 	_pending = waiting
 
 
@@ -570,7 +670,174 @@ func _land_strokes(delta: float) -> Array[Paddling.Stroke]:
 		if pending.time_left <= 0.0:
 			landed.append(pending.stroke)
 			stroke_landed.emit(pending.stroke.seat)
+			_log("action", "action.stroke", "%s's stroke landed%s" % [_who(pending.stroke.seat),
+					" backwards" if pending.stroke.backwards else ""],
+					{"seat": pending.stroke.seat, "hold_time": snappedf(pending.stroke.hold_time, 0.01),
+					"backwards": pending.stroke.backwards, "outcome": "landed", "bar_flipped": pending.flipped})
 		else:
 			waiting.append(pending)
 	_pending = waiting
 	return landed
+
+
+# --- play log (T70) -------------------------------------------------------------------------------
+
+## The state at a point worth a full picture, for PlayLog's _build_snapshot(): plain values only.
+func snapshot() -> Dictionary:
+	var crew: Array = []
+	for guy: Guy in guys:
+		var swimmer: Rescue.Swimmer = rescue.swimmer_of(guy.seat)
+		var swim: String = "aboard"
+		if swimmer != null:
+			swim = str(Rescue.State.keys()[swimmer.state]).to_lower()
+		crew.append({
+			"seat": guy.seat,
+			"name": name_of(guy.seat),
+			"aboard": guy.aboard,
+			"drunkenness": snappedf(guy.drunkenness, 0.001),
+			"stamina": snappedf(guy.stamina, 0.001),
+			"stamina_state": str(Stamina.State.keys()[stamina.state_of(guy.seat)]).to_lower(),
+			"antic_state": str(Antics.State.keys()[antics.state_of(guy.seat)]).to_lower(),
+			"antic_kind": str(Antics.Kind.keys()[antics.kind_of(guy.seat)]).to_lower(),
+			"in_water": swimmer != null,
+			"swim": swim,
+			"has_beer": swimmer != null and swimmer.has_beer,
+		})
+	return {
+		"phase": str(Phase.keys()[phase]).to_lower(),
+		"progress": snappedf(progress, 0.001),
+		"elapsed": snappedf(elapsed, 0.1),
+		"lake_seed": lake_seed,
+		"guys": crew,
+	}
+
+
+## Why the player can't act now, for PlayLog's progress_block_reason(): "" while crossing with
+## someone aboard, "won" once the island is reached, "launch" before the boat has left the shore,
+## "nobody aboard" when all four are in the water.
+func block_reason() -> String:
+	if phase == Phase.WON:
+		return "won"
+	if phase == Phase.LAUNCH:
+		return "launch"
+	if _seats_aboard().is_empty():
+		return "nobody aboard"
+	return ""
+
+
+## The PlayLog autoload (tools/play_log.gd), or null where it isn't there. Looked up through the
+## main loop, so a RunState outside the tree (a test) finds it too.
+func _log_node() -> Node:
+	if _play_log == null or not is_instance_valid(_play_log):
+		var tree: SceneTree = Engine.get_main_loop() as SceneTree
+		_play_log = tree.root.get_node_or_null("PlayLog") if tree != null else null
+	return _play_log
+
+
+## One play-log line (category, a stable snake_case event id, a sentence and its data); a no-op
+## without the PlayLog autoload.
+func _log(category: String, event: String, text: String, data: Dictionary = {}) -> void:
+	var play_log: Node = _log_node()
+	if play_log != null:
+		play_log.log_event(category, event, text, data)
+
+
+func _log_snapshot() -> void:
+	var play_log: Node = _log_node()
+	if play_log != null:
+		play_log.log_snapshot()
+
+
+## "left" or "right"; "none" for a hazard that comes from nowhere in particular.
+func _hull_name(side: int) -> String:
+	if side < 0 or side >= Rescue.Hull.size():
+		return "none"
+	return str(Rescue.Hull.keys()[side]).to_lower()
+
+
+## The guy's name for a log sentence ("seat 2" before names are drawn).
+func _who(seat: int) -> String:
+	var guy_name: String = name_of(seat)
+	return guy_name if not guy_name.is_empty() else "seat %d" % seat
+
+
+## Why `seat` gives no strokes, for the log: the first of can_paddle()'s reasons that holds.
+func _block_of(seat: int) -> String:
+	if not guys[seat].aboard:
+		return "in the water"
+	if not stamina.can_stroke(seat):
+		return "on a break"
+	if not antics.can_stroke(seat):
+		return "busy with an antic"
+	if is_snagged(seat):
+		return "snagged"
+	return "bailing"
+
+
+## The timing bar's tier for the log: 0 off, 1 winding up, 2 on.
+func _bar_tier(seat: int) -> int:
+	if drunkenness.uses_bar(seat):
+		return 2
+	return 1 if drunkenness.bar_winding_up(seat) else 0
+
+
+## The swim state for the log: 0 aboard, 1 swimming for his beer, 2 floating, 3 swimming back to
+## the boat, 4 washed up at the shoreline.
+func _swim_tier(seat: int) -> int:
+	var swimmer: Rescue.Swimmer = rescue.swimmer_of(seat)
+	if swimmer == null:
+		return 0
+	if swimmer.washed_up:
+		return 4
+	if swimmer.state == Rescue.State.SWIMMING:
+		return 1
+	return 3 if swimmer.adrift > paddling.tuning.swim_back_delay else 2
+
+
+## Records what each seat's log state is now without writing a line (after reset()).
+func _sync_logged() -> void:
+	_logged_antic.clear()
+	_logged_stamina.clear()
+	_logged_bar.clear()
+	_logged_swim.clear()
+	for seat: int in GUY_COUNT:
+		_logged_antic.append(antics.state_of(seat))
+		_logged_stamina.append(stamina.state_of(seat))
+		_logged_bar.append(_bar_tier(seat))
+		_logged_swim.append(_swim_tier(seat))
+
+
+## One line per state change since the last step: an antic winding up or running, a stamina
+## warning, break and its end, the timing bar's tier, and a swimmer reaching his beer, swimming
+## back or washing up. A few comparisons per seat per step; nothing is written otherwise.
+func _log_changes() -> void:
+	for seat: int in GUY_COUNT:
+		var antic: int = antics.state_of(seat)
+		if antic != _logged_antic[seat]:
+			_logged_antic[seat] = antic
+			if antic != Antics.State.IDLE and antic != Antics.State.RECOVERING:
+				var antic_state: String = str(Antics.State.keys()[antic]).to_lower()
+				var kind: String = str(Antics.Kind.keys()[antics.kind_of(seat)]).to_lower()
+				_log("guy", "guy.antic", "%s: %s (%s)" % [_who(seat), kind, antic_state],
+						{"seat": seat, "kind": kind, "state": antic_state})
+		var energy: int = stamina.state_of(seat)
+		if energy != _logged_stamina[seat]:
+			_logged_stamina[seat] = energy
+			var energy_state: String = str(Stamina.State.keys()[energy]).to_lower()
+			_log("guy", "guy.break", "%s: stamina %s" % [_who(seat), energy_state],
+					{"seat": seat, "state": energy_state})
+		var tier: int = _bar_tier(seat)
+		if tier != _logged_bar[seat]:
+			_logged_bar[seat] = tier
+			var tier_name: String = ["off", "wind_up", "on"][tier]
+			_log("guy", "guy.bar", "%s: timing bar %s" % [_who(seat), tier_name.replace("_", " ")],
+					{"seat": seat, "tier": tier_name})
+		var swim: int = _swim_tier(seat)
+		if swim != _logged_swim[seat]:
+			var before: int = _logged_swim[seat]
+			_logged_swim[seat] = swim
+			# Into the water is logged by its jump or fall, and out of it by the pickup.
+			if before != 0 and swim > 1:
+				var swim_name: String = ["", "", "floating", "swimming_back", "washed_up"][swim]
+				_log("rescue", "rescue.%s" % swim_name, "%s is %s" % [_who(seat), swim_name.replace("_", " ")],
+						{"seat": seat})

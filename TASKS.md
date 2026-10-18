@@ -323,7 +323,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: near_bounds(position) is true within beast_warn_margin of the out-of-bounds line at either edge or beyond the island's far side, and false inside (test) · entering that zone from inside telegraphs `edge` on the hull facing the edge once per approach, re-armed when the boat is back inside (test) · a Swedish line shows over the hull's guy (play)
 - GDD: Systems › Hazards
 
-### T70 · Wire the play log · todo · M · agent
+### T70 · Wire the play log · done · M · agent
 - Depends on: (none)
 - Touches: tools/play_log.gd (the seed's hooks), scripts/autoload/run_state.gd (begin_run at new_attempt, log each stroke, jump, pickup, hazard effect, antic, win and shore reset with stable event ids, log_snapshot where the player acts), scripts/lake.gd (view_changed for the lake and the win screen), tests/test_play_log.gd (new)
 - Done when: a new attempt begins a run whose log holds a line with a stable event id for every player action, hazard effect, antic, rescue step, shore reset and win, asserted through `PlayLog.start_capture()` (test) · `_build_snapshot()` and `progress_block_reason()` are filled from RunState (test) · the log of a played session reads as what happened (play)

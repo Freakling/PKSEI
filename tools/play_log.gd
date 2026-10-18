@@ -21,24 +21,25 @@ func _init() -> void:
 	hitch_threshold_ms = 250   ## PLACEHOLDER: a frame slower than this is logged as a hitch
 
 
-## PLACEHOLDER: what the session header adds, such as {"settings": Settings.to_dict(),
-## "failsafe": false}. Settings named like a secret (token, password, install_id...) are left out.
+## What the session header adds: the game. The lake seed is per attempt, so it is in each run's
+## run.attempt_started line and snapshot, not here. The game has no settings to list yet.
 func _session_extras() -> Dictionary:
-	return {}
+	return {"game": "PKSEI"}
 
 
-## PLACEHOLDER: the state at a point the player may act: resources, what is queued, available and
-## blocking. Plain data, kept small.
+## The state at a point worth a full picture (an attempt's start, a shore reset): the phase,
+## progress, elapsed time, the lake seed and per guy his seat, name, whether he is aboard, his
+## drunkenness, stamina and its state, his antic and where he is in the water. RunState builds it.
 func _build_snapshot() -> Dictionary:
-	return {}
+	return RunState.snapshot()
 
 
-## PLACEHOLDER: why the player can't continue right now (End Turn, Next Day), or "" when they can.
+## Why the player can't act right now, or "" while crossing with someone aboard: "launch" before
+## the boat has left the shore, "nobody aboard" with all four in the water, "won" at the island.
 func progress_block_reason() -> String:
-	return ""
+	return RunState.block_reason()
 
 
-## PLACEHOLDER: the game's install id, if it has one (a per-install UUID in its settings, say), so the
-## base scrubs it from every line.
+## The game has no install id: nothing identifying is kept.
 func _install_id() -> String:
 	return ""
