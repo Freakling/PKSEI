@@ -1,18 +1,18 @@
 extends "res://tools/test_case.gd"
 ## T5 · Drunkenness: levels rise with time, faster on a break or in the water; lag and misses
 ## follow the level (GDD › Systems › Drunkenness).
-## T31 · The timing bar at the top tier: the bar sweeps with bar_period, a release inside
-## green_width of the centre is a hit, and crossing bar_level is announced with a wind-up.
-## T65 · After its wind-up the bar applies for bar_duration then ends, level or no; it can be
-## announced again after bar_cooldown if he is still at or above bar_level; dropping below
-## bar_level ends it and clears the cooldown.
-## T63 · relieve() lowers a level by an amount, never below 0; dropping below bar_level ends the
-## bar tier (GDD › Systems › Drunkenness: "drunkenness also comes down").
+## T31 · Crossing double_level (the top tier) is announced with a wind-up.
+## T89 · The tier is seeing double, reversed controls, not a timing bar (the minigame is gone).
+## T65 · After its wind-up the reversal applies for double_duration then ends, level or no; it can be
+## announced again after double_cooldown if he is still at or above double_level; dropping below
+## double_level ends it and clears the cooldown.
+## T63 · relieve() lowers a level by an amount, never below 0; dropping below double_level ends the
+## seeing-double tier (GDD › Systems › Drunkenness: "drunkenness also comes down").
 
 const SEATS: int = 4
-## The bar's duration and cooldown these tests set (T65).
-const BAR_DURATION: float = 10.0
-const BAR_COOLDOWN: float = 20.0
+## The reversal's duration and cooldown these tests set (T65).
+const DOUBLE_DURATION: float = 10.0
+const DOUBLE_COOLDOWN: float = 20.0
 
 var tuning: DrinkTuning
 var drunkenness: Drunkenness
@@ -26,11 +26,9 @@ func before_each() -> void:
 	tuning.water_drink_multiplier = 5.0
 	tuning.lag_curve = Curves.ramp(0.0, 0.5)
 	tuning.miss_curve = Curves.ramp(0.0, 0.4)
-	tuning.bar_level = 0.8
-	tuning.bar_period = 2.0
-	tuning.green_width = 0.2
-	tuning.bar_duration = BAR_DURATION
-	tuning.bar_cooldown = BAR_COOLDOWN
+	tuning.double_level = 0.8
+	tuning.double_duration = DOUBLE_DURATION
+	tuning.double_cooldown = DOUBLE_COOLDOWN
 	drunkenness = Drunkenness.new(tuning)
 
 
@@ -122,155 +120,117 @@ func test_misses_are_rolled_from_the_given_rng() -> void:
 	expect(rate > 0.25 and rate < 0.35, "about 30%% of strokes miss at chance 0.3, got %f" % rate)
 
 
-func test_bar_position_sweeps_there_and_back_once_per_bar_period() -> void:
-	expect_near(drunkenness.bar_position(0.0), 0.0, 0.0001, "the bar starts at the left end")
-	expect_near(drunkenness.bar_position(0.5), 0.5, 0.0001, "a quarter period in it is at the centre")
-	expect_near(drunkenness.bar_position(1.0), 1.0, 0.0001, "half a period in it is at the right end")
-	expect_near(drunkenness.bar_position(1.5), 0.5, 0.0001, "on the way back")
-	expect_near(drunkenness.bar_position(2.0), 0.0, 0.0001, "back at the left end after bar_period")
-	expect_near(drunkenness.bar_position(2.5), 0.5, 0.0001, "and sweeping again")
-	expect_near(drunkenness.bar_position(7.0), 1.0, 0.0001, "the sweep repeats every bar_period")
-	var previous: float = drunkenness.bar_position(0.0)
-	for i: int in range(1, 81):
-		var at: float = drunkenness.bar_position(i * 0.05)
-		expect(at >= 0.0 and at <= 1.0, "always on the bar (%d)" % i)
-		expect_near(at, previous, 0.0501, "no jumps: the marker slides (%d)" % i)
-		previous = at
-	tuning.bar_period = 1.0
-	expect_near(drunkenness.bar_position(0.25), 0.5, 0.0001, "a shorter period sweeps faster")
-	expect_near(drunkenness.bar_position(0.5), 1.0, 0.0001, "reaching the end in half of it")
-	tuning.bar_period = 0.0
-	expect_near(drunkenness.bar_position(3.0), 0.5, 0.0001, "no period: the bar rests in the middle")
-
-
-func test_bar_hit_is_a_release_inside_green_width_of_the_centre() -> void:
-	expect(drunkenness.bar_hit(0.5), "dead centre is a hit")
-	expect(drunkenness.bar_hit(0.45), "just inside the green zone on the way out")
-	expect(drunkenness.bar_hit(1.55), "just inside the green zone on the way back")
-	expect_false(drunkenness.bar_hit(0.35), "outside the green zone is a miss")
-	expect_false(drunkenness.bar_hit(0.0), "a tap, marker at the left end, is a miss")
-	expect_false(drunkenness.bar_hit(1.0), "the right end is a miss")
-	expect(drunkenness.bar_hit(2.5), "the centre on the next sweep is a hit again")
-	tuning.green_width = 0.5
-	expect(drunkenness.bar_hit(0.35), "a wider green zone takes the same release")
-	tuning.green_width = 1.0
-	expect(drunkenness.bar_hit(0.0) and drunkenness.bar_hit(1.0), "the whole bar green: everything hits")
-	tuning.green_width = 0.0
-	expect_false(drunkenness.bar_hit(0.45), "no green zone: nothing but the centre")
-	expect(drunkenness.bar_hit(0.5), "which still hits")
-
-
-func test_the_bar_applies_after_a_wind_up_at_bar_level_and_lasts_bar_duration() -> void:
+func test_the_controls_reverse_after_a_wind_up_at_double_level_and_last_double_duration() -> void:
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.uses_bar(0), "just below bar_level his strokes are plain")
-	expect_false(drunkenness.bar_winding_up(0), "and nothing is announced")
+	expect_false(drunkenness.reversed(0), "just below double_level his strokes are plain")
+	expect_false(drunkenness.double_winding_up(0), "and nothing is announced")
 	drunkenness.set_level(0, 0.8)
-	expect(drunkenness.bar_winding_up(0), "at bar_level the tier is announced")
-	expect_false(drunkenness.uses_bar(0), "the bar does not apply during the wind-up")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.bar_winding_up(0), "still announcing halfway through")
-	expect_false(drunkenness.uses_bar(0), "still not applied")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.uses_bar(0), "the bar applies once the wind-up is over")
-	expect_false(drunkenness.bar_winding_up(0), "the announcement is over")
-	drunkenness.drink(0, BAR_DURATION * 0.5, false, false)
-	expect(drunkenness.uses_bar(0), "and holds as he drinks on, halfway through bar_duration")
+	expect(drunkenness.double_winding_up(0), "at double_level the tier is announced")
+	expect_false(drunkenness.reversed(0), "the controls are not reversed during the wind-up")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.double_winding_up(0), "still announcing halfway through")
+	expect_false(drunkenness.reversed(0), "still not applied")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.reversed(0), "the controls reverse once the wind-up is over")
+	expect_false(drunkenness.double_winding_up(0), "the announcement is over")
+	drunkenness.drink(0, DOUBLE_DURATION * 0.5, false, false)
+	expect(drunkenness.reversed(0), "and holds as he drinks on, halfway through double_duration")
 	drunkenness.set_level(0, 1.0)
-	expect(drunkenness.uses_bar(0) and not drunkenness.bar_winding_up(0), "no new wind-up while he stays in the tier")
-	drunkenness.drink(0, BAR_DURATION * 0.5 - 0.1, false, false)
-	expect(drunkenness.uses_bar(0), "still on, a tenth of a second short of bar_duration")
+	expect(drunkenness.reversed(0) and not drunkenness.double_winding_up(0), "no new wind-up while he stays in the tier")
+	drunkenness.drink(0, DOUBLE_DURATION * 0.5 - 0.1, false, false)
+	expect(drunkenness.reversed(0), "still on, a tenth of a second short of double_duration")
 	drunkenness.drink(0, 0.1, false, false)
-	expect_false(drunkenness.uses_bar(0), "after bar_duration the bar ends")
-	expect_false(drunkenness.bar_winding_up(0), "with no new announcement")
-	expect(drunkenness.level_of(0) >= tuning.bar_level, "though he is still at the top of the meter")
+	expect_false(drunkenness.reversed(0), "after double_duration the reversal ends")
+	expect_false(drunkenness.double_winding_up(0), "with no new announcement")
+	expect(drunkenness.level_of(0) >= tuning.double_level, "though he is still at the top of the meter")
 	drunkenness.drink(0, 1.0, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "and stays ended: plain lag and misses")
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "and stays ended: plain lag and misses")
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.uses_bar(0), "below bar_level his strokes are plain")
-	expect_false(drunkenness.bar_winding_up(0), "nothing announced")
+	expect_false(drunkenness.reversed(0), "below double_level his strokes are plain")
+	expect_false(drunkenness.double_winding_up(0), "nothing announced")
 	drunkenness.set_level(0, 0.9)
-	expect(drunkenness.bar_winding_up(0), "crossing again is announced again")
-	expect_false(drunkenness.uses_bar(0), "before the bar applies")
-	expect_false(drunkenness.uses_bar(2) or drunkenness.bar_winding_up(2), "the other guys are unaffected")
+	expect(drunkenness.double_winding_up(0), "crossing again is announced again")
+	expect_false(drunkenness.reversed(0), "before the reversal")
+	expect_false(drunkenness.reversed(2) or drunkenness.double_winding_up(2), "the other guys are unaffected")
 	drunkenness.reset()
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a reset forgets the tier")
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "a reset forgets the tier")
 
 
-## T65: once the bar has ended, bar_cooldown later it is announced again if he is still at or
-## above bar_level, and the cycle repeats; like the wind-up, the clock waits in the water.
-func test_it_can_be_announced_again_after_bar_cooldown_if_he_is_still_at_bar_level() -> void:
+## T65: once the reversal has ended, double_cooldown later it is announced again if he is still at or
+## above double_level, and the cycle repeats; like the wind-up, the clock waits in the water.
+func test_it_can_be_announced_again_after_double_cooldown_if_he_is_still_at_double_level() -> void:
 	drunkenness.set_level(0, 0.9)
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
-	expect(drunkenness.uses_bar(0), "the bar applies after its wind-up")
-	drunkenness.drink(0, BAR_DURATION, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "and ends after bar_duration")
-	drunkenness.drink(0, BAR_COOLDOWN * 0.5, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "halfway through the cooldown: nothing")
-	drunkenness.drink(0, BAR_COOLDOWN, false, true)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "the cooldown waits while he floats")
-	drunkenness.drink(0, BAR_COOLDOWN * 0.5 - 0.1, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a tenth of a second short of bar_cooldown: still nothing")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP, false, false)
+	expect(drunkenness.reversed(0), "the controls reverse after its wind-up")
+	drunkenness.drink(0, DOUBLE_DURATION, false, false)
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "and ends after double_duration")
+	drunkenness.drink(0, DOUBLE_COOLDOWN * 0.5, false, false)
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "halfway through the cooldown: nothing")
+	drunkenness.drink(0, DOUBLE_COOLDOWN, false, true)
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "the cooldown waits while he floats")
+	drunkenness.drink(0, DOUBLE_COOLDOWN * 0.5 - 0.1, false, false)
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "a tenth of a second short of double_cooldown: still nothing")
 	drunkenness.drink(0, 0.1, false, false)
-	expect(drunkenness.level_of(0) >= tuning.bar_level, "he is still at the top")
-	expect(drunkenness.bar_winding_up(0), "so after bar_cooldown the bar is announced again")
-	expect_false(drunkenness.uses_bar(0), "and does not apply during the new wind-up")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.bar_winding_up(0), "a full wind-up, not a shortened one")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.uses_bar(0), "then the bar applies again")
-	expect_false(drunkenness.bar_winding_up(0), "the announcement over")
-	drunkenness.drink(0, BAR_DURATION, false, false)
-	expect_false(drunkenness.uses_bar(0), "and ends again after bar_duration: the cycle repeats")
-	expect_false(drunkenness.uses_bar(1) or drunkenness.bar_winding_up(1), "the other guys are unaffected")
+	expect(drunkenness.level_of(0) >= tuning.double_level, "he is still at the top")
+	expect(drunkenness.double_winding_up(0), "so after double_cooldown seeing double is announced again")
+	expect_false(drunkenness.reversed(0), "and the controls are not reversed during the new wind-up")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.double_winding_up(0), "a full wind-up, not a shortened one")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.reversed(0), "then the controls reverse again")
+	expect_false(drunkenness.double_winding_up(0), "the announcement over")
+	drunkenness.drink(0, DOUBLE_DURATION, false, false)
+	expect_false(drunkenness.reversed(0), "and ends again after double_duration: the cycle repeats")
+	expect_false(drunkenness.reversed(1) or drunkenness.double_winding_up(1), "the other guys are unaffected")
 
 
-## T65: dropping below bar_level ends the bar, as before, and forgets the cooldown: a re-crossing
+## T65: dropping below double_level ends the reversal, as before, and forgets the cooldown: a re-crossing
 ## is announced at once, with a full wind-up.
-func test_dropping_below_bar_level_ends_the_bar_and_clears_the_cooldown() -> void:
+func test_dropping_below_double_level_ends_it_and_clears_the_cooldown() -> void:
 	drunkenness.set_level(0, 0.9)
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP, false, false)
 	drunkenness.drink(0, 2.0, false, false)
-	expect(drunkenness.uses_bar(0), "the bar is on")
+	expect(drunkenness.reversed(0), "the controls are reversed")
 	drunkenness.set_level(0, 0.79)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "below bar_level it ends")
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "below double_level it ends")
 	drunkenness.set_level(0, 0.9)
-	expect(drunkenness.bar_winding_up(0), "crossing again is announced at once")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP, false, false)
-	drunkenness.drink(0, BAR_DURATION, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "the bar ran its course")
+	expect(drunkenness.double_winding_up(0), "crossing again is announced at once")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP, false, false)
+	drunkenness.drink(0, DOUBLE_DURATION, false, false)
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "the reversal ran its course")
 	drunkenness.drink(0, 1.0, false, false)
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "a second into the cooldown")
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "a second into the cooldown")
 	drunkenness.relieve(0, 0.25)
-	expect(drunkenness.level_of(0) < tuning.bar_level, "a puke's relief takes him below bar_level")
-	expect_false(drunkenness.uses_bar(0) or drunkenness.bar_winding_up(0), "nothing shows below it")
+	expect(drunkenness.level_of(0) < tuning.double_level, "a puke's relief takes him below double_level")
+	expect_false(drunkenness.reversed(0) or drunkenness.double_winding_up(0), "nothing shows below it")
 	drunkenness.set_level(0, 0.9)
-	expect(drunkenness.bar_winding_up(0), "crossing again is announced at once: the cooldown is forgotten")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.bar_winding_up(0), "with a full wind-up")
-	expect_false(drunkenness.uses_bar(0), "the bar not yet applying")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.uses_bar(0), "then the bar")
+	expect(drunkenness.double_winding_up(0), "crossing again is announced at once: the cooldown is forgotten")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.double_winding_up(0), "with a full wind-up")
+	expect_false(drunkenness.reversed(0), "not yet reversed")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.reversed(0), "then the reversal")
 
 
 func test_the_wind_up_waits_while_he_is_in_the_water_and_counts_down_once_aboard() -> void:
 	drunkenness.set_level(0, 0.79)
 	drunkenness.drink(0, 1.0, false, true)
-	expect(drunkenness.level_of(0) >= tuning.bar_level, "a second in the water carries him over bar_level")
-	expect(drunkenness.bar_winding_up(0), "the crossing in the water is registered")
-	expect_false(drunkenness.uses_bar(0), "but the bar does not apply yet")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 2.0, false, true)
-	expect(drunkenness.bar_winding_up(0), "the wind-up does not count down while he floats")
-	expect_false(drunkenness.uses_bar(0), "so he cannot come aboard already on the bar")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 2.0, false, true, false)
-	expect(drunkenness.bar_winding_up(0), "nor while he floats without a beer")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.bar_winding_up(0), "back aboard it counts down: halfway, still announcing")
-	expect_false(drunkenness.uses_bar(0), "still not applied")
-	drunkenness.drink(0, Drunkenness.BAR_WINDUP * 0.5, false, false)
-	expect(drunkenness.uses_bar(0), "the full wind-up ran aboard, then the bar applies")
-	expect_false(drunkenness.bar_winding_up(0), "the announcement is over")
+	expect(drunkenness.level_of(0) >= tuning.double_level, "a second in the water carries him over double_level")
+	expect(drunkenness.double_winding_up(0), "the crossing in the water is registered")
+	expect_false(drunkenness.reversed(0), "but the controls are not reversed yet")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 2.0, false, true)
+	expect(drunkenness.double_winding_up(0), "the wind-up does not count down while he floats")
+	expect_false(drunkenness.reversed(0), "so he cannot come aboard already reversed")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 2.0, false, true, false)
+	expect(drunkenness.double_winding_up(0), "nor while he floats without a beer")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.double_winding_up(0), "back aboard it counts down: halfway, still announcing")
+	expect_false(drunkenness.reversed(0), "still not applied")
+	drunkenness.drink(0, Drunkenness.DOUBLE_WINDUP * 0.5, false, false)
+	expect(drunkenness.reversed(0), "the full wind-up ran aboard, then the controls reverse")
+	expect_false(drunkenness.double_winding_up(0), "the announcement is over")
 	drunkenness.drink(0, 3.0, false, true)
-	expect(drunkenness.uses_bar(0), "once applied, the bar holds through another dip in the water")
+	expect(drunkenness.reversed(0), "once applied, the reversal holds through another dip in the water")
 
 
 func test_tuning_resource_loads_with_placeholders() -> void:
@@ -278,12 +238,10 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(loaded is DrinkTuning, "data/drink_tuning.tres is a DrinkTuning")
 	var drink: DrinkTuning = loaded
 	expect(drink.start_level > 0.0, "the guys start tipsy, not sober")
-	expect(drink.start_level < drink.bar_level, "nobody starts on the bar")
-	expect(drink.bar_level <= 1.0, "the top tier is reachable")
-	expect(drink.bar_period > 0.0, "the bar sweeps")
-	expect(drink.green_width > 0.0 and drink.green_width < 1.0, "a thin green zone: not none, not the whole bar")
-	expect(drink.bar_duration >= 10.0 and drink.bar_duration <= 15.0, "the bar lasts ten to fifteen seconds (GDD)")
-	expect(drink.bar_cooldown > 0.0, "and comes back only after a while")
+	expect(drink.start_level < drink.double_level, "nobody starts seeing double")
+	expect(drink.double_level <= 1.0, "the top tier is reachable")
+	expect(drink.double_duration >= 10.0 and drink.double_duration <= 15.0, "the reversal lasts ten to fifteen seconds (GDD)")
+	expect(drink.double_cooldown > 0.0, "and comes back only after a while")
 	expect(drink.drink_rate > 0.0, "the crate gets drunk")
 	expect(drink.break_drink_multiplier > 1.0, "a break drinks faster")
 	expect(drink.water_drink_multiplier > drink.break_drink_multiplier, "the water drinks faster still")
@@ -295,8 +253,8 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(rules.miss_chance(1.0) > rules.miss_chance(0.5), "misses rise with the level")
 
 
-## T63: relieve() takes an amount off one guy's level, never below 0, and a drop below bar_level
-## ends the bar tier like any other fall.
+## T63: relieve() takes an amount off one guy's level, never below 0, and a drop below double_level
+## ends the seeing-double tier like any other fall.
 func test_relieve_lowers_the_level_and_clamps_at_zero() -> void:
 	expect_near(drunkenness.relieve(0, 0.05), 0.15, 0.0001, "relieve takes the amount off")
 	expect_near(drunkenness.level_of(0), 0.15, 0.0001, "and stores it")
@@ -304,7 +262,7 @@ func test_relieve_lowers_the_level_and_clamps_at_zero() -> void:
 	expect_near(drunkenness.relieve(0, 1.0), 0.0, 0.0001, "never below 0")
 	expect_near(drunkenness.relieve(1, -0.5), 0.2, 0.0001, "a negative amount relieves nothing")
 	drunkenness.set_level(2, 0.9)
-	expect(drunkenness.bar_winding_up(2), "at bar_level the bar is announced")
+	expect(drunkenness.double_winding_up(2), "at double_level seeing double is announced")
 	expect_near(drunkenness.relieve(2, 0.4), 0.5, 0.0001, "a puke's worth comes off")
-	expect_false(drunkenness.bar_winding_up(2), "below bar_level the bar is no longer announced")
-	expect_false(drunkenness.uses_bar(2), "and does not apply")
+	expect_false(drunkenness.double_winding_up(2), "below double_level seeing double is no longer announced")
+	expect_false(drunkenness.reversed(2), "and the controls are not reversed")

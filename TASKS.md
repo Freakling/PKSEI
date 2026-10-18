@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T89 · B8 · R1
+**Next IDs:** T90 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T89 · Seeing double is reversed controls, not a timing bar · done · M · agent
+- Depends on: T65
+- Touches: scripts/systems/drunkenness.gd (the tier's cycle stays: wind-up → reversed for bar_duration → cooldown; `reversed(seat)` replaces uses_bar; bar_position, bar_hit, bar_period and green_width go), scripts/resources/drink_tuning.gd (−bar_period, −green_width; the cycle's tunables renamed double_level/double_duration/double_cooldown or kept as bar_*: the builder picks and says), data/drink_tuning.tres, scripts/autoload/run_state.gd (stroke(): backwards flipped while reversed; the log's bar tier → "double"), scripts/catamaran.gd (no bar drawn; the sway frames stay for the tier), scripts/ui/hud.gd, scripts/ui/speech_bubbles.gd (the wind-up line stays), tools/dev_menu.gd, tests/test_drunkenness.gd, tests/test_run_state.gd, tests/test_hud.gd, tests/test_speech_bubbles.gd
+- Done when: while a guy is in the top tier every stroke's direction is flipped: a forward key gives the weaker reverse stroke and a reverse key a forward one, with no dependence on the hold time (test) · the wind-up, the duration, the cooldown and the fall below the level end it as before (test) · no bar is drawn and the bar helpers are gone (check: `grep -rn "bar_hit\|bar_position\|green_width\|bar_period" scripts tools` is empty) · the guy sways and the HUD says "seeing double" while it lasts (play)
+- GDD: Systems › Drunkenness
 
 ### T88 · The motorboat's wake is a V: two fronts at wake_angle either side of its course · done · M · agent
 - Depends on: T19

@@ -1,15 +1,15 @@
 extends "res://tools/test_case.gd"
 ## T79 · HUD status line: Hud.status_text() names what a guy is doing, the first that applies
 ## of the water, his antic (wind-up by kind, then state), the jump after a beer, a snag, the
-## break then its warning, bailing and the timing bar, and is empty while he just paddles
+## break then its warning, bailing and seeing double, and is empty while he just paddles
 ## (GDD › Core Loop › Moment to moment).
 
 
 func _idle(swim: StringName = &"", antic: Antics.State = Antics.State.IDLE,
 		kind: Antics.Kind = Antics.Kind.STAND, jump: bool = false, snagged: bool = false,
 		stamina: Stamina.State = Stamina.State.PADDLING, bailing: bool = false,
-		bar: bool = false) -> String:
-	return Hud.status_text(swim, antic, kind, jump, snagged, stamina, bailing, bar)
+		seeing_double: bool = false) -> String:
+	return Hud.status_text(swim, antic, kind, jump, snagged, stamina, bailing, seeing_double)
 
 
 func test_a_paddling_guy_has_no_status() -> void:
@@ -54,13 +54,13 @@ func test_the_water_beats_everything_and_the_antic_beats_the_rest() -> void:
 			Hud.WINDUP_TEXT[Antics.Kind.PUKE], "the wind-up names its kind")
 
 
-func test_then_the_jump_the_snag_the_break_its_warning_bailing_and_the_bar() -> void:
+func test_then_the_jump_the_snag_the_break_its_warning_bailing_and_seeing_double() -> void:
 	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, true, true, Stamina.State.BREAK, true, true), Hud.JUMP_TEXT)
 	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, true, Stamina.State.BREAK, true, true), Hud.SNAG_TEXT)
 	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, false, Stamina.State.BREAK, true, true), Hud.BREAK_TEXT)
 	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, false, Stamina.State.WARNING, true, true), Hud.WARNING_TEXT)
 	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, false, Stamina.State.PADDLING, true, true), Hud.BAILING_TEXT)
-	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, false, Stamina.State.PADDLING, false, true), Hud.BAR_TEXT)
+	expect_eq(_idle(&"", Antics.State.IDLE, Antics.Kind.STAND, false, false, Stamina.State.PADDLING, false, true), Hud.DOUBLE_TEXT)
 
 
 func test_an_unknown_swim_kind_still_says_he_is_in_the_water() -> void:

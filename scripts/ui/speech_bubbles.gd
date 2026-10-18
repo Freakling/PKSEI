@@ -7,7 +7,7 @@ class_name SpeechBubbles
 ## OffscreenArrows does, and sits his bubble (a Label in a rounded panel with a tail) just above
 ## him. For his own wind-ups it reads the states catamaran.gd reads (GDD › Systems › Drunkenness,
 ## Stamina; GDD › Systems › Setbacks for the jump): an antic's wind-up, the jump after a beer, the
-## break warning and the timing bar's wind-up, in that order of priority, each a kind in
+## break warning and the seeing-double wind-up, in that order of priority, each a kind in
 ## Lines.KINDS (windup_kind); the line is drawn once per wind-up through RunState.pick_line() and
 ## the bubble goes away at the effect, when the wind-up state ends. For a hazard it listens to
 ## RunState.telegraphed and puts the line on the guy on that hull (front seat first; any aboard
@@ -45,7 +45,7 @@ const ANTIC_KINDS: Dictionary[int, StringName] = {
 	Antics.Kind.PUKE: &"antic_puke",
 }
 const STAMINA_KIND: StringName = &"stamina_warning"
-const BAR_KIND: StringName = &"bar_windup"
+const DOUBLE_KIND: StringName = &"double_windup"
 const JUMP_KIND: StringName = &"jump_windup"
 ## The yell of a guy whose paddle a fishing line snagged (T87).
 const SNAG_KIND: StringName = &"snag"
@@ -177,7 +177,7 @@ func _swim_text_of(seat: int, swimmer: Rescue.Swimmer, delta: float) -> String:
 func _windup_kind_of(seat: int) -> StringName:
 	return windup_kind(RunState.antics.state_of(seat), RunState.antics.kind_of(seat),
 			RunState.rescue.winding_up(seat), RunState.stamina.state_of(seat),
-			RunState.drunkenness.bar_winding_up(seat))
+			RunState.drunkenness.double_winding_up(seat))
 
 
 ## A fishing line snagged this guy's paddle (T87): he yells about it for call_out_time, over
@@ -263,17 +263,17 @@ func _build_bubble(seat: int) -> PanelContainer:
 # --- the rules of what shows, pure ---------------------------------------------------------------
 
 ## The line kind for a guy's wind-up now, by priority: an antic's wind-up (its kind's line), the
-## jump after a beer, the break warning, then the timing bar's wind-up; empty for none.
+## jump after a beer, the break warning, then the seeing-double wind-up; empty for none.
 static func windup_kind(antic: Antics.State, antic_kind: Antics.Kind, jump_winding_up: bool,
-		stamina: Stamina.State, bar_winding_up: bool) -> StringName:
+		stamina: Stamina.State, double_winding_up: bool) -> StringName:
 	if antic == Antics.State.WINDING_UP:
 		return ANTIC_KINDS[antic_kind] if ANTIC_KINDS.has(antic_kind) else &""
 	if jump_winding_up:
 		return JUMP_KIND
 	if stamina == Stamina.State.WARNING:
 		return STAMINA_KIND
-	if bar_winding_up:
-		return BAR_KIND
+	if double_winding_up:
+		return DOUBLE_KIND
 	return &""
 
 

@@ -11,13 +11,12 @@ extends CharacterBody2D
 ## PNGs in assets/sprites/guys/ (FRAME_PATH, built into SpriteFrames here). Every telegraph in
 ## GDD › Drunkenness and GDD › Stamina is one of his animations (ANIMATIONS), chosen each frame
 ## by _animation_for(): the antic wind-up, the antics themselves, the break warning and the
-## break from RunState's Antics and Stamina states, the timing bar's wind-up (a sway) from its
+## break from RunState's Antics and Stamina states, seeing double (the wind-up and the reversal, a sway) from
 ## Drunkenness; a stroke is a reach on the key's release, the pull when RunState says it landed
 ## (so his lag shows as the reach held) and a fumble when it missed. The flat primitives that
 ## remain are a white marker flashing over a warned guy (it keeps the warning readable through
-## his strokes), his dropped paddle floating beside the hull, and the timing bar beside a guy
-## on the top tier while his key is held (or a finger on the touch pads, scripts/ui/touch_pads.gd,
-## whose release also gives the reach), its marker sweeping over the green band. A guy
+## his strokes) and his dropped paddle floating beside the hull; a finger on the touch pads
+## (scripts/ui/touch_pads.gd) gives the reach on its release. A guy
 ## winding up to jump after a beer (Rescue's winding_up, T34) rocks in his seat; a guy in the
 ## water has no sprite here (the lake draws him), and once the attempt is won nobody is drawn
 ## here (the win cutscene, T28, draws the boys stepping ashore from guy_global_position). Hazard
@@ -82,17 +81,6 @@ const WARNING_FLASH_PERIOD: float = 0.3
 ## (cosmetic), quickening as his wind-up runs out.
 const WIND_UP_ROCK: float = 0.35
 const WIND_UP_ROCK_PERIOD: float = 0.4
-## The timing bar beside a guy's sprite (cosmetic sizes, in canvas pixels): a dark track
-## with a green band of DrinkTuning.green_width and a sweeping marker.
-const BAR_WIDTH: float = 16.0
-const BAR_HEIGHT: float = 3.0
-## From the sprite's centre to the bar's centre, out past the hull.
-const BAR_OFFSET: float = 14.0
-const BAR_MARKER_WIDTH: float = 2.0
-const BAR_TRACK_COLOUR: Color = Color(0.15, 0.15, 0.15, 1.0)
-const BAR_GREEN_COLOUR: Color = Color(0.2, 0.9, 0.3, 1.0)
-const BAR_MARKER_COLOUR: Color = Color(1.0, 1.0, 1.0, 1.0)
-
 ## Speed from strokes, kept apart from `velocity` so a shore collision never feeds the current
 ## back into it.
 var _stroke_velocity: Vector2 = Vector2.ZERO
@@ -105,13 +93,11 @@ var _rock_clock: float = 0.0
 var _guys: Array[AnimatedSprite2D] = []
 var _warnings: Array[Node2D] = []
 var _paddles: Array[Node2D] = []
-var _bars: Array[Node2D] = []
-var _bar_markers: Array[Node2D] = []
 ## Per seat, the stroke one-shot in progress (empty for none) and its seconds left.
 var _one_shots: Array[StringName] = [&"", &"", &"", &""]
 var _one_shot_left: Array[float] = [0.0, 0.0, 0.0, 0.0]
 ## The touch pads (scripts/ui/touch_pads.gd, the "touch_pads" group) when the lake has them;
-## null for the boat alone (tests). Read for the timing bar; their release gives the reach.
+## null for the boat alone (tests). Their release gives the reach.
 var _touch_pads: TouchPads = null
 
 
@@ -126,7 +112,6 @@ func _ready() -> void:
 		_guys.append(guy)
 		_warnings.append(guy.get_node("Warning") as Node2D)
 		_paddles.append(guy.get_node("Paddle") as Node2D)
-		_bars.append(_build_bar(guy, seat))
 	RunState.stroke_landed.connect(_on_stroke_landed)
 	RunState.stroke_fumbled.connect(_on_stroke_fumbled)
 
@@ -184,16 +169,6 @@ func _read_key(seat: int, action: StringName, hold_times: Array[float], backward
 		hold_times[seat] = 0.0
 
 
-## How long the key this seat is charging has been held: the forward key's time, else the
-## reverse key's, else the touch pad's finger's (0 with none down).
-func _held_time(seat: int) -> float:
-	if _hold_times[seat] > 0.0:
-		return _hold_times[seat]
-	if _reverse_hold_times[seat] > 0.0:
-		return _reverse_hold_times[seat]
-	return _touch_pads.held_time(seat) if _touch_pads != null else 0.0
-
-
 ## A finger on the touch pads released this seat (just before its stroke, as a key's release):
 ## a guy who can paddle reaches at once.
 func _on_touch_released(seat: int) -> void:
@@ -227,7 +202,7 @@ func place(at: Vector2) -> void:
 
 ## Visual only: a swimmer's sprite is hidden, each guy plays the animation his state picks, a
 ## warned guy's marker flashes over him, a guy winding up to jump rocks in his seat, a dropped
-## paddle floats beside the hull, and the timing bar shows beside a guy on the top tier.
+## paddle floats beside the hull.
 func _show_telegraphs(delta: float) -> void:
 	_flash_clock = fmod(_flash_clock + delta, WARNING_FLASH_PERIOD)
 	_rock_clock = fmod(_rock_clock + delta, WIND_UP_ROCK_PERIOD)
@@ -244,12 +219,11 @@ func _show_telegraphs(delta: float) -> void:
 			guy.play(animation)
 		_warnings[seat].visible = stamina_state == Stamina.State.WARNING and flash_on
 		_paddles[seat].visible = antic == Antics.State.PADDLE_DROPPED
-		_show_bar(seat)
 
 
 ## Visual only: the animation a guy shows this frame, by priority. An antic wind-up or antic
 ## first, so its telegraph runs unbroken from the wind-up to the antic; then his break; then a
-## stroke or fumble in progress; then the break warning; then the bar's wind-up; else idle.
+## stroke or fumble in progress; then the break warning; then the sway while he sees double (the wind-up and the reversal); else idle.
 func _animation_for(seat: int, stamina_state: Stamina.State, antic: Antics.State) -> StringName:
 	if ANTIC_ANIMATIONS.has(antic):
 		return ANTIC_ANIMATIONS[antic]
@@ -259,7 +233,7 @@ func _animation_for(seat: int, stamina_state: Stamina.State, antic: Antics.State
 		return _one_shots[seat]
 	if stamina_state == Stamina.State.WARNING:
 		return &"warning"
-	if RunState.drunkenness.bar_winding_up(seat):
+	if RunState.drunkenness.double_winding_up(seat) or RunState.drunkenness.reversed(seat):
 		return &"sway"
 	return &"idle"
 
@@ -290,16 +264,6 @@ func _wind_up_rock(seat: int) -> float:
 	return WIND_UP_ROCK * (0.5 + 0.5 * build_up) * sin(TAU * _rock_clock / WIND_UP_ROCK_PERIOD)
 
 
-## Visual only: the bar shows beside a guy while either of his keys is held once it applies (its
-## wind-up is his sway animation), its marker where Drunkenness says the sweep is for this hold,
-## so what the player sees is what RunState.stroke() judges.
-func _show_bar(seat: int) -> void:
-	var drunkenness: Drunkenness = RunState.drunkenness
-	var held: float = _held_time(seat)
-	_bars[seat].visible = drunkenness.uses_bar(seat) and held > 0.0
-	_bar_markers[seat].position.x = (drunkenness.bar_position(held) - 0.5) * BAR_WIDTH
-
-
 ## One guy's SpriteFrames from his frame PNGs (FRAME_PATH), one animation per ANIMATIONS entry.
 static func _build_frames(seat: int) -> SpriteFrames:
 	var frames: SpriteFrames = SpriteFrames.new()
@@ -310,34 +274,3 @@ static func _build_frames(seat: int) -> SpriteFrames:
 		for frame: String in ANIMATIONS[animation]:
 			frames.add_frame(animation, load(FRAME_PATH % [seat, frame]) as Texture2D)
 	return frames
-
-
-## Builds one guy's bar under his sprite (a telegraph: flat primitives under Visual), out
-## past his hull: the track, the green band sized by DrinkTuning.green_width, and the marker.
-func _build_bar(guy: Node2D, seat: int) -> Node2D:
-	var bar: Node2D = Node2D.new()
-	bar.name = "Bar"
-	bar.position = Vector2(-Paddling.seat_side(seat) * BAR_OFFSET, 0.0)
-	bar.visible = false
-	bar.add_child(_rect("Track", BAR_WIDTH, BAR_HEIGHT, BAR_TRACK_COLOUR))
-	var green_width: float = clampf(RunState.drunkenness.tuning.green_width, 0.0, 1.0)
-	bar.add_child(_rect("Green", BAR_WIDTH * green_width, BAR_HEIGHT, BAR_GREEN_COLOUR))
-	var marker: Polygon2D = _rect("Marker", BAR_MARKER_WIDTH, BAR_HEIGHT + 2.0, BAR_MARKER_COLOUR)
-	bar.add_child(marker)
-	_bar_markers.append(marker)
-	guy.add_child(bar)
-	return bar
-
-
-## A flat rectangle centred on its origin.
-static func _rect(rect_name: String, width: float, height: float, colour: Color) -> Polygon2D:
-	var rect: Polygon2D = Polygon2D.new()
-	rect.name = rect_name
-	rect.color = colour
-	var half_width: float = width * 0.5
-	var half_height: float = height * 0.5
-	rect.polygon = PackedVector2Array([
-		Vector2(-half_width, -half_height), Vector2(half_width, -half_height),
-		Vector2(half_width, half_height), Vector2(-half_width, half_height),
-	])
-	return rect

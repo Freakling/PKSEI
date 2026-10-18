@@ -11,7 +11,7 @@ lines = Dictionary[StringName, PackedStringArray]({
 &"antic_nap": PackedStringArray("Bara blunda lite...", "Väck mig vid ön", "Zzz... va?"),
 &"antic_pee": PackedStringArray("Jag måste pissa", "Kissnödig!", "Blåsan säger stopp"),
 &"antic_puke": PackedStringArray("Nu kommer det...", "Håll i båten!", "Jag mår inte bra..."),
-&"bar_windup": PackedStringArray("Oj, allt snurrar!", "Vilket håll är fram?", "Nu är jag rund under fötterna"),
+&"double_windup": PackedStringArray("Oj, allt snurrar!", "Vilket håll är fram?", "Nu är jag rund under fötterna"),
 &"jump_windup": PackedStringArray("Min öl!!", "Nej, inte ölen!", "Jag hämtar den!"),
 &"geese": PackedStringArray("Se upp för fåglarna!", "Gäss! Paddla!", "Jävla gäss!"),
 &"gust": PackedStringArray("Nu jävlar blåser det!", "Håll i hatten!", "Vind! Åt andra hållet!"),

@@ -40,7 +40,7 @@ extends Node
 ## The play log (T70, tools/play_log.gd): every player action and every step of the run is one
 ## PlayLog line with a stable event id, written from here by _log(): run.* (the attempt, the
 ## crossing, a shore reset, the win), action.* (strokes), rescue.*, hazard.* (effects) and guy.*
-## (antics, breaks, the timing bar). snapshot() and block_reason() are what PlayLog's hooks
+## (antics, breaks, seeing double). snapshot() and block_reason() are what PlayLog's hooks
 ## report; a new attempt and a shore reset also log a snapshot. Nothing is logged per frame
 ## except where a state actually changes (_log_changes, once per step).
 ##
@@ -66,7 +66,7 @@ class Guy extends RefCounted:
 class PendingStroke extends RefCounted:
 	var stroke: Paddling.Stroke
 	var time_left: float = 0.0
-	## Whether the timing bar flipped its direction (only for the play log).
+	## Whether seeing double flipped its direction (only for the play log).
 	var flipped: bool = false
 
 	func _init(pending: Paddling.Stroke, delay: float) -> void:
@@ -169,11 +169,11 @@ var _boat_at: Vector2 = Vector2.ZERO
 var _puke_armed: Array[bool] = []
 ## The PlayLog autoload, found once by _log(); null where there is none.
 var _play_log: Node = null
-## What was last logged per seat (antic state, stamina state, timing-bar tier, swim state), so
+## What was last logged per seat (antic state, stamina state, seeing-double tier, swim state), so
 ## _log_changes() writes a line only when one changes. Synced silently by reset().
 var _logged_antic: Array[int] = []
 var _logged_stamina: Array[int] = []
-var _logged_bar: Array[int] = []
+var _logged_double: Array[int] = []
 var _logged_swim: Array[int] = []
 ## Whether a sustained push or a headwind is in progress, so each is logged once at its start
 ## and once at its end, not every frame.
@@ -505,10 +505,9 @@ func can_paddle(seat: int) -> bool:
 ## whether it was his reverse key. Nothing happens if he is on a break, snagged, bailing, in the
 ## water, or the attempt is over. He burns stamina for the stroke's forward power at once, the
 ## same for either key (GDD › Presentation and Platforms); the stroke then lands after his
-## drunkenness's lag, or misses, unless he goes overboard before it lands. On the timing bar
-## (drunkenness.uses_bar) a release outside the green zone flips the stroke's direction: a
-## forward key paddles backwards and a reverse key forwards (an XOR), so a miss is always the
-## stroke he didn't ask for.
+## drunkenness's lag, or misses, unless he goes overboard before it lands. While he sees double
+## (drunkenness.reversed) the stroke's direction is flipped whatever the hold time: a forward key
+## paddles backwards (the weaker reverse stroke) and a reverse key forwards (an XOR).
 func stroke(seat: int, hold_time: float, backwards: bool = false) -> void:
 	if phase == Phase.WON:
 		return
@@ -525,10 +524,10 @@ func stroke(seat: int, hold_time: float, backwards: bool = false) -> void:
 		_log("action", "action.stroke", "%s fumbled his stroke" % _who(seat),
 				{"seat": seat, "hold_time": snappedf(hold_time, 0.01), "backwards": backwards, "outcome": "fumbled"})
 		return
-	var bar_missed: bool = drunkenness.uses_bar(seat) and not drunkenness.bar_hit(hold_time)
-	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards != bar_missed)
+	var flipped: bool = drunkenness.reversed(seat)
+	var pending: Paddling.Stroke = Paddling.Stroke.new(seat, hold_time, backwards != flipped)
 	var waiting: PendingStroke = PendingStroke.new(pending, drunkenness.stroke_delay(level))
-	waiting.flipped = bar_missed
+	waiting.flipped = flipped
 	_pending.append(waiting)
 
 
@@ -702,7 +701,7 @@ func _land_strokes(delta: float) -> Array[Paddling.Stroke]:
 			_log("action", "action.stroke", "%s's stroke landed%s" % [_who(pending.stroke.seat),
 					" backwards" if pending.stroke.backwards else ""],
 					{"seat": pending.stroke.seat, "hold_time": snappedf(pending.stroke.hold_time, 0.01),
-					"backwards": pending.stroke.backwards, "outcome": "landed", "bar_flipped": pending.flipped})
+					"backwards": pending.stroke.backwards, "outcome": "landed", "reversed": pending.flipped})
 		else:
 			waiting.append(pending)
 	_pending = waiting
@@ -802,11 +801,11 @@ func _block_of(seat: int) -> String:
 	return "bailing"
 
 
-## The timing bar's tier for the log: 0 off, 1 winding up, 2 on.
-func _bar_tier(seat: int) -> int:
-	if drunkenness.uses_bar(seat):
+## The seeing-double tier for the log: 0 off, 1 winding up, 2 on.
+func _double_tier(seat: int) -> int:
+	if drunkenness.reversed(seat):
 		return 2
-	return 1 if drunkenness.bar_winding_up(seat) else 0
+	return 1 if drunkenness.double_winding_up(seat) else 0
 
 
 ## The swim state for the log: 0 aboard, 1 swimming for his beer, 2 floating, 3 swimming back to
@@ -826,17 +825,17 @@ func _swim_tier(seat: int) -> int:
 func _sync_logged() -> void:
 	_logged_antic.clear()
 	_logged_stamina.clear()
-	_logged_bar.clear()
+	_logged_double.clear()
 	_logged_swim.clear()
 	for seat: int in GUY_COUNT:
 		_logged_antic.append(antics.state_of(seat))
 		_logged_stamina.append(stamina.state_of(seat))
-		_logged_bar.append(_bar_tier(seat))
+		_logged_double.append(_double_tier(seat))
 		_logged_swim.append(_swim_tier(seat))
 
 
 ## One line per state change since the last step: an antic winding up or running, a stamina
-## warning, break and its end, the timing bar's tier, and a swimmer reaching his beer, swimming
+## warning, break and its end, the seeing-double tier, and a swimmer reaching his beer, swimming
 ## back or washing up. A few comparisons per seat per step; nothing is written otherwise.
 func _log_changes() -> void:
 	for seat: int in GUY_COUNT:
@@ -854,11 +853,11 @@ func _log_changes() -> void:
 			var energy_state: String = str(Stamina.State.keys()[energy]).to_lower()
 			_log("guy", "guy.break", "%s: stamina %s" % [_who(seat), energy_state],
 					{"seat": seat, "state": energy_state})
-		var tier: int = _bar_tier(seat)
-		if tier != _logged_bar[seat]:
-			_logged_bar[seat] = tier
+		var tier: int = _double_tier(seat)
+		if tier != _logged_double[seat]:
+			_logged_double[seat] = tier
 			var tier_name: String = ["off", "wind_up", "on"][tier]
-			_log("guy", "guy.bar", "%s: timing bar %s" % [_who(seat), tier_name.replace("_", " ")],
+			_log("guy", "guy.double", "%s: seeing double %s" % [_who(seat), tier_name.replace("_", " ")],
 					{"seat": seat, "tier": tier_name})
 		var swim: int = _swim_tier(seat)
 		if swim != _logged_swim[seat]:

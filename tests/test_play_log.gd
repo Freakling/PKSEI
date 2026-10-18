@@ -182,7 +182,7 @@ func test_a_stroke_dropped_when_its_guy_goes_overboard_is_logged() -> void:
 	state.free()
 
 
-func test_antics_breaks_and_the_bar_log_where_they_change() -> void:
+func test_antics_breaks_and_seeing_double_log_where_they_change() -> void:
 	var state: Node = _state()
 	state.drunkenness.set_level(0, 1.0)
 	state.stamina.call_break(1)
@@ -192,7 +192,7 @@ func test_antics_breaks_and_the_bar_log_where_they_change() -> void:
 	var events: PackedStringArray = _events(lines)
 	expect(events.has("guy.antic"), "an antic wound up (got %s)" % ", ".join(events))
 	expect(events.has("guy.break"), "a break started")
-	expect(events.has("guy.bar"), "the timing bar started")
+	expect(events.has("guy.double"), "seeing double started")
 	expect(events.size() < 40, "state changes only, not every frame (%d lines)" % events.size())
 	state.free()
 

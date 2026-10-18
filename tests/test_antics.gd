@@ -222,7 +222,7 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	var previous: float = data.start_level
 	for threshold: float in data.antic_thresholds:
 		expect(threshold > previous, "thresholds rise and sit above start_level")
-		expect(threshold < data.bar_level, "and below the timing bar's tier")
+		expect(threshold < data.double_level, "and below the seeing-double tier")
 		previous = threshold
 	expect(data.windup_time > 0.0, "an antic is announced ahead")
 	expect(data.stand_time > 0.0, "standing lasts")
@@ -232,7 +232,7 @@ func test_tuning_resource_loads_with_placeholders() -> void:
 	expect(data.nap_time > 0.0, "a nap lasts")
 	expect(data.pee_time > 0.0, "a pee lasts")
 	expect(data.pee_fall_shove > 0.0, "it takes a real shove to knock him in")
-	expect(data.puke_level >= data.bar_level, "the puke sits at the top of the meter, in the bar's tier (T63)")
+	expect(data.puke_level >= data.double_level, "the puke sits at the top of the meter, in the seeing-double tier (T63)")
 	expect(data.puke_level <= 1.0, "and within the meter")
 	expect(data.puke_time > 0.0, "a puke lasts")
 	expect(data.puke_relief > 0.0, "and brings the level down")

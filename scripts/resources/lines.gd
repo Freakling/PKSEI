@@ -11,14 +11,14 @@ extends Resource
 
 ## Every telegraph that gets a bubble, in one list so the test can walk it. The guys' wind-ups:
 ## the break warning, the five antics' wind-ups (the puke at the top of the meter, T63), the
-## timing bar's wind-up and the jump after a beer; then the hazards' warnings, the log and the
+## seeing-double wind-up and the jump after a beer; then the hazards' warnings, the log and the
 ## rock ahead on the path, and the beast's edge warning as the boat nears its water (T69); then
 ## the swimmer's lines (T74): swimming for his beer, floating with it, floating without one after
 ## a fall, and swimming back to be fetched; and the yell of a guy whose paddle a fishing line
 ## has snagged (T87).
 const KINDS: Array[StringName] = [
 	&"stamina_warning", &"antic_stand", &"antic_paddle", &"antic_nap", &"antic_pee",
-	&"antic_puke", &"bar_windup", &"jump_windup",
+	&"antic_puke", &"double_windup", &"jump_windup",
 	&"geese", &"gust", &"headwind", &"wake", &"jetski", &"beast", &"edge", &"log", &"rock",
 	&"swim_fetch", &"swim_drink", &"swim_fell", &"swim_back",
 	&"snag",

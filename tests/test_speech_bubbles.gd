@@ -1,6 +1,6 @@
 extends "res://tools/test_case.gd"
 ## T56 · Speech bubbles: windup_kind() names the Lines kind for each guy wind-up catamaran.gd
-## shows (antic first, then the jump, the break warning, the bar's wind-up; none otherwise), every
+## shows (antic first, then the jump, the break warning, the seeing-double wind-up; none otherwise), every
 ## kind it can name has lines; speaker_for() picks the guy on the hazard's hull front first, any
 ## aboard guy when it is empty or unknown, and nobody with nobody aboard; bubble_position() centres
 ## the bubble over the guy with its tail's tip lifted above him. HazardBase.hull_of() is the hull a
@@ -28,13 +28,13 @@ func test_the_antic_itself_is_not_a_wind_up() -> void:
 			Stamina.State.PADDLING, false), &"")
 
 
-func test_the_jump_the_warning_and_the_bar_in_priority_order() -> void:
+func test_the_jump_the_warning_and_seeing_double_in_priority_order() -> void:
 	expect_eq(SpeechBubbles.windup_kind(Antics.State.IDLE, Antics.Kind.STAND, true,
 			Stamina.State.WARNING, true), &"jump_windup", "the jump first")
 	expect_eq(SpeechBubbles.windup_kind(Antics.State.IDLE, Antics.Kind.STAND, false,
 			Stamina.State.WARNING, true), &"stamina_warning", "then the break warning")
 	expect_eq(SpeechBubbles.windup_kind(Antics.State.IDLE, Antics.Kind.STAND, false,
-			Stamina.State.PADDLING, true), &"bar_windup", "then the bar's wind-up")
+			Stamina.State.PADDLING, true), &"double_windup", "then the seeing-double wind-up")
 	expect_eq(SpeechBubbles.windup_kind(Antics.State.WINDING_UP, Antics.Kind.STAND, true,
 			Stamina.State.WARNING, true), &"antic_stand", "an antic's wind-up over all")
 	expect_eq(SpeechBubbles.windup_kind(Antics.State.IDLE, Antics.Kind.STAND, false,
@@ -43,7 +43,7 @@ func test_the_jump_the_warning_and_the_bar_in_priority_order() -> void:
 
 func test_every_wind_up_kind_the_screen_names_has_lines() -> void:
 	var lines: Lines = preload("res://data/lines.tres")
-	var named: Array[StringName] = [SpeechBubbles.STAMINA_KIND, SpeechBubbles.BAR_KIND, SpeechBubbles.JUMP_KIND]
+	var named: Array[StringName] = [SpeechBubbles.STAMINA_KIND, SpeechBubbles.DOUBLE_KIND, SpeechBubbles.JUMP_KIND]
 	for kind: StringName in SpeechBubbles.ANTIC_KINDS.values():
 		named.append(kind)
 	named.append_array([Rescue.KIND_FETCH, Rescue.KIND_DRINK, Rescue.KIND_FELL, Rescue.KIND_BACK])

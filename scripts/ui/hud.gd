@@ -6,7 +6,7 @@ class_name Hud
 ## doing whenever he is not available to paddle (T79): in the water (after the beer, drinking,
 ## fallen in, swimming back, washed up), his antic and its wind-up by kind (taking a piss,
 ## puking, asleep, standing up, the paddle dropped), the jump after a beer, a snag, his break
-## and its warning, bailing, and the timing bar; empty while he just paddles. The line is in a
+## and its warning, bailing, and seeing double; empty while he just paddles. The line is in a
 ## warning colour so a guy who isn't responding is explained at a glance (status_text, pure).
 ## Hidden once the attempt is won, when the win cutscene (scenes/win.tscn, GDD › Win and Loss)
 ## takes the screen. A screen: it only reads RunState every frame.
@@ -51,7 +51,7 @@ const SNAG_TEXT: String = "snagged on a line"
 const BREAK_TEXT: String = "on a break, drinking"
 const WARNING_TEXT: String = "break soon"
 const BAILING_TEXT: String = "bailing water"
-const BAR_TEXT: String = "seeing double"
+const DOUBLE_TEXT: String = "seeing double"
 
 @onready var _progress: ProgressBar = %Progress
 @onready var _guys: GridContainer = %Guys
@@ -97,7 +97,7 @@ func _process(_delta: float) -> void:
 		_status[seat].text = status_text(_swim_kind_of(seat), RunState.antics.state_of(seat),
 				RunState.antics.kind_of(seat), RunState.rescue.winding_up(seat),
 				RunState.is_snagged(seat), RunState.stamina.state_of(seat),
-				RunState.is_bailing(seat), RunState.drunkenness.uses_bar(seat))
+				RunState.is_bailing(seat), RunState.drunkenness.reversed(seat))
 	visible = RunState.phase != RunState.Phase.WON
 
 
@@ -126,10 +126,10 @@ func _swim_kind_of(seat: int) -> StringName:
 ## What a guy is doing, for the line under his name: the first that applies of being in the
 ## water (`swim`, a Rescue swim kind; empty aboard), his antic (its wind-up
 ## by `kind`, then its state), the jump after a beer, a snag, his break then its warning,
-## bailing, and the timing bar; "" when he is simply paddling.
+## bailing, and seeing double; "" when he is simply paddling.
 static func status_text(swim: StringName, antic: Antics.State, kind: Antics.Kind,
 		jump_winding_up: bool, snagged: bool, stamina: Stamina.State, bailing: bool,
-		bar: bool) -> String:
+		seeing_double: bool) -> String:
 	if not swim.is_empty():
 		return WATER_TEXT.get(swim, "in the water")
 	if antic == Antics.State.WINDING_UP:
@@ -146,6 +146,6 @@ static func status_text(swim: StringName, antic: Antics.State, kind: Antics.Kind
 		return WARNING_TEXT
 	if bailing:
 		return BAILING_TEXT
-	if bar:
-		return BAR_TEXT
+	if seeing_double:
+		return DOUBLE_TEXT
 	return ""

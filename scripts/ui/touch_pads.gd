@@ -16,7 +16,7 @@ class_name TouchPads
 ## sit under them: four pad.png sprites (tools/gen_sprites.gd) tinted per seat, in a row across
 ## the bottom from the view size, one brightening while its seat is charged. Shown when
 ## DisplayServer says there is a touchscreen, or on the first touch; hidden on keyboard play,
-## which stays in scripts/catamaran.gd. The boat reads held_time(seat) for its timing bar and
+## which stays in scripts/catamaran.gd. The boat
 ## listens to stroke_released for the reach animation. Touches are taken in _input, before the
 ## GUI, so the HUD's bars never swallow one; none is handled once the attempt is won, so the
 ## win cutscene's "any key" gets it. A screen: it only reads RunState and calls its stroke().
@@ -101,12 +101,6 @@ func _input(event: InputEvent) -> void:
 			_release(touch.index)
 		get_viewport().set_input_as_handled()
 
-
-## How long the finger charging `seat` has been down, 0 with none: the boat's timing bar reads
-## it beside its own key timers.
-func held_time(seat: int) -> float:
-	var finger: Finger = _finger_on(seat)
-	return finger.hold_time if finger != null else 0.0
 
 
 func _press(index: int, at: Vector2) -> void:

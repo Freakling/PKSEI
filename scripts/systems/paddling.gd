@@ -14,7 +14,7 @@ enum Seat { LEFT_FRONT = 0, LEFT_BACK = 1, RIGHT_FRONT = 2, RIGHT_BACK = 3 }
 
 
 ## One released stroke: who paddled, for how long his key was held, and whether he paddled
-## backwards (his reverse key, or a timing-bar miss, GDD › Drunkenness): the forward stroke
+## backwards (his reverse key, or seeing double flipping a key, GDD › Drunkenness): the forward stroke
 ## mirrored, its thrust reverse_thrust_fraction of the forward one and its turn the same, both
 ## negated (GDD › Systems › Catamaran and paddling).
 class Stroke extends RefCounted:
