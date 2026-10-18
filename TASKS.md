@@ -347,7 +347,7 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Done when: `release.cfg` names an upload command for each preset Q7's decision names, and `bash tools/release.sh uat --dry-run` lists them (check)
 - GDD: (none)
 
-### T81 · The screen catalog lists the lake and the win screen · todo · S · agent
+### T81 · The screen catalog lists the lake and the win screen · done · S · agent
 - Depends on: T71
 - Touches: tools/ui_screens.gd (entries lake and win with their overlays: HUD, pads, bubbles, arrows, reset button), tools/autoplay_scenarios.gd (smoke no longer skips "main")
 - Done when: `bash tools/log_review.sh --latest` after `bash tools/autoplay.sh smoke` reports the lake as a catalog view that smoke opened, and the stub "main" entry is gone (check) · `bash tools/ui_capture.sh --list` lists lake and win (check)
