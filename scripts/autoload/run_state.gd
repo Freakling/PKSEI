@@ -97,6 +97,8 @@ signal guy_picked_up(seat: int)
 signal beer_overboard_started(hull: Rescue.Hull)
 ## A guy knocked in (not a jump, not a grab) in guy_overboard() (T26: the splash).
 signal guy_fell_in(seat: int)
+## A fishing line snagged this guy's paddle in snag() (T87: he yells about it).
+signal snagged(seat: int)
 ## The beast grabbed a guy in beast_grab() (T50; T26: the chomp).
 signal guy_grabbed(seat: int)
 ## A guy's puke ran its course in step() (T64: the beast listens, scripts/hazards/beast.gd).
@@ -414,6 +416,7 @@ func snag(side: Rescue.Hull, seconds: float) -> int:
 		_snag_left[seat] = maxf(_snag_left[seat], seconds)
 		_log("hazard", "hazard.snag", "%s's paddle is snagged for %.1fs" % [_who(seat), seconds],
 				{"seat": seat, "hull": _hull_name(side), "seconds": snappedf(seconds, 0.1)})
+		snagged.emit(seat)
 	else:
 		_log("hazard", "hazard.snag", "a paddle snag on the %s hull found nobody" % _hull_name(side),
 				{"seat": Rescue.NOBODY, "hull": _hull_name(side), "seconds": snappedf(seconds, 0.1)})

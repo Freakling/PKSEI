@@ -22,6 +22,7 @@ lines = Dictionary[StringName, PackedStringArray]({
 &"edge": PackedStringArray("Inte för långt ut!", "Vänd om, här bor odjuret!", "Håll er på sjön!"),
 &"log": PackedStringArray("Stock rakt fram!", "Styr, det ligger en stock!", "Se upp för stocken!"),
 &"rock": PackedStringArray("Sten! Styr undan!", "Det är en sten där!", "Boj rakt fram!"),
+&"snag": PackedStringArray("Fan, linan!", "Jag sitter fast!", "Vems jävla lina är det här?!", "Flytta på din rev, gubbe!"),
 &"swim_fetch": PackedStringArray("Jag tar den!", "Simma simma...", "Kom hit, ölen!"),
 &"swim_drink": PackedStringArray("Ska bara dricka sen kommer jag", "En klunk till bara...", "Skål från sjön!", "Ölen först, båten sen"),
 &"swim_fell": PackedStringArray("Hjälp, jag ramla i!", "Va kallt det är!", "Vart tog båten vägen?"),

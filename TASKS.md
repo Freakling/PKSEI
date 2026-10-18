@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T87 · B8 · R1
+**Next IDs:** T89 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -370,6 +370,18 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: data/lake_tuning.tres (island_distance 24000 → 8000), design/gdd.md
 - Done when: island_distance is 8000, a third of before, and the GDD's session length says about two minutes clean (check: the values quoted)
 - GDD: Core Loop › Session
+
+### T87 · A snagged guy yells about the fishing line · done · S · agent
+- Depends on: T18, T56
+- Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
+- Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
+- GDD: World and Narrative
+
+### T88 · The motorboat's wake is a V: two fronts at wake_angle either side of its course · todo · M · agent
+- Depends on: T19
+- Touches: scripts/systems/wake.gd (two fronts behind the motorboat, each a line at ±wake_angle from its travel, spreading as it crosses and rolling on after; the hit is the front that crosses the boat, head-on judged against that front's normal), scripts/resources/lake_tuning.gd (+wake_angle, the old front_y/wake_speed kept for the roll), data/lake_tuning.tres, scripts/hazards/wake.gd (two crest lines drawn along the fronts), scenes/hazards/wake.tscn, tests/test_wake.gd
+- Done when: each front is a line through the motorboat's position at ±wake_angle (30° placeholder) from its travel, extending behind it, and after the crossing both keep spreading at wake_speed (test) · a boat sitting on the course behind the motorboat is hit by whichever front reaches it first, at most once per event, with the shove and the water of before (test) · a boat heading into a front within wake_head_on_angle of its normal takes no hit, so the boat can cross from one side of the V to the other at an angle (test) · the two crests are drawn as diagonal lines in play (play)
+- GDD: Systems › Hazards
 
 ### T86 · Run stats, shown on the win screen · done · M · agent
 - Depends on: T28, T68, T70

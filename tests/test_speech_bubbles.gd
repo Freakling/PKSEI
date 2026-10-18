@@ -47,6 +47,7 @@ func test_every_wind_up_kind_the_screen_names_has_lines() -> void:
 	for kind: StringName in SpeechBubbles.ANTIC_KINDS.values():
 		named.append(kind)
 	named.append_array([Rescue.KIND_FETCH, Rescue.KIND_DRINK, Rescue.KIND_FELL, Rescue.KIND_BACK])
+	named.append(SpeechBubbles.SNAG_KIND)
 	for kind: StringName in named:
 		expect(Lines.KINDS.has(kind), "%s is a Lines.KINDS entry" % kind)
 		expect(lines.lines_of(kind).size() >= 1, "%s has a line" % kind)

@@ -12,7 +12,8 @@ class_name SpeechBubbles
 ## the bubble goes away at the effect, when the wind-up state ends. For a hazard it listens to
 ## RunState.telegraphed and puts the line on the guy on that hull (front seat first; any aboard
 ## guy when the hull is empty or unknown: speaker_for, Rescue's jumper rule) for
-## BoatTuning.call_out_time seconds, over his wind-up's bubble while it lasts. A guy in the water
+## BoatTuning.call_out_time seconds, over his wind-up's bubble while it lasts; a guy whose paddle
+## a fishing line snags yells a `snag` line the same way, on his own seat (RunState.snagged, T87). A guy in the water
 ## (T74) talks from where he floats: a line of his swim kind (Rescue.Swimmer.kind: fetching his
 ## beer, drinking it, fallen in, swimming back) at once when the kind changes and again every
 ## BoatTuning.swim_talk_interval seconds, each for call_out_time (SwimTalk); the bubble goes away at
@@ -46,6 +47,8 @@ const ANTIC_KINDS: Dictionary[int, StringName] = {
 const STAMINA_KIND: StringName = &"stamina_warning"
 const BAR_KIND: StringName = &"bar_windup"
 const JUMP_KIND: StringName = &"jump_windup"
+## The yell of a guy whose paddle a fishing line snagged (T87).
+const SNAG_KIND: StringName = &"snag"
 
 
 ## A swimmer's talking rhythm: a line shows for `show_time`, then nothing for `interval`, then a
@@ -113,6 +116,7 @@ func _ready() -> void:
 		_bubbles.append(_build_bubble(seat))
 		_swim_talks.append(SwimTalk.new())
 	RunState.telegraphed.connect(_on_telegraphed)
+	RunState.snagged.connect(_on_snagged)
 	RunState.run_reset.connect(_clear)
 
 
@@ -174,6 +178,16 @@ func _windup_kind_of(seat: int) -> StringName:
 	return windup_kind(RunState.antics.state_of(seat), RunState.antics.kind_of(seat),
 			RunState.rescue.winding_up(seat), RunState.stamina.state_of(seat),
 			RunState.drunkenness.bar_winding_up(seat))
+
+
+## A fishing line snagged this guy's paddle (T87): he yells about it for call_out_time, over
+## whatever wind-up line he had.
+func _on_snagged(seat: int) -> void:
+	var line: String = RunState.pick_line(SNAG_KIND)
+	if line.is_empty():
+		return
+	_call_outs[seat] = line
+	_call_out_left[seat] = RunState.paddling.tuning.call_out_time
 
 
 ## A hazard's warning started: the guy on its hull calls it out for call_out_time.

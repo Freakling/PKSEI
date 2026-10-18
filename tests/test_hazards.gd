@@ -667,6 +667,21 @@ func test_a_snag_blocks_the_hulls_guy_for_its_time() -> void:
 	state.free()
 
 
+## T87: a snag that found a guy emits snagged(seat), so he can yell about it; one that found
+## nobody emits nothing.
+func test_a_snag_emits_snagged_with_the_seat_and_an_empty_hull_does_not() -> void:
+	var state: Node = sober_state()
+	var heard: Array[int] = []
+	state.snagged.connect(func(seat: int) -> void: heard.append(seat))
+	state.snag(Rescue.Hull.RIGHT, 2.0)
+	expect_eq(heard, [Paddling.Seat.RIGHT_FRONT] as Array[int], "the right front guy was snagged")
+	state.guys[Paddling.Seat.LEFT_FRONT].aboard = false
+	state.guys[Paddling.Seat.LEFT_BACK].aboard = false
+	state.snag(Rescue.Hull.LEFT, 2.0)
+	expect_eq(heard.size(), 1, "nobody on the left hull: no yell")
+	state.free()
+
+
 func test_a_snag_takes_the_back_guy_when_the_front_one_is_in_the_water_and_nobody_on_an_empty_hull() -> void:
 	var state: Node = sober_state()
 	var delay: float = state.paddling.tuning.jump_delay
