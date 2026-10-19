@@ -88,6 +88,27 @@ Godot Director's latest release, v3.13.0, came out while the game was being buil
 
 Across the two days the pre-commit check ran well over a hundred times and the reviews and builders' reports found, among others: a design call the builder had made silently about the shore reset, a swimmer who could drift past the shoreline out of reach, a wind-up that could expire unseen while a guy was in the water, a hit that could land during the win cutscene, a gameplay constant hiding as a cosmetic one, the guaranteed path leading into the beast's water, a spawn window too narrow for the widest hazard, and a floating-point edge on the touch pads' forward/reverse line that made a press exactly on the line reverse. None of these were bugs I would have filed from playing. All became either a fix in the same item or a new item in the queue.
 
+## 11. What it cost
+
+Claude Code reports token use per session. This is the row for the session that built the game, from the empty folder on 2026-10-16 to the last build on 2026-10-18. It includes the builder, reviewer and researcher subagents that session started, which is why three models are listed: the main session ran on Fable 5.1, `S` items were built on Haiku and `M` items on Sonnet. It runs past the numbers table at the top: by its end the game had 125 commits and 92 done items.
+
+![Claude Code token usage for the PKSEI build session](session-token-usage.png)
+
+| | |
+|---|---|
+| Input tokens | 37,346 |
+| Output tokens | 1,671,693 |
+| Cache writes | 11,197,981 |
+| Cache reads | 298,970,791 |
+| Total tokens | 311,877,811 |
+| Cost | $258.23 |
+| Per commit | about $2.07 |
+| Per done item | about $2.81 |
+
+Almost all of it, 96% of the tokens, is cache reads: every turn re-reads the conversation and the records the agents work from, and a cached read is billed at a small fraction of fresh input. Fresh input is tiny, because the director's messages are a sentence or two each. Output, the code, the tests, the records and the reports, is about half a percent of the tokens.
+
+**Recipe:** let model sizing do its job: small items on a small model, a fresh context per item, and an orchestrating session that keeps to decisions and bookkeeping while the builders do the reading. The report doesn't split the cost by model, so measure your own split before tuning it.
+
 ## The recipe, short
 
 1. Install Godot Director; answer the interview; write the pillars.
