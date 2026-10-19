@@ -127,7 +127,9 @@ The game was built on a Claude Max 20x subscription, so nothing was billed per t
 | Pay-as-you-go per commit | about $2.07 |
 | Pay-as-you-go per done item | about $2.81 |
 
-On a subscription the same work is far cheaper. On Claude Pro and Max a pay-as-you-go dollar of tokens costs roughly 2.5 to 5 cents of the subscription (the director's estimate, not a published rate). Spread over the 4.33 weeks of an average month, each plan's price becomes a weekly limit in pay-as-you-go dollars, and a commit or a done item takes this much of it:
+The Claude Code transcripts of the same session, priced the same way, give $211 and 0.82 million output tokens. The cache figures agree with the report within four percent; the output count is where the two differ. The Director-Driven Development blog post uses the transcript figures.
+
+On a subscription the same work is far cheaper. On Claude Pro and Max a pay-as-you-go dollar of tokens costs roughly 2.5 to 5 cents of the subscription. That rate is measured, not published. Wokey's measurement of real accounts for the week of 2026-10-12 puts Pro's weekly cap at about $170 of API-equivalent, across 474 accounts, and Max 20x's at about $1,640, across 17 accounts. This director's own heaviest week was $1,401 across six projects, with allowance left. Both measured caps fall inside the ranges in the table. Spread over the 4.33 weeks of an average month, each plan's price becomes a weekly limit in pay-as-you-go dollars, and a commit or a done item takes this much of it:
 
 | | Pro, $20 a month | Max 20x, $200 a month |
 |---|---|---|
@@ -140,7 +142,9 @@ In subscription money that is about 5 to 10 cents a commit, 7 to 14 cents a done
 
 Almost all of it, 96% of the tokens, is cache reads: every turn re-reads the conversation and the records the agents work from, and at pay-as-you-go prices a cached read costs a small fraction of fresh input. Fresh input is tiny, because the director's messages are a sentence or two each. Output, the code, the tests, the records and the reports, is about half a percent of the tokens.
 
-**Recipe:** let model sizing do its job: small items on a small model, a fresh context per item, and an orchestrating session that keeps to decisions and bookkeeping while the builders do the reading. The report doesn't split the tokens by model, so measure your own split before tuning it.
+The transcripts do split the tokens by model, and they show where the money went. 48 of the 89 subagent runs, 41 builds and 7 reviews, ran on Fable 5.1: the model was inherited from the session, not chosen by the item's size. Those 48 runs cost $67 of the build's $211 API-equivalent (transcript figures). The 41 runs that were passed Haiku or Sonnet cost $4 between them.
+
+**Recipe:** pass every builder its model explicitly, read from the sizing table for the item's size. Never let it inherit the session's model: an inherited run quietly costs what the most capable model costs, and the sizing table only saves anything if every call uses it.
 
 ## The recipe, short
 

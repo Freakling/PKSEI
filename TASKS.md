@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T90 · B8 · R1
+**Next IDs:** T91 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T90 · The devlog's section 11: the token split by model, the transcript figures, the measured subscription caps · done · XS · agent
+- Depends on: T78
+- Touches: design/devlog/01-how-pksei-was-made.md
+- Done when: the model-sizing recipe says 48 of the 89 subagent runs inherited Fable 5.1 and cost $67 of the $211 transcript figure while the 41 Haiku and Sonnet runs cost $4, and that a builder's model must be passed from the sizing table, never inherited · a sentence after the token table gives the transcript figures ($211, 0.82 million output tokens, cache within four percent of the report) and says the blog post uses them · the subscription paragraph cites Wokey's measured caps for the week of 2026-10-12 (Pro about $170 over 474 accounts, Max 20x about $1,640 over 17) and the director's heaviest week ($1,401 across six projects), instead of "the director's estimate" (check: the text quoted)
+- GDD: (none)
 
 ### T89 · Seeing double is reversed controls, not a timing bar · done · M · agent
 - Depends on: T65
