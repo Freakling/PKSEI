@@ -112,7 +112,7 @@ So the director put in about six to seven hours, most of it in short bursts and 
 
 **Tokens.** Claude Code reports token use per session. This is the row for the session that built the game, from the empty folder on 2026-10-16 to the last build on 2026-10-18. It includes the builder, reviewer and researcher subagents that session started, which is why three models are listed: the main session ran on Fable 5.1, `S` items were built on Haiku and `M` items on Sonnet. It runs past the numbers table at the top: by its end the game had 125 commits and 92 done items.
 
-The game was built on a Claude Max subscription, so nothing was billed per token. The dollar figures below are the report's comparison: what the same tokens would have cost at pay-as-you-go API prices. Read them as a measure of the work's size, not as what was spent.
+The game was built on a Claude Max 20x subscription, so nothing was billed per token. The dollar figures below are the report's comparison: what the same tokens would have cost at pay-as-you-go API prices. Read them as a measure of the work's size, not as what was spent.
 
 ![Claude Code token usage for the PKSEI build session](session-token-usage.png)
 
@@ -124,8 +124,19 @@ The game was built on a Claude Max subscription, so nothing was billed per token
 | Cache reads | 298,970,791 |
 | Total tokens | 311,877,811 |
 | Pay-as-you-go equivalent | $258.23 |
-| Per commit | about $2.07 |
-| Per done item | about $2.81 |
+| Pay-as-you-go per commit | about $2.07 |
+| Pay-as-you-go per done item | about $2.81 |
+
+On a subscription the same work is far cheaper. On Claude Pro and Max a pay-as-you-go dollar of tokens costs roughly 2.5 to 5 cents of the subscription (the director's estimate, not a published rate). Spread over the 4.33 weeks of an average month, each plan's price becomes a weekly limit in pay-as-you-go dollars, and a commit or a done item takes this much of it:
+
+| | Pro, $20 a month | Max 20x, $200 a month |
+|---|---|---|
+| Weekly limit, in pay-as-you-go dollars | $92–$185 | $923–$1,846 |
+| Per commit | 1.1–2.2% of the week | 0.11–0.22% of the week |
+| Per done item | 1.5–3.0% of the week | 0.15–0.30% of the week |
+| The whole build | 1.4–2.8 weeks | 14–28% of one week |
+
+In subscription money that is about 5 to 10 cents a commit, 7 to 14 cents a done item and $6.46 to $12.91 for the whole build, on either plan. The difference between the plans is how much of it fits in a week: on Max 20x the two-day build used a fraction of one week, on Pro it would have needed between one and three weeks of limits.
 
 Almost all of it, 96% of the tokens, is cache reads: every turn re-reads the conversation and the records the agents work from, and at pay-as-you-go prices a cached read costs a small fraction of fresh input. Fresh input is tiny, because the director's messages are a sentence or two each. Output, the code, the tests, the records and the reports, is about half a percent of the tokens.
 
