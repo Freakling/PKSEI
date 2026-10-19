@@ -90,14 +90,14 @@ Across the two days the pre-commit check ran well over a hundred times and the r
 
 ## 11. What it used
 
-**Time.** The session's transcript timestamps every message, tool call and answer, so the build's clock can be split between the agent working on its own and the director. The build ran from 2026-10-16 21:47 to 2026-10-18 21:03.
+**Time.** The game was built over two days, about 48 hours of calendar time, from 2026-10-16 21:47 to 2026-10-18 21:03. The director was not at it for those 48 hours: the work came in on-off stretches between builds, with the agent building on its own in between. The session's transcript timestamps every message, tool call and answer, so the hours the two of them actually put in can be counted.
 
 | | |
 |---|---|
-| Calendar span | 47.3 h |
 | Agent working on its own | 11.0 h |
 | Director at the keyboard | 4.7 h |
-| Director away or playing | 31.5 h |
+| Director playtesting the builds | about 1 to 2 h (the director's estimate) |
+| Director in all | about 6 to 7 h |
 | Director messages | 102, about 2,500 words in all, 24 words each on average |
 | Answers to the agent's multiple-choice questions | 21 |
 | Permission approvals | 53 |
@@ -105,11 +105,10 @@ Across the two days the pre-commit check ran well over a hundred times and the r
 How it is counted:
 
 - **Agent working** is every stretch in which the agent was generating, running tools, running the check, exporting and pushing builds, or waiting for a builder, reviewer or researcher subagent to finish.
-- **Director at the keyboard** is every wait that ended with a message, an answer or a permission approval from the director and lasted 30 minutes or less: reading the agent's reports, deciding, short play sessions and typing. It is a slight overcount, because a wait for an approval also holds the approved command's own run time.
-- **Director away or playing** is every such wait over 30 minutes: two nights, longer play sessions on the laptop and the phone, and the rest of life. The transcript can't tell those apart. One builder sat 4.3 hours overnight on a permission prompt nobody was there to answer; that counts here too, not as agent time.
+- **Director at the keyboard** is every wait of 30 minutes or less that ended with a message, an answer or a permission approval from the director: reading the agent's reports, deciding, tweaking and typing. It is a slight overcount, because a wait for an approval also holds the approved command's own run time. Longer waits are left out: the transcript can't tell a play session from a night's sleep, so the playtesting is the director's own estimate instead. One builder sat 4.3 hours overnight on a permission prompt nobody was there to answer; that is left out too, not counted as agent time.
 - A second session ran for 21 minutes in parallel to write a function-check checklist. It is not in these numbers.
 
-So for every hour the director spent at the keyboard, the agent worked a little over two hours on its own, and most of what the director typed was a sentence or two.
+So the director put in about six to seven hours, most of it in short bursts and a sentence or two at a time, and the agent worked 11 hours on its own, one and a half to two times as long.
 
 **Tokens.** Claude Code reports token use per session. This is the row for the session that built the game, from the empty folder on 2026-10-16 to the last build on 2026-10-18. It includes the builder, reviewer and researcher subagents that session started, which is why three models are listed: the main session ran on Fable 5.1, `S` items were built on Haiku and `M` items on Sonnet. It runs past the numbers table at the top: by its end the game had 125 commits and 92 done items.
 
