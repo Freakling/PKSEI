@@ -10,6 +10,12 @@ extends "res://tools/autoplay_catalog.gd"
 ## The game is real-time: a "turn" is one forward api stroke (tools/autoplay_adapter.gd).
 
 
+func _init() -> void:
+	# The step that lands on the island waits for the win cutscene's tweens to settle, which takes a
+	# little over five seconds on this machine; it is the cutscene, not a hitch.
+	step_seconds = 8.0
+
+
 func scenarios() -> Array[Dictionary]:
 	return [
 		# The catalog (tools/ui_screens.gd) lists "lake", the view the game starts in (smoke counts it as

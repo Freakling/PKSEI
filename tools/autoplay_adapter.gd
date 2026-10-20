@@ -164,6 +164,10 @@ func state() -> Dictionary:
 ## What blocks progress: nobody aboard (all four swimming) and, at the end, the island. RunState's
 ## answer as it is.
 func progress_block_reason() -> String:
+	# Once the boat has landed nothing is blocked: the run is ending, through the cutscene, the title
+	# and the recording's hold on the stats (the driver would call that wait a softlock).
+	if RunState.phase == RunState.Phase.WON:
+		return ""
 	return RunState.block_reason()
 
 
