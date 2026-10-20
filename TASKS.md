@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T95 · B9 · R1
+**Next IDs:** T96 · B9 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T95 · The splash song as 16-bit MIDI music: melody, bass and beat transcribed and rendered · done · M · agent
+- Depends on: T93
+- Touches: tools/song_midi.py (new: transcribe and render), assets/audio/music/vi_ses_om_ett_ar_igen.mid (new), assets/audio/music/vi_ses_om_ett_ar_igen_16bit.wav (new, looping), assets/audio/music/vi_ses_om_ett_ar_igen.wav.import (skip), scenes/splash.tscn (music), design/gdd.md, AGENTS.md
+- Done when: `python -I tools/song_midi.py transcribe` writes a type-1 MIDI file of the song's melody, bass and beat at its tempo and key (check: 123.6 BPM, B minor, 85 bars, 341 melody and 197 bass notes) · `render` plays it with FM brass, FM slap bass, synthesised drums and an echo to a looping WAV the splash plays (check: the scene quoted) · the plain recording is not in the build (check) · it sounds like the song as 16-bit console music (play)
+- GDD: Presentation and Platforms
 
 ### B8 · The splash is silent on the web · done · S · agent · high
 - Depends on: T92
