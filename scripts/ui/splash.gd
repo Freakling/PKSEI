@@ -12,6 +12,9 @@ extends CanvasLayer
 ## screen and the music fade out together, then the splash unpauses the tree and frees itself.
 ## Everything runs in _process so it is the same with frames as in a test that calls _process.
 ##
+## On the web the browser holds all sound until the first key, click or tap inside the game (B8),
+## so there the splash first asks for sound ("Press any key for sound"): that first input only starts
+## the music from the top, and the next one, after INPUT_GUARD again, fades the splash out.
 ## The music is the exported `music` stream, played on the Music bus. To swap in the human's mp3:
 ## put it in res://assets/audio/music/, set its import "Loop" on, and point the Splash node's
 ## `music` at it in scenes/splash.tscn. A stream that doesn't loop by itself is restarted when it
@@ -56,10 +59,14 @@ var _fading: bool = false
 var _done: bool = false
 var _holds_pause: bool = false
 var _boat_home: Vector2 = Vector2.ZERO
+## False while the splash waits for the input that lets the browser play sound (the web only).
+var _sound_on: bool = true
 
 
 func _ready() -> void:
 	_prompt.text = prompt_text(DisplayServer.is_touchscreen_available())
+	if needs_sound_input(OS.has_feature("web")):
+		hold_for_sound()
 	_backdrop.resized.connect(_layout)
 	_layout()
 	_music.stream = music
@@ -93,15 +100,49 @@ func _input(event: InputEvent) -> void:
 	if _done:
 		return
 	if is_start_event(event):
-		if _age >= INPUT_GUARD and not _fading:
+		if not _sound_on and _age >= INPUT_GUARD:
+			_turn_sound_on()
+		elif _age >= INPUT_GUARD and not _fading:
 			start_fade()
 		# Held back while it is guarded or fading too: nothing gets past the splash.
 		get_viewport().set_input_as_handled()
 
 
-## "Tap to start" on a touchscreen, "Press any key" otherwise.
-static func prompt_text(touch: bool) -> String:
+## "Tap to start" on a touchscreen, "Press any key" otherwise; while the splash waits for the input
+## that lets the browser play sound, "Tap for sound" or "Press any key for sound".
+static func prompt_text(touch: bool, sound_on: bool = true) -> String:
+	if not sound_on:
+		return "Tap for sound" if touch else "Press any key for sound"
 	return "Tap to start" if touch else "Press any key"
+
+
+## Whether the splash must wait for an input before its music can be heard: on the web, where the
+## browser holds sound until the player first presses or taps inside the game (B8).
+static func needs_sound_input(web: bool) -> bool:
+	return web
+
+
+## Waits for the input that lets the browser play sound: the prompt asks for it, and the next start
+## event turns the music on instead of fading the splash.
+func hold_for_sound() -> void:
+	_sound_on = false
+	_prompt.text = prompt_text(DisplayServer.is_touchscreen_available(), false)
+
+
+## Whether the music can be heard: true at once off the web, after the first input on it.
+func is_sound_on() -> bool:
+	return _sound_on
+
+
+## The first input on the web: the browser lets sound through now, so the music starts from the top,
+## the prompt goes back to starting the game, and the guard starts again so the same press can't
+## also skip the splash.
+func _turn_sound_on() -> void:
+	_sound_on = true
+	_music.stop()
+	_music.play()
+	_prompt.text = prompt_text(DisplayServer.is_touchscreen_available())
+	_age = 0.0
 
 
 ## Whether `event` is one that starts the game: a key press (not a repeat), a mouse button, a pad

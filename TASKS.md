@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T95 · B8 · R1
+**Next IDs:** T95 · B9 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### B8 · The splash is silent on the web · done · S · agent · high
+- Depends on: T92
+- Touches: scripts/ui/splash.gd (hold_for_sound, needs_sound_input, the first input turns the music on), tests/test_splash.gd, design/gdd.md
+- Repro: open the game on itch.io: the splash shows but no music plays. The browser holds all audio until the first key, click or tap inside the game, and that first press also dismissed the splash, so the song was never heard
+- Done when: on the web the splash first prompts "Press any key for sound" ("Tap for sound"), the first input restarts the music and resets the guard without fading, and the next input after the guard fades it; off the web nothing changes (test: a regression test drives both presses) · the song plays on itch.io after the first press (play)
+- GDD: Presentation and Platforms
 
 ### T94 · A MIDI-like babble whenever a guy talks · done · S · agent
 - Depends on: T56, T26

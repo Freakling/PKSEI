@@ -182,3 +182,30 @@ func _count_splashes(under: Node) -> int:
 		if child is Splash:
 			count += 1
 	return count
+
+
+## B8: on the web the first input only turns the sound on (the music from the top), and the next
+## one after the guard fades the splash; off the web there is no such step.
+func test_on_the_web_the_first_input_turns_the_sound_on_and_the_next_starts_the_game() -> void:
+	expect(Splash.needs_sound_input(true), "the web waits for sound")
+	expect_false(Splash.needs_sound_input(false), "the desktop doesn't")
+	expect_eq(Splash.prompt_text(false, false), "Press any key for sound")
+	expect_eq(Splash.prompt_text(true, false), "Tap for sound")
+	var splash: Splash = _add_splash()
+	splash.hold_for_sound()
+	expect_false(splash.is_sound_on(), "waiting for sound")
+	expect_eq((splash.get_node("%Prompt") as Label).text, Splash.prompt_text(DisplayServer.is_touchscreen_available(), false))
+	var key: InputEventKey = InputEventKey.new()
+	key.pressed = true
+	key.keycode = KEY_SPACE
+	splash._process(Splash.INPUT_GUARD + 0.1)
+	splash._input(key)
+	expect(splash.is_sound_on(), "the first press turns the sound on")
+	expect_false(splash.is_fading(), "and doesn't start the game")
+	expect((splash.get_node("%Music") as AudioStreamPlayer).playing, "the music plays")
+	splash._input(key)
+	expect_false(splash.is_fading(), "a second press inside the new guard does nothing")
+	splash._process(Splash.INPUT_GUARD + 0.1)
+	splash._input(key)
+	expect(splash.is_fading(), "after the guard the next press starts the game")
+	_remove(splash)
