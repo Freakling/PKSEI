@@ -1,2 +1,4 @@
 id	kind	text	first_seen_build	last_seen_build
 sig-7a33327f	blocked	launch	unversioned	unversioned
+sig-ada4aa05	blocked	won	unversioned	unversioned
+sig-ea6d9417	slow	pilot took <n> seconds (more than <n>)	unversioned	unversioned
