@@ -14,7 +14,8 @@ extends "res://tools/autoplay_adapter_base.gd"
 ## Picking up the guys in the water comes first: while anyone is in the water it steers for the
 ## nearest one (where he will float, while he still swims for his beer), backing up to a guy behind
 ## the boat instead of turning round, and easing off the strokes close in so it doesn't overshoot.
-## With nobody in the water it steers for the guaranteed corridor a look-ahead up the lake, or the
+## It never aims into the beast's water at the lake's edges (the target is kept half the warning
+## band inside the bounds). With nobody in the water it steers for the guaranteed corridor a look-ahead up the lake, or the
 ## island once it is close. It strokes the seats that turn the boat toward the target (a left stroke
 ## turns right; in reverse, the other way round) or all four when it is lined up, pressing the other
 ## key for a guy who sees double and skipping a guy who can't paddle, then lets the boat run for
@@ -227,6 +228,9 @@ func _pilot() -> bool:
 	var swimmer: Vector2 = _nearest_swimmer(at)
 	var rescuing: bool = swimmer != Vector2.INF
 	var target: Vector2 = swimmer if rescuing else _course_target(at)
+	# Never into the beast's water: a guy out there swims back toward the boat on his own.
+	var safe: float = LAKE_TUNING.lake_width * 0.5 - LAKE_TUNING.beast_edge_margin - LAKE_TUNING.beast_warn_margin * 0.5
+	target.x = clampf(target.x, -safe, safe)
 	var to_target: Vector2 = target - at
 	var forward: Vector2 = Vector2.UP.rotated(boat.rotation)
 	var hold: float = PILOT_EASE_HOLD if rescuing and to_target.length() < PILOT_EASE else MEDIUM_HOLD
