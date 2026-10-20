@@ -3,7 +3,9 @@ extends Node2D
 ## screen, open water, and the island up-screen. Places the island by LakeTuning.island_distance
 ## and sizes it by LakeTuning.island_radius; sizes the water and the shore to the lake by
 ## lake_width and island_distance. It reports the boat's progress to RunState every physics
-## frame, and calls RunState.arrive() when the boat enters the island's area. Once RunState's
+## frame, and calls RunState.arrive() when the boat enters the island's area; the island also has a
+## solid body a little smaller than that area, so the boat stops at the shore instead of sailing
+## over it (T97). Once RunState's
 ## phase is WON it puts the win cutscene (scenes/win.tscn, GDD › Win and Loss) at the island
 ## and hands it the boat and the camera (the camera's follow is off while it plays), and the
 ## hazards stop for it (their processing is disabled and their telegraph loops end, B4); when the
@@ -78,6 +80,9 @@ const ISLAND_ART_RADIUS: float = 60.0
 const WATER_MARGIN: float = 400.0
 ## The shore strip's depth in pixels, from the shore line (y = 0) down to the water's bottom edge.
 const SHORE_DEPTH: float = 400.0
+## The island stops the boat (T97): its solid body is this much smaller than the island's area, so
+## a boat held at the body's edge still overlaps the area and arrive() is called.
+const ISLAND_STOP_INSET: float = 2.0
 
 @onready var _boat: CharacterBody2D = $Catamaran
 @onready var _water: Polygon2D = $Visual/Water
@@ -86,6 +91,8 @@ const SHORE_DEPTH: float = 400.0
 @onready var _island: Area2D = $Island
 @onready var _island_shape: CollisionShape2D = $Island/CollisionShape2D
 @onready var _island_visual: Node2D = $Island/Visual
+@onready var _island_body: StaticBody2D = $IslandBody
+@onready var _island_body_shape: CollisionShape2D = $IslandBody/CollisionShape2D
 @onready var _swimmers: Node2D = $Visual/Swimmers
 @onready var _hazards: Node2D = $Hazards
 @onready var _path_overlay: Line2D = $Visual/PathOverlay
@@ -112,6 +119,10 @@ func _ready() -> void:
 	var circle: CircleShape2D = _island_shape.shape as CircleShape2D
 	if circle != null:
 		circle.radius = TUNING.island_radius
+	_island_body.position = _island.position
+	var body_circle: CircleShape2D = _island_body_shape.shape as CircleShape2D
+	if body_circle != null:
+		body_circle.radius = TUNING.island_radius - ISLAND_STOP_INSET
 	_island_visual.scale = Vector2.ONE * (TUNING.island_radius / ISLAND_ART_RADIUS)
 	_size_water()
 	_start = _boat.position

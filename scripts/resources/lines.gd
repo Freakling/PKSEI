@@ -15,13 +15,15 @@ extends Resource
 ## rock ahead on the path, and the beast's edge warning as the boat nears its water (T69); then
 ## the swimmer's lines (T74): swimming for his beer, floating with it, floating without one after
 ## a fall, and swimming back to be fetched; and the yell of a guy whose paddle a fishing line
-## has snagged (T87).
+## has snagged (T87); and, last, the win title's dark jokes about a guy left in the water (T97),
+## the one kind in English (like the title) and the one whose lines each hold one %s for his name.
 const KINDS: Array[StringName] = [
 	&"stamina_warning", &"antic_stand", &"antic_paddle", &"antic_nap", &"antic_pee",
 	&"antic_puke", &"double_windup", &"jump_windup",
 	&"geese", &"gust", &"headwind", &"wake", &"jetski", &"beast", &"edge", &"log", &"rock",
 	&"swim_fetch", &"swim_drink", &"swim_fell", &"swim_back",
 	&"snag",
+	&"left_behind",
 ]
 
 ## The lines per kind (a KINDS entry): a bubble shows one of them, drawn at random.

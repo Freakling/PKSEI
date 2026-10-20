@@ -170,14 +170,15 @@ func test_the_win_action_arrives_with_all_four_aboard() -> void:
 	expect_eq(RunState.phase, RunState.Phase.WON, "the attempt is won with all four aboard")
 
 
-func test_the_win_action_is_refused_with_someone_in_the_water() -> void:
+func test_the_win_action_leaves_the_guy_in_the_water_behind() -> void:
 	var menu: Node = _menu()
 	if menu == null:
 		fail("the DevMenu autoload is in the tree")
 		return
 	RunState.guy_overboard(0, Vector2.ZERO)
 	menu.run_action("Run", "debug_win", [])
-	expect(RunState.phase != RunState.Phase.WON, "the island isn't reached with a guy in the water")
+	expect_eq(RunState.phase, RunState.Phase.WON, "the attempt is won short-handed")
+	expect_eq(RunState.left_behind, [0], "and the guy in the water is left behind")
 
 
 func test_the_guy_lines_show_aboard_and_idle() -> void:

@@ -236,7 +236,7 @@ func test_the_win_is_logged() -> void:
 	state.free()
 
 
-func test_reaching_the_island_short_handed_is_logged() -> void:
+func test_reaching_the_island_short_handed_logs_the_win_with_the_left_behind() -> void:
 	var state: Node = _state()
 	state.set_progress(0.9)
 	state.guy_overboard(1, BOAT)
@@ -244,8 +244,13 @@ func test_reaching_the_island_short_handed_is_logged() -> void:
 	state.arrive()
 	var lines: Array[Dictionary] = PlayLog.stop_capture()
 	var events: PackedStringArray = _events(lines)
-	expect(events.has("run.arrived_short"), "run.arrived_short")
-	expect_false(events.has("run.won"), "not a win")
+	expect(events.has("run.won"), "run.won")
+	expect_false(events.has("run.arrived_short"), "the short arrival event is gone")
+	for line: Dictionary in lines:
+		if line.get("event", "") == "run.won":
+			var data: Dictionary = line.get("data", {})
+			expect_eq(data.get("left_behind", []), [1], "run.won carries the seats left behind")
+			expect_eq((data.get("left_behind_names", []) as Array).size(), 1, "and their names")
 	state.free()
 
 

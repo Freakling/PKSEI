@@ -26,5 +26,6 @@ lines = Dictionary[StringName, PackedStringArray]({
 &"swim_fetch": PackedStringArray("Jag tar den!", "Simma simma...", "Kom hit, ölen!"),
 &"swim_drink": PackedStringArray("Ska bara dricka sen kommer jag", "En klunk till bara...", "Skål från sjön!", "Ölen först, båten sen"),
 &"swim_fell": PackedStringArray("Hjälp, jag ramla i!", "Va kallt det är!", "Vart tog båten vägen?"),
-&"swim_back": PackedStringArray("Kom och hämta mig dåååå!", "Vänta på mig för fan!", "Jag orkar inte simma!", "Det är kallt, skynda er!")
+&"swim_back": PackedStringArray("Kom och hämta mig dåååå!", "Vänta på mig för fan!", "Jag orkar inte simma!", "Det är kallt, skynda er!"),
+&"left_behind": PackedStringArray("%s stayed for one more swim. A long one.", "%s is part of the lake now.", "Loch-Brez says thanks for %s.", "%s will be back next year. Probably.", "Nobody tell %s's mum.", "%s found a new drinking buddy. It has fins.", "The fish are drinking with %s tonight.", "%s is still swimming. Somewhere.")
 })

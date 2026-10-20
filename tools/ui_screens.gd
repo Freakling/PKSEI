@@ -39,7 +39,8 @@ func screens() -> Array[Dictionary]:
 	return [
 		{"id": "splash", "title": "Splash", "scene": "res://scenes/splash.tscn"},
 		{"id": "lake", "title": "Lake", "scene": "res://scenes/lake.tscn"},
-		{"id": "win", "title": "Win", "scene": "res://scenes/win.tscn", "setup": _win},
+		{"id": "win", "title": "Win", "scene": "res://scenes/win.tscn",
+				"states": {"default": _win, "short_handed": _win_short_handed}},
 	]
 
 
@@ -52,13 +53,26 @@ func reset() -> void:
 
 
 ## The win, as the lake shows it: the attempt is won at the island through RunState.arrive(), which
-## the boat does when all four are aboard (the lake then puts the cutscene up). The setup waits until
-## the cutscene's title has faded in, so the capture shows the camp and the crew's names, not the walk.
+## the boat does with anyone aboard (the lake then puts the cutscene up). The setup waits until the
+## cutscene's title has faded in, so the capture shows the camp and the crew's names, not the walk.
 func _win() -> Node:
+	return await _win_with(0)
+
+
+## The same win short-handed (T97): two of the four are in the water, so the title says "2 of 4 made
+## it", lists the two aboard and names each of the others with a dark joke.
+func _win_short_handed() -> Node:
+	return await _win_with(2)
+
+
+## The win with the first `in_water` seats after the front left in the water.
+func _win_with(in_water: int) -> Node:
 	var lake: Node = open_view("res://scenes/lake.tscn")
 	if lake == null:
 		return null
 	await wait_frames(2)
+	for i: int in in_water:
+		RunState.guy_overboard(i + 1, Vector2.ZERO)
 	RunState.arrive()
 	var title_box: Control = null
 	while title_box == null or title_box.modulate.a < 1.0:

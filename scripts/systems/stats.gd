@@ -34,6 +34,8 @@ var shoves: int = 0
 var stops: int = 0
 var pushes: int = 0
 var shore_resets: int = 0
+## The guys left in the water when the boat landed (T97).
+var left_behind: int = 0
 ## The positive changes of every guy's level, summed (what the beers drunk are estimated from).
 var drunk_gained: float = 0.0
 ## The highest level any guy reached.
@@ -62,6 +64,7 @@ func reset() -> void:
 	stops = 0
 	pushes = 0
 	shore_resets = 0
+	left_behind = 0
 	drunk_gained = 0.0
 	max_drunkenness = 0.0
 
@@ -119,6 +122,8 @@ func count(event: StringName, data: Dictionary = {}) -> void:
 			pushes += 1
 		&"run.shore_reset":
 			shore_resets += 1
+		&"run.won":
+			left_behind = (data.get("left_behind", []) as Array).size()
 
 
 ## One guy's level moved up by `gained` (never negative: relief is not counted) and stands at
@@ -153,6 +158,7 @@ func rows(elapsed: float, level_per_beer: float) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	_row(out, "Time", format_time(elapsed))
 	_row(out, "Shore resets", str(shore_resets))
+	_row(out, "Left behind", str(left_behind))
 	_row(out, "Strokes", str(strokes))
 	_row(out, "Fumbles", str(fumbles))
 	_row(out, "Reverse strokes", str(reverse_strokes))

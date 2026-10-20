@@ -304,15 +304,45 @@ func test_progress_is_clamped_and_leaving_the_shore_starts_the_crossing() -> voi
 	state.free()
 
 
-func test_arrive_wins_only_with_all_four_aboard() -> void:
+func test_arrive_wins_with_a_full_crew_and_leaves_nobody_behind() -> void:
+	var state: Node = sober_state()
+	state.set_progress(1.0)
+	state.arrive()
+	expect_eq(state.phase, RunStateScript.Phase.WON, "all four at the island wins")
+	expect_eq(state.left_behind.size(), 0, "nobody left behind")
+	state.free()
+
+
+func test_arrive_short_handed_wins_and_keeps_the_seats_in_the_water() -> void:
 	var state: Node = sober_state()
 	state.set_progress(1.0)
 	state.guys[Paddling.Seat.RIGHT_BACK].aboard = false
+	state.guys[Paddling.Seat.LEFT_FRONT].aboard = false
 	state.arrive()
-	expect_eq(state.phase, RunStateScript.Phase.CROSSING, "a swimmer left behind is no win")
-	state.guys[Paddling.Seat.RIGHT_BACK].aboard = true
+	expect_eq(state.phase, RunStateScript.Phase.WON, "two of four is a win")
+	var expected: Array[int] = [Paddling.Seat.LEFT_FRONT, Paddling.Seat.RIGHT_BACK]
+	expected.sort()
+	var got: Array[int] = state.left_behind.duplicate()
+	got.sort()
+	expect_eq(got, expected, "the seats in the water are left behind")
+	state.guys[Paddling.Seat.LEFT_FRONT].aboard = true
+	state.reset()
+	expect_eq(state.left_behind.size(), 0, "a reset forgets them")
+	state.free()
+
+
+func test_arrive_with_one_aboard_wins_and_nobody_aboard_does_nothing() -> void:
+	var state: Node = sober_state()
+	state.set_progress(1.0)
+	for seat: int in state.guys.size():
+		state.guys[seat].aboard = false
 	state.arrive()
-	expect_eq(state.phase, RunStateScript.Phase.WON, "all four at the island wins")
+	expect_eq(state.phase, RunStateScript.Phase.CROSSING, "an empty boat does not land")
+	expect_eq(state.left_behind.size(), 0, "and leaves nobody behind")
+	state.guys[Paddling.Seat.LEFT_BACK].aboard = true
+	state.arrive()
+	expect_eq(state.phase, RunStateScript.Phase.WON, "one aboard is enough")
+	expect_eq(state.left_behind.size(), 3, "the other three are left behind")
 	state.free()
 
 

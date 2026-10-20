@@ -1,8 +1,9 @@
 class_name WinCutscene
 extends Node2D
-## WinCutscene · the win (GDD › Win and Loss): the boat has reached the island with all four
-## aboard, so the boys step onto the island, make camp and drink more, and the crossing ends
-## there. The lake puts this scene at the island's position when RunState's phase becomes WON
+## WinCutscene · the win (GDD › Win and Loss): the boat has reached the island with at least one
+## guy aboard, so the guys aboard step onto the island, make camp and drink more, and the crossing
+## ends there. Anyone left in the water (RunState.left_behind, T97) does not appear: the title says
+## how many made it and names each of the left-behind with a dark joke. The lake puts this scene at the island's position when RunState's phase becomes WON
 ## and calls begin(); it tears the scene down when the player goes again. Scripted with Tweens,
 ## no physics and no rules: it reads RunState.elapsed for the title and emits `again` on a key
 ## once the title is up (the lake starts the new attempt).
@@ -25,6 +26,8 @@ const BEER_TEXTURE: Texture2D = preload("res://assets/sprites/beer.png")
 const FIRE_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/campfire_0.png"), preload("res://assets/sprites/campfire_1.png"),
 ]
+## The title's heading with a full crew; short-handed it is heading_text()'s "%d of 4 made it".
+const HEADING_FULL: String = "They made it"
 ## The order the boys hop off: the front seats first.
 const HOP_ORDER: Array[int] = [
 	Paddling.Seat.LEFT_FRONT, Paddling.Seat.RIGHT_FRONT,
@@ -78,14 +81,18 @@ const STATS_OUTLINE_SIZE: int = 3
 @onready var _fire: Sprite2D = $Visual/Fire
 @onready var _title: CanvasLayer = $Title
 @onready var _title_box: Control = %TitleBox
+@onready var _heading: Label = %Heading
+@onready var _left_behind_box: VBoxContainer = %LeftBehind
 @onready var _time_label: Label = %Time
 @onready var _stats_grid: GridContainer = %Stats
 @onready var _crew_label: Label = %Crew
 @onready var _prompt: Label = %Prompt
 
 var _island_scale: float = 1.0
-## One sprite per seat, in Paddling.Seat order.
+## One sprite per seat, in Paddling.Seat order; null for a guy left behind (T97).
 var _guys: Array[Sprite2D] = []
+## The seats that made it, in seat order, read from RunState when begin() is called.
+var _crew: Array[int] = []
 var _seated: int = 0
 var _fire_frame: int = 0
 var _title_shown: bool = false
@@ -104,7 +111,11 @@ func begin(boat: CharacterBody2D, camera: Camera2D, island_radius: float, island
 		toward_boat = Vector2.DOWN
 	var along_beach: Vector2 = toward_boat.orthogonal()
 	_guys.resize(RunState.GUY_COUNT)
+	_crew.clear()
 	for seat: int in RunState.GUY_COUNT:
+		if not RunState.guys[seat].aboard:
+			continue
+		_crew.append(seat)
 		var guy: Sprite2D = Sprite2D.new()
 		guy.name = "Guy%d" % seat
 		guy.texture = GUY_TEXTURES[seat]
@@ -117,6 +128,8 @@ func begin(boat: CharacterBody2D, camera: Camera2D, island_radius: float, island
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	master.tween_callback(Audio.play.bind(&"cheer"))
 	for seat: int in HOP_ORDER:
+		if not _crew.has(seat):
+			continue
 		var depth: float = LAND_DEPTH_BACK if Paddling.is_back_seat(seat) else LAND_DEPTH_FRONT
 		var landing: Vector2 = toward_boat * island_radius * depth \
 				- along_beach * Paddling.seat_side(seat) * LAND_SPREAD
@@ -134,6 +147,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key or touch or event.is_action_pressed(&"ui_accept"):
 		_done = true
 		again.emit()
+
+
+## The title's heading for `made_it` guys of GUY_COUNT who reached the island.
+static func heading_text(made_it: int) -> String:
+	if made_it >= RunState.GUY_COUNT:
+		return HEADING_FULL
+	return "%d of %d made it" % [made_it, RunState.GUY_COUNT]
+
+
+## One dark joke per name in `names`, in order: each drawn from `lines` with `rng` and holding the
+## name where the line has its %s. The lines are not repeated until they run out (two left-behind
+## guys do not get the same joke); a line without a %s is used as it is. Empty when `lines` is.
+static func left_behind_lines(names: Array[String], lines: PackedStringArray, rng: RandomNumberGenerator) -> Array[String]:
+	var out: Array[String] = []
+	if lines.is_empty():
+		return out
+	var pool: Array[String] = []
+	for who: String in names:
+		if pool.is_empty():
+			pool.assign(lines)
+		var line: String = pool.pop_at(rng.randi_range(0, pool.size() - 1))
+		out.append(line % who if line.contains("%s") else line)
+	return out
 
 
 ## The crossing time as m:ss.
@@ -203,7 +239,7 @@ func _sit(seat: int) -> void:
 	sip.tween_property(beer, "rotation", 0.0, DRINK_LIFT_TIME * 0.5)
 	sip.tween_property(beer, "position", BEER_HAND, DRINK_LIFT_TIME).set_trans(Tween.TRANS_SINE)
 	_seated += 1
-	if _seated == RunState.GUY_COUNT:
+	if _seated == _crew.size():
 		_make_camp()
 
 
@@ -237,13 +273,35 @@ func _flicker() -> void:
 ## keys count.
 func _show_title() -> void:
 	_time_label.text = "Crossing time %s" % format_time(RunState.elapsed)
-	_crew_label.text = ", ".join(RunState.guy_names)
+	_heading.text = heading_text(_crew.size())
+	var crew_names: Array[String] = []
+	for seat: int in _crew:
+		crew_names.append(RunState.name_of(seat))
+	_crew_label.text = ", ".join(crew_names)
+	_fill_left_behind()
 	_fill_stats()
 	_title_box.modulate.a = 0.0
 	_title.visible = true
 	var fade: Tween = create_tween()
 	fade.tween_property(_title_box, "modulate:a", 1.0, TITLE_FADE)
 	fade.tween_callback(_arm_prompt)
+
+
+## A dark joke for each guy left in the water, under the crew line, drawn once as the title comes up
+## from the run's RNG.
+func _fill_left_behind() -> void:
+	for child: Node in _left_behind_box.get_children():
+		_left_behind_box.remove_child(child)
+		child.queue_free()
+	var names: Array[String] = []
+	for seat: int in RunState.left_behind:
+		names.append(RunState.name_of(seat))
+	for line: String in left_behind_lines(names, RunState.lines.lines_of(&"left_behind"), RunState.rng):
+		var label: Label = Label.new()
+		label.text = line
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_style_stat(label)
+		_left_behind_box.add_child(label)
 
 
 ## The crossing's stats (T86) under the time, in two columns of label and value pairs: the first

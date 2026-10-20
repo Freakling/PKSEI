@@ -116,6 +116,9 @@ var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
 var progress: float = 0.0
 var elapsed: float = 0.0
+## The seats still in the water when the boat reached the island (T97): set by arrive(), empty
+## until the attempt is won and for a full crew; the win title names them.
+var left_behind: Array[int] = []
 var phase: Phase = Phase.LAUNCH
 
 var paddling: Paddling = Paddling.new(preload("res://data/boat_tuning.tres") as BoatTuning)
@@ -244,6 +247,7 @@ func reset() -> void:
 		_water.append(0.0)
 	progress = 0.0
 	elapsed = 0.0
+	left_behind.clear()
 	phase = Phase.LAUNCH
 	_push_on = false
 	_headwind_on = false
@@ -643,22 +647,25 @@ func set_progress(value: float) -> void:
 		_log("run", "run.crossing_started", "the boat left the shore", {"elapsed": snappedf(elapsed, 0.1)})
 
 
-## The boat has touched the island: the attempt is won if all four are aboard
-## (GDD › Win and Loss); otherwise nothing happens and the boat can come back for them.
+## The boat has touched the island (T97, GDD › Win and Loss): the attempt is won with at least one
+## guy aboard. Anyone still in the water is left behind: their seats go to `left_behind`, which the
+## win title names. With nobody aboard nothing happens (the empty boat can't land anyway).
 func arrive() -> void:
 	if phase == Phase.WON:
 		return
-	if all_aboard():
-		phase = Phase.WON
-		_log("run", "run.won", "the boys reached the island in %.1fs" % elapsed,
-				{"elapsed": snappedf(elapsed, 0.1), "lake_seed": lake_seed})
-	else:
-		var missing: Array[int] = []
-		for guy: Guy in guys:
-			if not guy.aboard:
-				missing.append(guy.seat)
-		_log("run", "run.arrived_short", "the boat reached the island with %d in the water" % missing.size(),
-				{"missing": missing})
+	var aboard: Array[int] = _seats_aboard()
+	if aboard.is_empty():
+		return
+	left_behind.clear()
+	var left_names: Array[String] = []
+	for guy: Guy in guys:
+		if not guy.aboard:
+			left_behind.append(guy.seat)
+			left_names.append(name_of(guy.seat))
+	phase = Phase.WON
+	_log("run", "run.won", "the boys reached the island in %.1fs, %d of %d made it" % [elapsed, aboard.size(), GUY_COUNT],
+			{"elapsed": snappedf(elapsed, 0.1), "lake_seed": lake_seed,
+			"left_behind": left_behind.duplicate(), "left_behind_names": left_names})
 
 
 func all_aboard() -> bool:
@@ -939,7 +946,7 @@ func debug_water(side: int) -> void:
 		water_aboard(side as Rescue.Hull, DEBUG_WATER)
 
 
-## The boat touches the island (arrive): the attempt is won only with all four aboard.
+## The boat touches the island (arrive): the attempt is won with anyone aboard.
 func debug_win() -> void:
 	arrive()
 

@@ -230,9 +230,10 @@ func test_rows_have_a_stable_order_and_keep_the_zero_rows() -> void:
 	for row: Dictionary in stats.rows(75.0, 0.15):
 		again.append(row["label"])
 	expect(labels == again, "the order does not depend on the counts")
-	expect_eq(labels.size(), 24, "a row for every counter")
+	expect_eq(labels.size(), 25, "a row for every counter")
 	expect_eq(labels[0], "Time", "time first")
 	expect_eq(labels[1], "Shore resets")
+	expect_eq(labels[2], "Left behind", "after the shore resets")
 	expect_eq(labels[labels.size() - 1], "Drunkest", "the drunkest moment last")
 	var zero: Array[Dictionary] = Stats.new().rows(0.0, 0.15)
 	expect_eq(_row(zero, "Pukes"), "0", "zero rows stay")
@@ -284,3 +285,17 @@ func test_a_new_attempt_starts_the_stats_over_and_a_shore_reset_keeps_them() -> 
 func test_the_level_per_beer_is_a_tunable_with_a_placeholder_default() -> void:
 	var tuning: DrinkTuning = preload("res://data/drink_tuning.tres") as DrinkTuning
 	expect(tuning.level_per_beer > 0.0, "a beer is worth some drunkenness")
+
+
+func test_left_behind_is_counted_from_the_win() -> void:
+	var state: Node = _state()
+	state.guy_overboard(1, BOAT)
+	state.guy_overboard(3, BOAT)
+	state.set_progress(1.0)
+	state.arrive()
+	expect_eq(state.stats.left_behind, 2, "two in the water when the boat landed")
+	var rows: Array[Dictionary] = state.stats.rows(state.elapsed, state.drunkenness.tuning.level_per_beer)
+	expect_eq(_row(rows, "Left behind"), "2")
+	state.new_attempt()
+	expect_eq(state.stats.left_behind, 0, "a new attempt starts over")
+	state.free()

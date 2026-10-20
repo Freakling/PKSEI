@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T97 · B9 · R1
+**Next IDs:** T98 · B9 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T97 · Landing short-handed is a win: the left-behind are named on the win title with a dark joke · done · M · agent
+- Depends on: T28, T86
+- Touches: scripts/autoload/run_state.gd (arrive() wins with one or more aboard and records `left_behind`, the seats in the water; arrived_short goes), scripts/lake.gd (the island stops the boat), scenes/lake.tscn (an island body if needed), scripts/win_cutscene.gd and scenes/win.tscn (only the guys aboard hop ashore and camp; the heading says how many made it; a line per left-behind guy), scripts/resources/lines.gd and data/lines.tres (+left_behind: dark jokes with a %s for the name), scripts/systems/stats.gd (a "Left behind" row), tests/test_run_state.gd, tests/test_stats.gd, tests/test_lines.gd
+- Done when: arrive() with one to four aboard sets WON, logs run.won with the left-behind seats, and keeps them in `left_behind`; with nobody aboard it does nothing (test) · the boat can't sail over the island: it stops at its shore (test or play) · the win title's heading is "They made it" with a full crew and "%d of 4 made it" short-handed, and each left-behind guy gets a line drawn from `left_behind` with his name (test on the pure helper) · the cutscene hops and seats only the guys who were aboard (play) · Stats has a Left behind row (test)
+- GDD: Win and Loss
 
 ### T96 · The splash plays the song with vocals in the NES style · done · XS · agent
 - Depends on: T95

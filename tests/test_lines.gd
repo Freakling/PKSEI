@@ -42,6 +42,15 @@ func test_the_swimmers_kinds_have_three_lines_each_and_the_two_quoted_ones() -> 
 	expect(LINES.lines_of(&"swim_back").has("Kom och hämta mig dåååå!"))
 
 
+func test_left_behind_has_six_lines_each_with_one_name_slot() -> void:
+	expect(Lines.KINDS.has(&"left_behind"), "left_behind is a Lines.KINDS entry")
+	var lines: PackedStringArray = LINES.lines_of(&"left_behind")
+	expect(lines.size() >= 6, "at least six dark jokes")
+	for line: String in lines:
+		expect_eq(line.count("%s"), 1, "exactly one %%s in: %s" % line)
+		expect_eq(line % "Göras", line.replace("%s", "Göras"), "the name goes in")
+
+
 func test_the_resource_lists_no_kind_outside_kinds() -> void:
 	for kind: StringName in LINES.lines.keys():
 		expect(Lines.KINDS.has(kind), "%s in data/lines.tres is a Lines.KINDS entry" % kind)
