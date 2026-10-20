@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T96 · B9 · R1
+**Next IDs:** T97 · B9 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T96 · The splash plays the song with vocals in the NES style · done · XS · agent
+- Depends on: T95
+- Touches: assets/audio/music/vi_ses_om_ett_ar_igen_nes.wav (new, looping), assets/audio/music/vi_ses_om_ett_ar_igen_16bit.wav.import (skip), scenes/splash.tscn (music), tools/song_styles.py, design/gdd.md, AGENTS.md
+- Done when: the splash's `music` is the NES-style render with vocals from `tools/song_styles.py`, imported looping (check: the scene quoted) · the MIDI rendition and the plain recording are not in the build (check) · it plays on the splash (play)
+- GDD: Presentation and Platforms
 
 ### T95 · The splash song as 16-bit MIDI music: melody, bass and beat transcribed and rendered · done · M · agent
 - Depends on: T93
