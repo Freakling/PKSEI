@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T93 · B8 · R1
+**Next IDs:** T94 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T93 · The splash plays the director's song "Vi ses om ett år igen" · done · XS · agent
+- Depends on: T92
+- Touches: assets/audio/music/vi_ses_om_ett_ar_igen.wav (new, converted), scenes/splash.tscn (music), .gitignore (the source WAV and its .import), design/gdd.md
+- Done when: the source WAV (32-bit float stereo 44.1 kHz, 58 MB) is converted to 16-bit mono 22 kHz in assets/audio/music/ and the splash's `music` points at it (check: the scene quoted) · the source in the repository root is gitignored and set to skip import, so it stays out of the build (check) · it plays on the splash (play)
+- GDD: Presentation and Platforms
 
 ### T92 · A splash screen with the title, "Press any key" and placeholder chiptune music · done · M · agent
 - Depends on: T24, T26, T54

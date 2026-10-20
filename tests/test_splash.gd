@@ -69,7 +69,7 @@ func test_the_theme_plays_on_the_music_bus_and_is_one_exported_stream() -> void:
 	expect_eq(player.bus, &"Music")
 	expect(AudioServer.get_bus_index(&"Music") >= 0, "the Music bus exists")
 	var wav: AudioStreamWAV = splash.music as AudioStreamWAV
-	expect(wav != null and wav.loop_mode == AudioStreamWAV.LOOP_FORWARD, "the placeholder loops by itself")
+	expect(wav != null and wav.loop_mode == AudioStreamWAV.LOOP_FORWARD, "the music loops by itself")
 	_remove(splash)
 
 
