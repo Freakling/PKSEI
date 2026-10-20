@@ -61,6 +61,21 @@ const FLAT: float = 1.0e6
 ## Pitch of each guy's grunt in Paddling.Seat order (LF, LB, RF, RB): a tenor, a baritone, a
 ## bass and a squeaky one, so the four are told apart by ear.
 const GRUNT_PITCHES: Array[float] = [150.0, 115.0, 90.0, 200.0]
+## Each guy's babble (T94, guy_talk_%d) in Paddling.Seat order: a base pitch and a pattern of
+## four note ratios, so the four voices differ in pitch and in tune.
+const TALK_PITCHES: Array[float] = [260.0, 180.0, 140.0, 340.0]
+const TALK_PATTERNS: Array[Array] = [
+	[1.0, 1.25, 1.12, 1.5],
+	[1.0, 1.5, 1.25, 1.12],
+	[1.12, 1.0, 1.5, 1.25],
+	[1.5, 1.25, 1.0, 1.25],
+]
+## The babble's length, and each of its blips (a note) and the gap after it, in seconds.
+const TALK_SECONDS: float = 0.25
+const TALK_BLIP_SECONDS: float = 0.045
+const TALK_GAP_SECONDS: float = 0.015
+## The babble's peak, quieter than the grunts (PEAK) so it sits under the rest of the game.
+const TALK_PEAK: float = 0.35
 
 enum Wave { SINE, TRIANGLE, SQUARE }
 
@@ -79,6 +94,11 @@ func _init() -> void:
 		_save(_grunt(GRUNT_PITCHES[seat]), "guy_grunt_%d" % seat)
 	# It uses no noise, so the RNG's sequence for the sounds above stays as it was.
 	_save(_cheer(), "cheer")
+	# The guys' babbles (T94): no noise either, so the RNG's sequence still stays as it was.
+	for seat: int in TALK_PITCHES.size():
+		var pattern: Array[float] = []
+		pattern.assign(TALK_PATTERNS[seat])
+		_save(_talk(TALK_PITCHES[seat], pattern), "guy_talk_%d" % seat, OUT_DIR, false, TALK_PEAK)
 	# The hazard telegraphs (T26), after everything above for the same reason.
 	DirAccess.make_dir_recursive_absolute(HAZARD_DIR)
 	_save(_engine(), "engine", HAZARD_DIR, true)
@@ -161,6 +181,18 @@ func _cheer() -> PackedFloat32Array:
 		_mix(sound, 0.1 * i, _tone(length, notes[i], notes[i], Wave.SQUARE, 0.005, decay), 0.3)
 		_mix(sound, 0.1 * i, _tone(length, notes[i] * 0.5, notes[i] * 0.5, Wave.TRIANGLE, 0.005, decay), 0.4)
 	return sound
+
+
+## A guy's babble (T94): one short square-wave blip per entry of `pattern`, each at base_hz times
+## that ratio, with a gap between them, softened by a lowpass like the grunts. A few notes of
+## talk without words; the speech bubble says what he says.
+func _talk(base_hz: float, pattern: Array[float]) -> PackedFloat32Array:
+	var sound: PackedFloat32Array = _blank(TALK_SECONDS)
+	for i: int in pattern.size():
+		var hz: float = base_hz * pattern[i]
+		var blip: PackedFloat32Array = _tone(TALK_BLIP_SECONDS, hz, hz, Wave.SQUARE, 0.004, 0.015)
+		_mix(sound, float(i) * (TALK_BLIP_SECONDS + TALK_GAP_SECONDS), _release(blip), 1.0)
+	return _lowpass(sound, base_hz * 6.0)
 
 
 # --- the hazard telegraphs (T26) ----------------------------------------------------------------
@@ -441,13 +473,13 @@ func _coefficient(hz: float) -> float:
 
 # --- output -------------------------------------------------------------------------------------
 
-## Normalises `samples` to PEAK, packs them as PCM16 and writes `dir`/<sound_name>.wav, with a
-## forward loop over the whole sound when `loop` is set.
-func _save(samples: PackedFloat32Array, sound_name: String, dir: String = OUT_DIR, loop: bool = false) -> void:
+## Normalises `samples` to `level` (PEAK unless a quieter sound says so), packs them as PCM16 and
+## writes `dir`/<sound_name>.wav, with a forward loop over the whole sound when `loop` is set.
+func _save(samples: PackedFloat32Array, sound_name: String, dir: String = OUT_DIR, loop: bool = false, level: float = PEAK) -> void:
 	var peak: float = 0.0
 	for sample: float in samples:
 		peak = maxf(peak, absf(sample))
-	var gain: float = PEAK / peak if peak > 0.0 else 0.0
+	var gain: float = level / peak if peak > 0.0 else 0.0
 	var data: PackedByteArray = PackedByteArray()
 	data.resize(samples.size() * 2)
 	for i: int in samples.size():

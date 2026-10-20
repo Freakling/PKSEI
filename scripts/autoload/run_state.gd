@@ -31,9 +31,9 @@ extends Node
 ## RNG, the seed the lake plans its hazards from (Hazards.plan), and then resets; a shore reset
 ## only resets, so the attempt meets the same lake again. The guys' lines (T56, GDD › World and
 ## Narrative) live here too: a hazard whose warning starts calls telegraph(kind, hull), which
-## emits telegraphed for the speech bubbles (scripts/ui/speech_bubbles.gd), and pick_line(kind)
+## emits telegraphed for the speech bubbles (scripts/ui/speech_bubbles.gd), and pick_line(kind, seat)
 ## draws one of data/lines.tres's Swedish lines for a telegraph with the RNG, so no screen rolls
-## one. The crew's names (T68, GDD › Characters and Units) live here too: new_attempt() draws four
+## one, and emits spoke(seat, kind) for the babble (T94). The crew's names (T68, GDD › Characters and Units) live here too: new_attempt() draws four
 ## distinct ones from data/names.tres with the RNG (guy_names, name_of(seat)) and a shore reset
 ## keeps them. Screens only read. Reads and writes no player data.
 ##
@@ -107,6 +107,10 @@ signal puked(seat: int)
 ## comes from, or Rescue.NOBODY when it comes from nowhere in particular (a headwind). Emitted
 ## by telegraph(); the speech bubbles put the line on the guy on that hull.
 signal telegraphed(kind: StringName, hull: int)
+## A guy said a line (T94: the Audio autoload plays his babble): `seat` is the guy whose bubble
+## shows it, `kind` the Lines.KINDS entry it was drawn from. Emitted by pick_line() when it
+## returns a line, never for a kind without lines.
+signal spoke(seat: int, kind: StringName)
 
 var guys: Array[Guy] = []
 ## 0.0 at the shore, 1.0 at the island; the lake sets it with set_progress().
@@ -453,9 +457,13 @@ func telegraph(kind: StringName, hull: int = Rescue.NOBODY) -> void:
 
 
 ## One of the Swedish lines for `kind` (GDD › World and Narrative), drawn with the RNG here so
-## no screen rolls one; "" for a kind without lines.
-func pick_line(kind: StringName) -> String:
-	return lines.pick(kind, rng)
+## no screen rolls one; "" for a kind without lines. When it gives a line, `seat`'s guy says it:
+## emits spoke(seat, kind) (T94). The seat defaults to -1, nobody, which speaks to no one.
+func pick_line(kind: StringName, seat: int = -1) -> String:
+	var line: String = lines.pick(kind, rng)
+	if not line.is_empty():
+		spoke.emit(seat, kind)
+	return line
 
 
 ## The name of `seat`'s guy this attempt (T68, GDD › Characters and Units: the HUD shows it, not

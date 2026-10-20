@@ -137,7 +137,7 @@ func _process(delta: float) -> void:
 			var kind: StringName = _windup_kind_of(seat)
 			if kind != _windup_kinds[seat]:
 				_windup_kinds[seat] = kind
-				_windup_lines[seat] = RunState.pick_line(kind) if not kind.is_empty() else ""
+				_windup_lines[seat] = RunState.pick_line(kind, seat) if not kind.is_empty() else ""
 			text = _call_outs[seat] if not _call_outs[seat].is_empty() else _windup_lines[seat]
 			if boat != null:
 				at = to_screen * boat.guy_global_position(seat)
@@ -167,7 +167,7 @@ func _swim_text_of(seat: int, swimmer: Rescue.Swimmer, delta: float) -> String:
 	if swimmer != null:
 		kind = talk_kind(swimmer.kind(tuning.swim_back_delay))
 	if talk.step(delta, kind, tuning.swim_talk_interval, tuning.call_out_time):
-		_swim_lines[seat] = RunState.pick_line(kind)
+		_swim_lines[seat] = RunState.pick_line(kind, seat)
 	if kind.is_empty():
 		_swim_lines[seat] = ""
 	return _swim_lines[seat] if talk.showing() else ""
@@ -183,7 +183,7 @@ func _windup_kind_of(seat: int) -> StringName:
 ## A fishing line snagged this guy's paddle (T87): he yells about it for call_out_time, over
 ## whatever wind-up line he had.
 func _on_snagged(seat: int) -> void:
-	var line: String = RunState.pick_line(SNAG_KIND)
+	var line: String = RunState.pick_line(SNAG_KIND, seat)
 	if line.is_empty():
 		return
 	_call_outs[seat] = line
@@ -195,7 +195,7 @@ func _on_telegraphed(kind: StringName, hull: int) -> void:
 	var seat: int = speaker_for(hull, _seats_aboard())
 	if seat == Rescue.NOBODY:
 		return
-	var line: String = RunState.pick_line(kind)
+	var line: String = RunState.pick_line(kind, seat)
 	if line.is_empty():
 		return
 	_call_outs[seat] = line

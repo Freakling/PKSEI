@@ -9,7 +9,8 @@ extends Node
 ## handle, stop_loop() ends it; at most LOOP_CAP run at once (T26). Listens to RunState: a
 ## stroke landing plays the swoosh and that seat's guy's grunt (one pitch per guy), a fumble
 ## the plop, a jump the splash, a pickup the blip, a beer going overboard the clink, a guy
-## knocked in the splash again and the beast's grab its chomp. The buses are
+## knocked in the splash again, the beast's grab its chomp, and a guy saying a line his babble
+## (RunState.spoke, T94). The buses are
 ## assets/audio/default_bus_layout.tres (Master → Sfx, Music for later). master_volume sets the
 ## Master bus and lives only here: the GDD leaves player settings open, so there is no settings
 ## file yet. Inert during the check, and safe without an audio device: on the dummy driver the
@@ -25,6 +26,8 @@ const LOOP_CAP: int = 4
 const DEFAULT_MASTER_VOLUME: float = 0.8
 ## The stroke swoosh varies this much in pitch either way, so four paddles don't sound like one.
 const STROKE_PITCH_SPREAD: float = 0.08
+## A guy's babble varies this much in pitch either way, so his repeats don't sound identical (T94).
+const TALK_PITCH_SPREAD: float = 0.06
 
 const AUDIO_DIR: String = "res://assets/audio"
 const HAZARD_DIR: String = "res://assets/audio/hazards"
@@ -34,6 +37,7 @@ const HAZARD_DIR: String = "res://assets/audio/hazards"
 const SOUNDS: Array[StringName] = [
 	&"stroke", &"fumble", &"splash", &"pickup", &"beer_over", &"cheer",
 	&"guy_grunt_0", &"guy_grunt_1", &"guy_grunt_2", &"guy_grunt_3",
+	&"guy_talk_0", &"guy_talk_1", &"guy_talk_2", &"guy_talk_3",
 ]
 ## The hazard telegraphs, each HAZARD_DIR/<name>.wav; engine, jetski, whitecaps and
 ## beast_rumble loop (the WAV carries the loop, which the importer reads).
@@ -42,6 +46,8 @@ const HAZARD_SOUNDS: Array[StringName] = [
 ]
 ## Each seat's grunt, in Paddling.Seat order.
 const GRUNTS: Array[StringName] = [&"guy_grunt_0", &"guy_grunt_1", &"guy_grunt_2", &"guy_grunt_3"]
+## Each seat's babble, in Paddling.Seat order too: the voice of a guy who says a line (T94).
+const TALKS: Array[StringName] = [&"guy_talk_0", &"guy_talk_1", &"guy_talk_2", &"guy_talk_3"]
 
 ## Linear 0..1 gain of the Master bus; assigning it applies it (set_master_volume).
 var master_volume: float = DEFAULT_MASTER_VOLUME:
@@ -76,6 +82,7 @@ func _ready() -> void:
 	RunState.beer_overboard_started.connect(_on_beer_overboard_started)
 	RunState.guy_fell_in.connect(_on_guy_fell_in)
 	RunState.guy_grabbed.connect(_on_guy_grabbed)
+	RunState.spoke.connect(_on_spoke)
 
 
 ## Plays the sound called `sound_name` (one of SOUNDS or HAZARD_SOUNDS) once at `pitch_scale`.
@@ -193,3 +200,11 @@ func _on_guy_fell_in(_seat: int) -> void:
 
 func _on_guy_grabbed(_seat: int) -> void:
 	play(&"beast_grab")
+
+
+## A guy says a line (T94): his babble, at a little pitch spread. A seat outside the guys (-1,
+## nobody) says nothing.
+func _on_spoke(seat: int, _kind: StringName) -> void:
+	if seat < 0 or seat >= TALKS.size():
+		return
+	play(TALKS[seat], randf_range(1.0 - TALK_PITCH_SPREAD, 1.0 + TALK_PITCH_SPREAD))

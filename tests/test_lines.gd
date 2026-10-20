@@ -1,8 +1,9 @@
 extends "res://tools/test_case.gd"
 ## T56 · Lines: data/lines.tres has at least one Swedish line for every telegraph and every hazard
 ## in Lines.KINDS, pick() returns one of that kind's lines, and RunState hands them out: pick_line()
-## draws one with its RNG and telegraph() emits telegraphed with the kind and the hull
-## (GDD › World and Narrative).
+## draws one with its RNG and telegraph() emits telegraphed with the kind and the hull, and
+## pick_line(kind, seat) emits spoke with the seat and the kind (T94: the babble), never for a kind
+## without lines (GDD › World and Narrative).
 
 const RunStateScript: GDScript = preload("res://scripts/autoload/run_state.gd")
 const LINES: Lines = preload("res://data/lines.tres")
@@ -11,12 +12,19 @@ const LINES: Lines = preload("res://data/lines.tres")
 var _heard_kind: StringName = &""
 var _heard_hull: int = -99
 var _heard_count: int = 0
+## What the last spoke signal carried (T94), and how many came.
+var _spoke_seat: int = -99
+var _spoke_kind: StringName = &""
+var _spoke_count: int = 0
 
 
 func before_each() -> void:
 	_heard_kind = &""
 	_heard_hull = -99
 	_heard_count = 0
+	_spoke_seat = -99
+	_spoke_kind = &""
+	_spoke_count = 0
 
 
 func test_every_kind_has_at_least_one_line() -> void:
@@ -63,6 +71,28 @@ func test_run_state_pick_line_draws_from_its_lines() -> void:
 	state.free()
 
 
+func test_pick_line_with_a_seat_emits_spoke_with_that_seat_and_kind() -> void:
+	var state: Node = RunStateScript.new()
+	state.rng.seed = 11
+	state.reset()
+	state.spoke.connect(_on_spoke)
+	var line: String = state.pick_line(&"gust", 2)
+	expect(line != "", "pick_line(gust) gave a line")
+	expect_eq(_spoke_seat, 2, "spoke carries the seat that says the line")
+	expect_eq(_spoke_kind, &"gust", "spoke carries the kind")
+	expect_eq(_spoke_count, 1, "one spoke per line")
+	state.free()
+
+
+func test_pick_line_of_an_unknown_kind_emits_no_spoke() -> void:
+	var state: Node = RunStateScript.new()
+	state.reset()
+	state.spoke.connect(_on_spoke)
+	expect_eq(state.pick_line(&"no_such_kind", 1), "")
+	expect_eq(_spoke_count, 0, "no spoke for a kind without lines")
+	state.free()
+
+
 func test_telegraph_emits_telegraphed_with_the_kind_and_the_hull() -> void:
 	var state: Node = RunStateScript.new()
 	state.reset()
@@ -81,3 +111,9 @@ func _on_telegraphed(kind: StringName, hull: int) -> void:
 	_heard_kind = kind
 	_heard_hull = hull
 	_heard_count += 1
+
+
+func _on_spoke(seat: int, kind: StringName) -> void:
+	_spoke_seat = seat
+	_spoke_kind = kind
+	_spoke_count += 1
