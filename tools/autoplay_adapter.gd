@@ -20,9 +20,12 @@ extends "res://tools/autoplay_adapter_base.gd"
 ## key for a guy who sees double and skipping a guy who can't paddle, then lets the boat run for
 ## PILOT_FRAMES. Weight 0: the random and smoke strategies never pick it.
 ##
-## The `pause` action holds still for a second, for recording a run: it is offered (weight 0, so only
-## a scenario that scores it picks it) for INTRO_SECONDS before the first other action of a run, and
-## once the win title with the stats is up, for OUTRO_SECONDS before the run counts as over.
+## The `splash` action shows the game's splash for recording a run, a second at a time: the first one
+## puts scenes/splash.tscn up again (start_run takes the boot one down), with its music, and after
+## SPLASH_SECONDS the last one fades it out the way a key press does. The `pause` action holds still
+## for a second: INTRO_SECONDS once the splash is gone, before the first stroke, and, once the win
+## title with the stats is up, OUTRO_SECONDS before the run counts as over. Both have weight 0, so
+## only a scenario that scores them (island) picks them; smoke and the check never see the splash.
 
 ## The strokes in Paddling.Seat order (S, A, K, L): the seat's name for ids and labels.
 const SEATS: Array[String] = ["left_front", "left_back", "right_front", "right_back"]
@@ -44,13 +47,17 @@ const PILOT_BEHIND: float = 1.9
 const PILOT_EASE: float = 110.0
 const PILOT_EASE_HOLD: float = 0.2
 const LAKE_TUNING: LakeTuning = preload("res://data/lake_tuning.tres") as LakeTuning
-## The recording pauses: seconds held before the first stroke and on the win title's stats.
-const INTRO_SECONDS: int = 10
+## The recording pauses: seconds the splash stays up, seconds held after it fades before the first
+## stroke, and seconds held on the win title's stats.
+const SPLASH_SECONDS: int = 15
+const INTRO_SECONDS: int = 3
 const OUTRO_SECONDS: int = 20
+const SPLASH_SCENE: String = "res://scenes/splash.tscn"
 
 var _turn: int = 0
 ## Seconds of the intro and outro pauses still to hold in this run.
 var _intro_left: int = INTRO_SECONDS
+var _splash_left: int = SPLASH_SECONDS
 var _outro_left: int = OUTRO_SECONDS
 
 
@@ -71,6 +78,7 @@ func start_run(run_seed: int) -> void:
 	else:
 		RunState.new_attempt()
 	_turn = 0
+	_splash_left = SPLASH_SECONDS
 	_intro_left = INTRO_SECONDS
 	_outro_left = OUTRO_SECONDS
 	play_log().call("set_turn", _turn)
@@ -115,13 +123,17 @@ func list_actions() -> Array[Dictionary]:
 	actions.append({"id": "wait", "label": "Let the boat drift", "kind": "api", "weight": 0.5})
 	actions.append({"id": "pilot", "label": "Steer for the corridor, a swimmer or the island", "kind": "api",
 		"weight": 0.0, "unblocks": true})
-	if _intro_left > 0:
+	if _splash_left > 0:
+		actions.append({"id": "splash", "label": "Show the splash", "kind": "api", "weight": 0.0})
+	elif _intro_left > 0:
 		actions.append({"id": "pause", "label": "Hold before the first stroke", "kind": "api", "weight": 0.0})
 	return actions
 
 
 ## The api actions: a medium-hold stroke (a forward one ends the driver's "turn") and the wait.
 func perform(action: Dictionary) -> bool:
+	if str(action.get("id", "")) == "splash":
+		return await _show_splash()
 	if str(action.get("id", "")) == "pause":
 		return await _pause()
 	_intro_left = 0
@@ -171,9 +183,37 @@ func _win_title_up() -> bool:
 	return win != null and bool(win.get("_title_shown"))
 
 
-## "win" while the island cutscene is up, else "lake".
+## "win" while the island cutscene is up, "splash" while the splash is, else "lake".
 func current_view() -> String:
-	return "win" if RunState.phase == RunState.Phase.WON else "lake"
+	if RunState.phase == RunState.Phase.WON:
+		return "win"
+	return "splash" if _splash() != null else "lake"
+
+
+## The splash over the lake, or null.
+func _splash() -> Node:
+	return tree.current_scene.get_node_or_null("Splash") if tree.current_scene != null else null
+
+
+## One second of the splash for a recording: put it up on the first, then hold; on the last, fade it
+## out as a key press would and wait until it is gone.
+func _show_splash() -> bool:
+	if tree.current_scene == null:
+		return false
+	var splash: Node = _splash()
+	if splash == null and _splash_left == SPLASH_SECONDS:
+		splash = (load(SPLASH_SCENE) as PackedScene).instantiate()
+		splash.name = "Splash"
+		tree.current_scene.add_child(splash)
+	await tree.create_timer(1.0).timeout
+	_splash_left -= 1
+	if _splash_left <= 0 and splash != null and is_instance_valid(splash):
+		splash.call("start_fade")
+		var frames: int = 0
+		while is_instance_valid(splash) and frames < 180:
+			await wait_frames(1)
+			frames += 1
+	return true
 
 
 ## One beat of the pilot (see the header): strokes toward its target, then PILOT_FRAMES of running.

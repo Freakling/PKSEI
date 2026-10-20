@@ -39,12 +39,15 @@ func scenarios() -> Array[Dictionary]:
 		# The full crossing: the adapter's pilot plays like a steady player, beat by beat, until the
 		# boat lands on the island (the run is over on WON) or the step cap. Rescues, hazards, antics and
 		# shore resets happen as they come; the win screen is the one view only this scenario opens. For
-		# recording, it holds 10 seconds before the first stroke and 20 on the win title's stats (the
-		# adapter's `pause`), then the run is over.
+		# recording, it shows the splash with its music for 15 seconds, fades it, holds 3 seconds before
+		# the first stroke, and holds 20 on the win title's stats (the adapter's `splash` and `pause`).
+		# The splash is in the catalog too, so this scenario opens it.
 		{"id": "island", "title": "Shore to island: the pilot plays the whole crossing", "kind": "strategy",
 			"strategy": "greedy", "steps": 3000,
 			"score": func(action: Dictionary, _state: Dictionary) -> float:
 				var id: String = str(action.get("id", ""))
+				if id == "splash":
+					return 3.0
 				if id == "pause":
 					return 2.0
 				return 1.0 if id in ["pilot", "again"] else 0.0},
