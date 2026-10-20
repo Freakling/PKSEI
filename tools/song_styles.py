@@ -3,7 +3,7 @@
 Pure Python 3, no packages. It keeps the real recording, so the song stays the song, and runs it
 through a different retro chain per style:
 
-    python -I tools/song_styles.py <stereo source.wav> <out folder>
+    python -I tools/song_styles.py <stereo source.wav> <out folder> [style ...]
 
 The source is a stereo WAV, 16-bit PCM or 32-bit float, any rate. "Without vocals" is the karaoke
 trick: the left channel minus the right cancels whatever is panned to the middle (the lead vocal),
@@ -11,7 +11,8 @@ and the middle's low end (under about 160 Hz: the bass and the kick) is added ba
 written as 16-bit mono PCM at 22050 Hz, peak-normalised, named <style>_vocals.wav and
 <style>_instrumental.wav:
 
-    nes        8-bit console: 5-bit samples, held at 11 kHz so it aliases, driven a little
+    nes        8-bit console: 7-bit samples (the NES DPCM's depth) held at 11 kHz, band-limited before
+               and after the hold so it doesn't hiss, quiet moments gated, driven a little
     gameboy    handheld: band-limited 150 Hz to 3.5 kHz, 4-bit samples held at 8 kHz
     snes       16-bit console: the soft sample interpolation (a low-pass), 12-bit, the echo
     megadrive  16-bit console: an 11 kHz low-pass, a gritty soft-clip, a 9-bit DAC
@@ -113,6 +114,19 @@ def crush(x, bits):
     return [round(v * levels) / levels for v in x]
 
 
+def gate(x, threshold, release_hz=8.0):
+    """A soft gate: below `threshold` (of the peak) the level falls away smoothly, so the quiet
+    moments go quiet instead of fizzing once the samples are coarse."""
+    peak = max(1e-9, max(abs(v) for v in x))
+    a = 1.0 - math.exp(-2 * math.pi * release_hz / RATE)
+    env, out = 0.0, [0.0] * len(x)
+    for i, v in enumerate(x):
+        env += a * (abs(v) / peak - env)
+        g = min(1.0, (env / threshold) ** 2) if threshold > 0 else 1.0
+        out[i] = v * g
+    return out
+
+
 def drive(x, amount):
     k = math.tanh(amount)
     return [math.tanh(v * amount) / k for v in x]
@@ -178,9 +192,11 @@ def wobble(x, depth_ms, rate_hz):
 
 def nes(x):
     x = highpass(x, 90)
-    x = drive(x, 1.8)
-    x = hold(x, 11025)
-    return crush(normalise(x), 5)
+    x = lowpass(lowpass(x, 5000), 5000)     # nothing above the held rate's Nyquist to alias
+    x = drive(normalise(x), 1.4)
+    x = gate(x, 0.04)
+    x = crush(hold(x, 11025), 7)
+    return lowpass(x, 6500)                  # soften the stair steps the hold leaves
 
 
 def gameboy(x):
@@ -213,7 +229,7 @@ def outrun(x):
 STYLES = [("nes", nes), ("gameboy", gameboy), ("snes", snes), ("megadrive", megadrive), ("outrun", outrun)]
 
 
-def main(src, out_dir):
+def main(src, out_dir, only=None):
     os.makedirs(out_dir, exist_ok=True)
     left, right, rate = read_stereo(src)
     print("source at %d Hz, %.1f s" % (rate, len(left) / RATE))
@@ -221,11 +237,13 @@ def main(src, out_dir):
     low_mid = lowpass(lowpass(with_vocals, 160), 160)
     instrumental = [(l - r) * 0.5 + lm for l, r, lm in zip(left, right, low_mid)]
     for name, style in STYLES:
+        if only and name not in only:
+            continue
         write_mono(os.path.join(out_dir, name + "_vocals.wav"), style(with_vocals))
         write_mono(os.path.join(out_dir, name + "_instrumental.wav"), style(instrumental))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3:] or None)
