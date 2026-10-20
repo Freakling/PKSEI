@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T92 · B8 · R1
+**Next IDs:** T93 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,13 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T92 · A splash screen with the title, "Press any key" and placeholder chiptune music · done · M · agent
+- Depends on: T24, T26, T54
+- UI: design/ui/splash.md
+- Touches: scenes/splash.tscn (new), scripts/ui/splash.gd (new), scenes/main.tscn (the splash over the lake), assets/audio/default_bus_layout.tres (+Music bus), tools/gen_audio.gd (the placeholder theme), assets/audio/music/splash_theme.wav (new), tools/ui_screens.gd (catalog entry splash), tools/autoplay_adapter.gd (start_run dismisses the splash), tests/test_splash.gd (new)
+- Done when: on launch the splash covers the lake with %Backdrop (water, island, the catamaran with the four guys bobbing), %Title "PKSEI", %Subtitle "Paddla Kanot Som En Idiot" and a blinking %Prompt ("Press any key", "Tap to start" on a touchscreen), and a looping theme plays on the Music bus (test: the scene opens with its named elements and a playing stream) · any key, click or tap after the input guard fades the screen and the music out over FADE_TIME and frees the splash; input before it is gone never reaches the boat (test) · the splash shows once per launch, not on a reset or after the win (test) · the music is one exported AudioStream on the splash, so the human's mp3 replaces the placeholder by dropping the file in and pointing the stream at it (check: the scene quoted) · the capture is lint-clean at every configured size and matches the spec (check) · it looks and sounds right (play)
+- GDD: Presentation and Platforms
 
 ### T91 · The motorboat's hull and the fisherman's dinghy knock a beer over when the boat hits them · done · M · agent
 - Depends on: T88, T18

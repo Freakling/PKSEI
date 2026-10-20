@@ -14,8 +14,8 @@ func scenarios() -> Array[Dictionary]:
 	return [
 		# The catalog (tools/ui_screens.gd) lists "lake", the view the game starts in (smoke counts it as
 		# opened), and "win", which no action opens: it is reached by winning, and the island is out of
-		# reach in 3 turns.
-		{"id": "smoke", "title": "Start, play 3 turns", "kind": "smoke", "turns": 3, "skip_views": ["win"]},
+		# reach in 3 turns. "splash" (T92) is dismissed by the adapter's start_run(), so no action opens it.
+		{"id": "smoke", "title": "Start, play 3 turns", "kind": "smoke", "turns": 3, "skip_views": ["win", "splash"]},
 		# The boat leaves the shore: strokes on all four seats, balanced left and right, then a drift.
 		{"id": "crossing", "title": "Paddle off the shore on all four seats", "kind": "scripted", "actions": [
 			{"do": "paddle_left_back", "repeat": 3},

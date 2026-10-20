@@ -10,6 +10,10 @@ extends "res://tools/ui_catalog.gd"
 ## The views are the ids the autoplay adapter reports (tools/autoplay_adapter.gd › current_view()) and
 ## the play log logs (view.changed), so the ids are fixed: "lake" and "win".
 ##
+## "splash" (T92) is the screen over the lake at launch (scenes/main.tscn holds scenes/splash.tscn
+## after the lake). It is not a view the adapter reports: start_run() dismisses it before play, so
+## the run starts on the lake. Opened on its own it pauses the tree, which its exit unpauses.
+##
 ## "lake" is the first view: the game starts there (scenes/main.tscn holds scenes/lake.tscn), and
 ## smoke counts it as opened at the start, with no action. Its HUD, touch pads with the reset
 ## button, speech bubbles and off-screen arrows are children of the lake scene's own HUD CanvasLayer,
@@ -33,6 +37,7 @@ const ATTEMPT_SEED: int = 12345
 
 func screens() -> Array[Dictionary]:
 	return [
+		{"id": "splash", "title": "Splash", "scene": "res://scenes/splash.tscn"},
 		{"id": "lake", "title": "Lake", "scene": "res://scenes/lake.tscn"},
 		{"id": "win", "title": "Win", "scene": "res://scenes/win.tscn", "setup": _win},
 	]

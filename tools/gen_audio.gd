@@ -23,6 +23,35 @@ extends SceneTree
 
 const OUT_DIR: String = "res://assets/audio"
 const HAZARD_DIR: String = "res://assets/audio/hazards"
+## The splash theme (T92): a drinking song in G major at this tempo, 16 bars of 4 beats.
+const THEME_BPM: float = 132.0
+const THEME_BARS: int = 16
+## The chord of each bar as [bass root, bass fifth] in MIDI notes: G, G, C, G, D, D, G, D, then
+## G, Em, C, G, Am, D, G, D, which leaves the loop on the dominant so it falls back onto the G.
+const THEME_BASS: Array = [
+	[43, 50], [43, 50], [48, 55], [43, 50], [50, 57], [50, 57], [43, 50], [50, 57],
+	[43, 50], [40, 47], [48, 55], [43, 50], [45, 52], [50, 57], [43, 50], [50, 57],
+]
+## The lead's melody, one array per bar of [MIDI note, beats] (0 is a rest); each bar adds up to 4.
+const THEME_LEAD: Array = [
+	[[67, 1.0], [71, 0.5], [74, 0.5], [79, 1.0], [74, 1.0]],
+	[[71, 1.0], [69, 0.5], [67, 0.5], [69, 1.0], [71, 1.0]],
+	[[72, 1.0], [76, 0.5], [79, 0.5], [76, 1.0], [72, 1.0]],
+	[[74, 1.5], [71, 0.5], [67, 2.0]],
+	[[69, 1.0], [74, 0.5], [78, 0.5], [78, 1.0], [74, 1.0]],
+	[[76, 0.5], [74, 0.5], [72, 1.0], [69, 1.0], [74, 1.0]],
+	[[71, 1.0], [74, 1.0], [79, 1.0], [78, 0.5], [76, 0.5]],
+	[[74, 1.5], [72, 0.5], [69, 1.0], [0, 1.0]],
+	[[79, 1.0], [79, 0.5], [78, 0.5], [79, 1.0], [71, 1.0]],
+	[[76, 1.0], [71, 0.5], [76, 0.5], [79, 1.0], [76, 1.0]],
+	[[76, 1.0], [79, 0.5], [76, 0.5], [72, 1.0], [76, 1.0]],
+	[[74, 1.0], [71, 1.0], [67, 1.0], [71, 1.0]],
+	[[69, 1.0], [72, 0.5], [76, 0.5], [76, 1.0], [72, 1.0]],
+	[[78, 1.0], [74, 1.0], [69, 1.0], [74, 1.0]],
+	[[71, 0.5], [74, 0.5], [79, 1.0], [78, 0.5], [76, 0.5], [74, 1.0]],
+	[[78, 1.0], [76, 0.5], [74, 0.5], [69, 1.0], [0, 1.0]],
+]
+const MUSIC_DIR: String = "res://assets/audio/music"
 const RATE: int = 22050
 const PEAK: float = 0.8
 ## Seconds of a loop's noise tail crossfaded into its head (_seamless).
@@ -59,6 +88,9 @@ func _init() -> void:
 	_save(_whitecaps(), "whitecaps", HAZARD_DIR, true)
 	_save(_beast_rumble(), "beast_rumble", HAZARD_DIR, true)
 	_save(_beast_grab(), "beast_grab", HAZARD_DIR)
+	# The splash's placeholder theme (T92), last of all for the same reason: it draws noise.
+	DirAccess.make_dir_recursive_absolute(MUSIC_DIR)
+	_save(_splash_theme(), "splash_theme", MUSIC_DIR, true)
 	quit()
 
 
@@ -211,6 +243,65 @@ func _beast_grab() -> PackedFloat32Array:
 	_mix(sound, 0.28, _tone(0.2, 110.0, 40.0, Wave.SINE, 0.005, 0.07), 0.8)
 	_mix(sound, 0.28, _noise(0.5, 5000.0, 700.0, 0.012, 0.14), 0.9)
 	return sound
+
+
+# --- the splash theme (T92) ---------------------------------------------------------------------
+
+## The placeholder for the splash's music, until the human's mp3 replaces it (a loop of THEME_BARS
+## bars at THEME_BPM): a square-wave lead that starts every note a hair flat and slides up into it,
+## so it wobbles like the crew; a triangle oom-pah bass (the root on beats 1 and 3, the fifth on 2
+## and 4); and a drum kit of a kick on 1 and 3, a snare on 2 and 4 and a hat on every eighth. The
+## notes are mixed with wrap-around (_mix_loop), so what rings past the last bar fades into the
+## first and the loop has no seam.
+func _splash_theme() -> PackedFloat32Array:
+	var beat: float = 60.0 / THEME_BPM
+	var song: PackedFloat32Array = _blank(THEME_BARS * 4.0 * beat)
+	var kick: PackedFloat32Array = _tone(0.16, 160.0, 45.0, Wave.SINE, 0.002, 0.05)
+	var snare: PackedFloat32Array = _noise(0.14, 3500.0, 1500.0, 0.002, 0.04)
+	var hat: PackedFloat32Array = _noise(0.05, 7000.0, 9000.0, 0.001, 0.012)
+	for bar: int in THEME_BARS:
+		var bar_start: float = bar * 4.0 * beat
+		var cursor: float = 0.0
+		for note: Array in THEME_LEAD[bar]:
+			var beats: float = note[1]
+			if int(note[0]) > 0:
+				var hz: float = _midi_hz(int(note[0]))
+				var held: float = beats * beat * 0.92
+				var lead: PackedFloat32Array = _tone(held, hz * 0.985, hz, Wave.SQUARE, 0.005, held * 0.9)
+				_mix_loop(song, bar_start + cursor * beat, _release(lead), 0.2)
+			cursor += beats
+		for step: int in 4:
+			var at: float = bar_start + step * beat
+			var root: bool = step % 2 == 0
+			var bass_hz: float = _midi_hz(int(THEME_BASS[bar][0 if root else 1]))
+			var bass: PackedFloat32Array = _tone(beat * 0.85, bass_hz, bass_hz, Wave.TRIANGLE, 0.004, beat * 0.5)
+			_mix_loop(song, at, _release(bass), 0.45)
+			_mix_loop(song, at, kick if root else snare, 0.5 if root else 0.3)
+			_mix_loop(song, at, hat, 0.12)
+			_mix_loop(song, at + beat * 0.5, hat, 0.08)
+	return song
+
+
+## The frequency of MIDI note `note` (69 is the A at 440 Hz).
+func _midi_hz(note: int) -> float:
+	return 440.0 * pow(2.0, float(note - 69) / 12.0)
+
+
+## `samples` with their last few milliseconds faded out, so a note cut short doesn't click.
+func _release(samples: PackedFloat32Array) -> PackedFloat32Array:
+	var out: PackedFloat32Array = samples.duplicate()
+	var fade: int = mini(int(0.006 * RATE), out.size())
+	for i: int in fade:
+		out[out.size() - 1 - i] *= float(i) / fade
+	return out
+
+
+## _mix that wraps: what runs past the end of `into` carries on from its start.
+func _mix_loop(into: PackedFloat32Array, at: float, part: PackedFloat32Array, gain: float) -> void:
+	var offset: int = int(at * RATE)
+	for i: int in part.size():
+		var index: int = (offset + i) % into.size()
+		into[index] += part[i] * gain
 
 
 # --- synthesis ----------------------------------------------------------------------------------

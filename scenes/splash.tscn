@@ -1,0 +1,135 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/splash.gd" id="1_splash"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/splash_theme.wav" id="2_music"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water.png" id="3_water"]
+[ext_resource type="Texture2D" path="res://assets/sprites/island.png" id="4_island"]
+[ext_resource type="Texture2D" path="res://assets/sprites/catamaran.png" id="5_hull"]
+[ext_resource type="Texture2D" path="res://assets/sprites/guys/guy_0_idle.png" id="6_guy0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/guys/guy_1_idle.png" id="7_guy1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/guys/guy_2_idle.png" id="8_guy2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/guys/guy_3_idle.png" id="9_guy3"]
+
+[node name="Splash" type="CanvasLayer"]
+process_mode = 3
+layer = 10
+script = ExtResource("1_splash")
+music = ExtResource("2_music")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Backdrop" type="Control" parent="Root"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Water" type="TextureRect" parent="Root/Backdrop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_water")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Island" type="Sprite2D" parent="Root/Backdrop"]
+unique_name_in_owner = true
+texture = ExtResource("4_island")
+
+[node name="Boat" type="Node2D" parent="Root/Backdrop"]
+unique_name_in_owner = true
+scale = Vector2(2, 2)
+
+[node name="Hull" type="Sprite2D" parent="Root/Backdrop/Boat"]
+texture = ExtResource("5_hull")
+
+[node name="Guy0" type="Sprite2D" parent="Root/Backdrop/Boat"]
+position = Vector2(-15, -14)
+texture = ExtResource("6_guy0")
+
+[node name="Guy1" type="Sprite2D" parent="Root/Backdrop/Boat"]
+position = Vector2(-15, 14)
+texture = ExtResource("7_guy1")
+
+[node name="Guy2" type="Sprite2D" parent="Root/Backdrop/Boat"]
+position = Vector2(15, -14)
+texture = ExtResource("8_guy2")
+
+[node name="Guy3" type="Sprite2D" parent="Root/Backdrop/Boat"]
+position = Vector2(15, 14)
+texture = ExtResource("9_guy3")
+
+[node name="Title" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1
+anchor_top = 0.12
+anchor_right = 0.9
+anchor_bottom = 0.3
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.1, 0.2, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 56
+text = "PKSEI"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.15
+anchor_top = 0.3
+anchor_right = 0.85
+anchor_bottom = 0.38
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.1, 0.2, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 16
+text = "Paddla Kanot Som En Idiot"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Prompt" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.82
+anchor_right = 0.75
+anchor_bottom = 0.89
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.1, 0.2, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "Press any key"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+bus = &"Music"

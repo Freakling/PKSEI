@@ -61,6 +61,10 @@ func start_run(run_seed: int) -> void:
 	# The game's boot already began a run (RunState._ready), before the driver pointed the log at this
 	# run's folder: begin the run again here, so its files are in the folder.
 	play_log().call("begin_run")
+	# The splash (T92) pauses the game and swallows input until a key; a run starts on the lake.
+	var splash: Node = tree.current_scene.get_node_or_null("Splash") if tree.current_scene != null else null
+	if splash != null and splash.has_method("dismiss_now"):
+		splash.call("dismiss_now")
 	var lake: Node = tree.current_scene.get_node_or_null("Lake") if tree.current_scene != null else null
 	if lake != null and lake.has_method("_new_attempt"):
 		lake.call("_new_attempt")
