@@ -10,7 +10,8 @@ extends HazardBase
 ## assets/sprites/hazards/ (T24, drawn by tools/gen_sprites.gd). The rule decides everything;
 ## this script steps it each physics frame with the boat's position and heading, and applies
 ## its one hit through RunState: beer_overboard() on the high hull, shove() and water_aboard()
-## on that hull. No rules and no randomness here; the tunables are the wake_* fields on
+## on that hull; and the motorboat's ram (T91), beer_overboard() on the hull facing it and shove()
+## along its course. No rules and no randomness here; the tunables are the wake_* fields on
 ## LakeTuning, which the lake sets as `tuning` before the node enters the tree.
 
 const SPRAY_FRAMES: Array[Texture2D] = [
@@ -60,6 +61,11 @@ func _physics_process(delta: float) -> void:
 		RunState.beer_overboard(hit.hull, _boat.global_position)
 		RunState.shove(hit.shove)
 		RunState.water_aboard(hit.hull, hit.water)
+	# The motorboat's own hull (T91): a beer over on the side it is on, and a shove along its course.
+	var ram: MotorboatWake.Hit = _wake.take_ram()
+	if ram != null:
+		RunState.beer_overboard(ram.hull, _boat.global_position)
+		RunState.shove(ram.shove)
 	_sound_state()
 	_show_state(delta)
 

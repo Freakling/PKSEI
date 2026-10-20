@@ -29,6 +29,11 @@ extends RefCounted
 ## the one facing the wave, with a shove of wake_shove sideways in the boat's frame away from the
 ## wave (toward the low hull) and wake_water of water aboard. A boat on the course behind the
 ## motorboat is reached by both fronts on the same step; the SHORE front is checked first.
+## Apart from the wave, the motorboat itself is a ram (T91): while it CROSSES, a boat within
+## wake_hull_radius of it takes one ram per event, whether or not the wave has hit: the hull facing
+## the motorboat (the side of the boat it is on, in the boat's frame) loses a beer and the boat is
+## shoved wake_ram_shove along the motorboat's travel. step() still returns only the wave's hit;
+## the ram is read with take_ram().
 ## No randomness: the same inputs give the same hit. The motorboat, the fronts and the trigger
 ## are in the same frame as the boat it is given (the scene uses global coordinates), with the
 ## island up-screen (negative y) and the shore down-screen.
@@ -47,6 +52,9 @@ class Hit extends RefCounted:
 	var shove: Vector2 = Vector2.ZERO
 	var water: float = 0.0
 	var front: Front = Front.SHORE
+	## Whether this is the motorboat's ram (a beer overboard on `hull`, `shove` along its travel,
+	## no water) and not a wave's hit.
+	var ram: bool = false
 
 
 const FRONTS: Array[Front] = [Front.SHORE, Front.ISLAND]
@@ -67,6 +75,10 @@ var direction: float = 1.0
 var spread: float = 0.0
 ## Whether this event's one hit has been given.
 var hit_given: bool = false
+## Whether the motorboat's one ram has been given.
+var rammed: bool = false
+## The ram given on the last step, until take_ram() reads it.
+var _ram: Hit = null
 ## The boat's signed distance to each front on the last step (positive: outside the V).
 var _last_distance: Array[float] = [0.0, 0.0]
 ## Whether each front has already crossed the boat (a hit, or head-on).
@@ -88,6 +100,8 @@ func reset() -> void:
 	direction = 1.0
 	spread = 0.0
 	hit_given = false
+	rammed = false
+	_ram = null
 	_last_distance = [0.0, 0.0]
 	_crossed = [false, false]
 	_done = [false, false]
@@ -185,10 +199,25 @@ func make_hit(boat_rotation: float, normal: Vector2) -> Hit:
 	return hit
 
 
+## The hull of the boat that the motorboat is beside, in the boat's own frame (the hull a ram
+## hits): LEFT when the motorboat lies to the boat's left.
+func ram_hull(boat_position: Vector2, boat_rotation: float) -> Rescue.Hull:
+	var local: Vector2 = (motorboat - boat_position).rotated(-boat_rotation)
+	return Rescue.Hull.LEFT if local.x < 0.0 else Rescue.Hull.RIGHT
+
+
+## The ram the last step gave, or null; reading it clears it.
+func take_ram() -> Hit:
+	var ram: Hit = _ram
+	_ram = null
+	return ram
+
+
 ## Advances the event by delta with the boat where it is; returns the hit a front lands this
 ## step, or null.
 func step(delta: float, boat_position: Vector2, boat_rotation: float = 0.0) -> Hit:
 	var hit: Hit = null
+	_ram = null
 	match state:
 		State.WAITING:
 			if boat_near(boat_position):
@@ -203,6 +232,7 @@ func step(delta: float, boat_position: Vector2, boat_rotation: float = 0.0) -> H
 				motorboat.x = end_x()
 				state = State.ROLLING
 			hit = _cross_fronts(boat_position, boat_rotation)
+			_check_ram(boat_position, boat_rotation)
 			if state == State.ROLLING:
 				_retire_fronts()
 		State.ROLLING:
@@ -234,6 +264,17 @@ func _cross_fronts(boat_position: Vector2, boat_rotation: float) -> Hit:
 		hit = make_hit(boat_rotation, normal)
 		hit.front = front
 	return hit
+
+
+## The motorboat's hull rams the boat the first step they are within wake_hull_radius.
+func _check_ram(boat_position: Vector2, boat_rotation: float) -> void:
+	if rammed or motorboat.distance_to(boat_position) > tuning.wake_hull_radius:
+		return
+	rammed = true
+	_ram = Hit.new()
+	_ram.ram = true
+	_ram.hull = ram_hull(boat_position, boat_rotation)
+	_ram.shove = Vector2(direction, 0.0) * tuning.wake_ram_shove
 
 
 ## Marks the fronts that have spread past the trigger's reach, and ends the event when both have.

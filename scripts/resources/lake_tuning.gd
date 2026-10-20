@@ -67,6 +67,11 @@ extends Resource
 @export var wake_shove: float = 120.0 ## PLACEHOLDER
 ## Water a broadside hit puts aboard the high hull, bailed at BoatTuning.bail_rate per second.
 @export var wake_water: float = 3.0 ## PLACEHOLDER
+## Pixels from the motorboat's position within which its hull rams the boat while it crosses (about
+## its half length plus the catamaran's half width); one ram per event.
+@export var wake_hull_radius: float = 34.0 ## PLACEHOLDER
+## Pixels per second the ram shoves the boat along the motorboat's course.
+@export var wake_ram_shove: float = 160.0 ## PLACEHOLDER
 ## Wind gust (the Wind gust row; read by WindGust, scripts/systems/gust.gd).
 ## Pixels from a gust trigger within which the boat sets the gust off.
 @export var gust_trigger_radius: float = 200.0 ## PLACEHOLDER
@@ -108,6 +113,10 @@ extends Resource
 @export var line_length: float = 200.0 ## PLACEHOLDER
 ## Seconds a crossing of the line snags the paddle on the side that crossed it.
 @export var snag_time: float = 3.0 ## PLACEHOLDER
+## Pixels from the dinghy's centre within which the boat bumps it (T91), apart from the line.
+@export var dinghy_radius: float = 22.0 ## PLACEHOLDER
+## Pixels per second a bump shoves the boat away from the dinghy.
+@export var dinghy_shove: float = 80.0 ## PLACEHOLDER
 ## The Loch-Brez beast (the Loch-Brez beast row; read by Beast, scripts/systems/beast.gd).
 ## Pixels in from either edge of lake_width within which the boat has strayed too far and the
 ## beast rises.

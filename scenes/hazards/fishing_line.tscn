@@ -23,4 +23,9 @@ texture = ExtResource("3_float")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Snag"]
 
+[node name="Hull" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hull"]
+
 [connection signal="body_entered" from="Snag" to="." method="_on_body_entered"]
+[connection signal="body_entered" from="Hull" to="." method="_on_hull_body_entered"]

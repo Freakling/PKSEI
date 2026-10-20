@@ -2,7 +2,7 @@
 
 Milestones, the work queue and bugs: the only place work is tracked. Item format: `.godot-director/tasks.md`. Queue order is priority; reorder by moving items. Pruning moves done items to `TASKS-archive.md`.
 
-**Next IDs:** T91 · B8 · R1
+**Next IDs:** T92 · B8 · R1
 
 ## Milestones
 | Milestone | Status |
@@ -376,6 +376,12 @@ Milestones, the work queue and bugs: the only place work is tracked. Item format
 - Touches: scripts/autoload/run_state.gd (signal snagged), scripts/resources/lines.gd (+snag), data/lines.tres, scripts/ui/speech_bubbles.gd (the yell on his seat), tests/test_hazards.gd, tests/test_speech_bubbles.gd
 - Done when: snag() emits snagged(seat) when it found a guy and nothing for an empty hull (test) · the `snag` kind has at least one Swedish line (test) · the snagged guy's bubble shows one for call_out_time in play (play)
 - GDD: World and Narrative
+
+### T91 · The motorboat's hull and the fisherman's dinghy knock a beer over when the boat hits them · done · M · agent
+- Depends on: T88, T18
+- Touches: scripts/systems/wake.gd (a ram while CROSSING: the boat within wake_hull_radius of the motorboat, once per event), scripts/hazards/wake.gd (applies it: beer overboard on the hull facing the motorboat, a shove of wake_ram_shove along its travel), scripts/resources/lake_tuning.gd (+wake_hull_radius, +wake_ram_shove, +dinghy_radius, +dinghy_shove), data/lake_tuning.tres, scripts/hazards/fishing_line.gd and scenes/hazards/fishing_line.tscn (a Hull area round the dinghy, apart from the line's Snag: beer overboard on the hull facing it and a shove away, with the spec's hit_cooldown), tests/test_wake.gd, tests/test_fishing_line.gd
+- Done when: a boat within wake_hull_radius of the crossing motorboat gets one ram per event, its hull the one facing the motorboat and its shove along the motorboat's travel, separate from the wave's one hit (test) · a boat touching the dinghy gets a beer overboard on the hull facing it and a shove away from it, at most once per hit_cooldown, and crossing the line or the float alone still only snags (test) · both read as a crash in play (play)
+- GDD: Systems › Hazards
 
 ### T90 · The devlog's section 11: the token split by model, the transcript figures, the measured subscription caps · done · XS · agent
 - Depends on: T78

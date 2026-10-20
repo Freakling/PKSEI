@@ -26,6 +26,8 @@ const WATER: float = 3.0
 const ANGLE: float = 30.0
 const HEAD_ON: float = 30.0
 const BAIL_RATE: float = 2.0
+const HULL_RADIUS: float = 34.0
+const RAM_SHOVE: float = 40.0
 ## Left of the lake's middle, so the motorboat sets off from the left edge and crosses rightward.
 const TRIGGER: Vector2 = Vector2(-100.0, -1000.0)
 const COURSE_Y: float = -1064.0
@@ -60,6 +62,8 @@ func before_each() -> void:
 	tuning.wake_head_on_angle = HEAD_ON
 	tuning.wake_shove = SHOVE
 	tuning.wake_water = WATER
+	tuning.wake_hull_radius = HULL_RADIUS
+	tuning.wake_ram_shove = RAM_SHOVE
 	wake = MotorboatWake.new(tuning, TRIGGER)
 	last_hit = null
 
@@ -351,6 +355,107 @@ func test_the_hit_applied_to_run_state_knocks_a_beer_over_shoves_and_sets_the_gu
 	expect(state.step(TICK, NEAR).thrust > 0.0, "the other hull still paddles")
 	state.step(0.5, NEAR)
 	expect_near(state.water_of(Rescue.Hull.LEFT), WATER - BAIL_RATE * (0.5 + 2.0 * TICK), 0.0001, "bailed at bail_rate per second")
+	state.free()
+
+
+var last_ram: MotorboatWake.Hit
+var wave_hits: Array[int] = []
+
+
+## Steps for some ticks with the boat still; returns the ticks (1-based) that gave a ram and keeps
+## the last in last_ram. The wave's hits go to wave_hits.
+func run_rams(ticks: int, boat: Vector2, rotation: float = 0.0) -> Array[int]:
+	var rams: Array[int] = []
+	wave_hits = []
+	for tick: int in ticks:
+		var hit: MotorboatWake.Hit = wake.step(TICK, boat, rotation)
+		if hit != null:
+			wave_hits.append(tick + 1)
+		var ram: MotorboatWake.Hit = wake.take_ram()
+		if ram != null:
+			rams.append(tick + 1)
+			last_ram = ram
+	return rams
+
+
+func test_a_boat_on_the_motorboats_course_is_rammed_once() -> void:
+	var rams: Array[int] = run_rams(200, ON_COURSE, 0.0)
+	expect_eq(rams.size(), 1, "exactly one ram in the whole event")
+	expect(rams[0] < ON_COURSE_TICK, "the first step the motorboat is within wake_hull_radius, before it is alongside")
+	expect(last_ram.ram, "marked as the ram")
+	expect(wake.rammed, "used up")
+	expect_eq(last_ram.hull, Rescue.Hull.LEFT, "the motorboat comes from the boat's left: the left hull")
+	expect_eq(last_ram.shove, Vector2(RAM_SHOVE, 0.0), "wake_ram_shove along the motorboat's travel, rightward")
+	expect_near(last_ram.water, 0.0, 0.0001, "no water from a ram")
+
+
+func test_the_ram_hull_is_the_side_the_motorboat_is_on_in_the_boats_frame() -> void:
+	run_rams(200, ON_COURSE, PI)
+	expect_eq(last_ram.hull, Rescue.Hull.RIGHT, "the boat turned round: the motorboat is on its right")
+	wake.reset()
+	run_rams(200, ON_COURSE, 0.0)
+	expect_eq(last_ram.hull, Rescue.Hull.LEFT, "facing up it comes from the left")
+	wake.motorboat = Vector2(-40.0, -1030.0)
+	expect_eq(wake.ram_hull(Vector2(-10.0, -1030.0), 0.0), Rescue.Hull.LEFT, "the motorboat left of the boat")
+	expect_eq(wake.ram_hull(Vector2(-70.0, -1030.0), 0.0), Rescue.Hull.RIGHT, "the motorboat right of the boat")
+
+
+func test_a_leftward_motorboat_shoves_leftward() -> void:
+	tuning.wake_trigger_radius = 400.0
+	wake = MotorboatWake.new(tuning, Vector2(100.0, -1000.0))
+	var rams: Array[int] = run_rams(200, Vector2(40.0, COURSE_Y), 0.0)
+	expect_eq(rams.size(), 1, "one ram")
+	expect_eq(last_ram.shove, Vector2(-RAM_SHOVE, 0.0), "along its course, leftward")
+	expect_eq(last_ram.hull, Rescue.Hull.RIGHT, "it comes from the boat's right")
+
+
+func test_a_boat_out_of_the_motorboats_reach_is_not_rammed() -> void:
+	expect_eq(run_rams(200, NEAR, BROADSIDE).size(), 0, "64 px off the course: no ram")
+	wake.reset()
+	expect_eq(run_rams(200, FAR, 0.0).size(), 0, "far from the trigger: the event never starts")
+	wake.reset()
+	expect_eq(run_rams(200, Vector2(-40.0, COURSE_Y + HULL_RADIUS + 1.0), 0.0).size(), 0, "just past wake_hull_radius of the course")
+	wake.reset()
+	expect_eq(run_rams(200, Vector2(-40.0, COURSE_Y + HULL_RADIUS - 1.0), 0.0).size(), 1, "just inside it")
+
+
+func test_the_ram_is_apart_from_the_waves_one_hit() -> void:
+	var rotation: float = rotation_of(direction_of(MotorboatWake.Front.SHORE))
+	var rams: Array[int] = run_rams(200, ON_COURSE, rotation)
+	expect_eq(rams.size(), 1, "the ram")
+	expect_eq(wave_hits, [ON_COURSE_TICK] as Array[int], "and the wave's hit, apart, on its own tick")
+	expect(wake.hit_given and wake.rammed, "each used up on its own")
+	wake.reset()
+	rams = run_rams(200, NEAR, BROADSIDE)
+	expect_eq(rams.size(), 0, "a wave hit without a ram")
+	expect_eq(wave_hits.size(), 1, "the wave still hits")
+	wake.reset()
+	rams = run_rams(200, ON_COURSE, 0.0)
+	expect_eq(rams.size(), 1, "a ram")
+	expect_eq(wave_hits.size(), 0, "head-on to both fronts: no wave hit")
+	expect_false(wake.hit_given, "the wave's hit is not used up by the ram")
+
+
+func test_a_rolling_wake_has_no_hull_to_ram_with() -> void:
+	tuning.wake_trigger_radius = 400.0
+	run(ROLL_TICK, NEAR)
+	expect_eq(wake.state, MotorboatWake.State.ROLLING, "across")
+	var rams: Array[int] = run_rams(200, Vector2(320.0, COURSE_Y), 0.0)
+	expect_eq(rams.size(), 0, "a boat at the parked apex is not rammed")
+
+
+func test_the_ram_applied_to_run_state_knocks_a_beer_over_and_shoves() -> void:
+	run_rams(200, ON_COURSE, 0.0)
+	var state: Node = RunStateScript.new()
+	state.rng.seed = 7
+	state.reset()
+	for seat: int in state.guys.size():
+		state.drunkenness.set_level(seat, 0.0)
+	# What scripts/hazards/wake.gd does with a ram.
+	var seat: int = state.beer_overboard(last_ram.hull, ON_COURSE)
+	state.shove(last_ram.shove)
+	expect_eq(seat, Paddling.Seat.LEFT_FRONT, "the left front guy's beer went over")
+	expect_eq(state.take_shove(), Vector2(RAM_SHOVE, 0.0), "the boat is shoved along the course")
 	state.free()
 
 

@@ -8,9 +8,12 @@ extends HazardBase
 ## along the line. When the boat crosses it, the hull hit is the side of the boat the dinghy is
 ## on, in the boat's own frame, and RunState snags that hull's guy for snag_time seconds (the Snag
 ## a paddle effect). One crossing is one hit: the spec's hit_cooldown passes before it can hit
-## again. No rules and no randomness here: the lake places it from Hazards.plan() and sets
-## `spec`; the tunables are the line_length and snag_time fields on LakeTuning, which the lake
-## sets as `tuning` before the node enters the tree.
+## again. The dinghy itself is a bump (T91, the Hull area, a circle of dinghy_radius round it,
+## apart from the line): a beer overboard on the hull facing it and a shove of dinghy_shove away
+## from it, with its own hit_cooldown; crossing the line or the float alone only snags. No rules
+## and no randomness here: the lake places it from Hazards.plan() and sets `spec`; the tunables
+## are the line_length, snag_time, dinghy_radius and dinghy_shove fields on LakeTuning, which the
+## lake sets as `tuning` before the node enters the tree.
 
 const FLOAT_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/hazards/float_0.png"),
@@ -29,8 +32,11 @@ const HIT_THICKNESS: float = 4.0
 @onready var _float: Sprite2D = $Visual/Float
 @onready var _snag: Area2D = $Snag
 @onready var _shape: CollisionShape2D = $Snag/CollisionShape2D
+@onready var _hull_shape: CollisionShape2D = $Hull/CollisionShape2D
 
 var _cooldown: float = 0.0
+## The dinghy bump's own cooldown, apart from the line's.
+var _hull_cooldown: float = 0.0
 ## Which way the line runs from the dinghy: away from the lake's middle line, -1 left, +1 right.
 var _direction: float = 1.0
 ## Seconds into the animation.
@@ -51,14 +57,20 @@ func _setup() -> void:
 	_dinghy.scale.x = _direction
 	_line.points = PackedVector2Array([Vector2(_direction * ROD_TIP.x, ROD_TIP.y), tip])
 	_float.position = tip
+	# The line snags from the dinghy's edge out to the float, so ramming the dinghy is only a bump.
+	var start: float = minf(tuning.dinghy_radius, reach)
 	var rect: RectangleShape2D = RectangleShape2D.new()
-	rect.size = Vector2(reach, HIT_THICKNESS)
+	rect.size = Vector2(reach - start, HIT_THICKNESS)
 	_shape.shape = rect
-	_snag.position = Vector2(_direction * reach * 0.5, 0.0)
+	_snag.position = Vector2(_direction * (start + (reach - start) * 0.5), 0.0)
+	var circle: CircleShape2D = CircleShape2D.new()
+	circle.radius = tuning.dinghy_radius
+	_hull_shape.shape = circle
 
 
 func _physics_process(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
+	_hull_cooldown = maxf(_hull_cooldown - delta, 0.0)
 	_clock += delta
 	_float.texture = FLOAT_FRAMES[_frame_at(_clock, FLOAT_FRAMES.size(), FRAME_PERIOD)]
 
@@ -72,3 +84,22 @@ func _on_body_entered(body: Node2D) -> void:
 	var on_left: bool = body.to_local(global_position).x < 0.0
 	var hull: Rescue.Hull = Rescue.Hull.LEFT if on_left else Rescue.Hull.RIGHT
 	RunState.snag(hull, tuning.snag_time)
+
+
+## The boat ran into the dinghy (T91): a beer overboard on the hull facing it and a shove away.
+func _on_hull_body_entered(body: Node2D) -> void:
+	if not body is CharacterBody2D or _hull_cooldown > 0.0 or spec == null or tuning == null:
+		return
+	_hull_cooldown = spec.hit_cooldown
+	var bump: Dictionary = dinghy_hit(body.global_position, body.global_rotation, global_position, tuning.dinghy_shove)
+	RunState.beer_overboard(bump["hull"], body.global_position)
+	RunState.shove(bump["shove"])
+
+
+## What bumping the dinghy does (pure): the hull of the boat the dinghy lies beside, in the boat's
+## own frame (as HazardBase.hull_of decides it), and the shove, `strength` pixels per second from
+## the dinghy toward the boat.
+static func dinghy_hit(boat_position: Vector2, boat_rotation: float, dinghy_position: Vector2, strength: float) -> Dictionary:
+	var local: Vector2 = (dinghy_position - boat_position).rotated(-boat_rotation)
+	var hull: Rescue.Hull = Rescue.Hull.LEFT if local.x < 0.0 else Rescue.Hull.RIGHT
+	return {"hull": hull, "shove": (boat_position - dinghy_position).normalized() * strength}
